@@ -34,6 +34,10 @@ set(_PublicFilters
   RobustAutomaticThreshold
   Silhouette
 
+  #Groeber
+  CutPatchesFromImage
+  ThermoElasticFFT
+
   # 2019-03-06 Filter AFRL Filter Release
   AlignGeometries
   ApproximatePointCloudHull
