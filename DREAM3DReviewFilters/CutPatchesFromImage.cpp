@@ -131,7 +131,7 @@ public:
 	    tempPath.update("tempDC", "tempAM", "tempAA");
       var.setValue(tempPath);
       filter->setProperty("ImageArrayPath", var);
-      filename = m_Directory + "\\Patch-";
+      filename = m_Directory + "\\Patch";
     }
 
     for(size_t curIndex = start; curIndex < end; curIndex++)
@@ -191,7 +191,15 @@ public:
       }
 
 
-  	  QString cFilename = filename + QString::number(m_LabelsArray[curIndex]) + '-' + QString::number(curIndex) + ".tif";
+  	  QString cFilename;
+      if(m_BalancePatches)
+      {
+        cFilename = filename + '-' + QString::number(m_LabelsArray[curIndex]) + '-' + QString::number(curIndex) + ".tif";
+      }
+      else
+      {
+        cFilename = filename + '-' + QString::number(curIndex) + ".tif";
+      }
       var.setValue(cFilename);
       filter->setProperty("FileName", var);
       filter->execute();
