@@ -30,8 +30,8 @@ public:
   SIMPL_FILTER_PARAMETER(QString, OutputDirectory)
   Q_PROPERTY(QString OutputDirectory READ getOutputDirectory WRITE setOutputDirectory)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, SelectedArrayPath)
-  Q_PROPERTY(DataArrayPath SelectedArrayPath READ getSelectedArrayPath WRITE setSelectedArrayPath)
+  SIMPL_FILTER_PARAMETER(QVector<DataArrayPath>, SelectedDataArrayPaths)
+  Q_PROPERTY(QVector<DataArrayPath> SelectedDataArrayPaths READ getSelectedDataArrayPaths WRITE setSelectedDataArrayPaths)
 
   SIMPL_FILTER_PARAMETER(IntVec3Type, PatchDims)
   Q_PROPERTY(IntVec3Type PatchDims READ getPatchDims WRITE setPatchDims)
@@ -149,8 +149,9 @@ protected:
   void sendThreadSafeProgressMessage(int64_t counter);
 
 private:
-  DEFINE_IDATAARRAY_VARIABLE(SelectedData)
   DEFINE_DATAARRAY_VARIABLE(bool, LabelsArray)
+
+  QVector<IDataArray::WeakPointer> m_SelectedWeakPtrVector;
 
   QMutex m_Mutex;
   int64_t m_ProgressCounter;

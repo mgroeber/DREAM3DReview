@@ -31,6 +31,7 @@
 
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
+#include "SIMPLib/FilterParameters/MultiDataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/OutputPathFilterParameter.h"
 #include "SIMPLib/FilterParameters/IntFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedBooleanFilterParameter.h"
@@ -52,13 +53,11 @@
 class CutPatchesImpl
 {
 public:
-  CutPatchesImpl(IntVec3Type patchDims, float* fraction, IDataArray::Pointer selectedArray, bool balancePatches, bool* labelsArray, ImageGeom::Pointer image, QString directory, CutPatchesFromImage* filter)
+  CutPatchesImpl(IntVec3Type patchDims, std::vector<size_t> patchIndices, QVector<IDataArray::WeakPointer> selectedWeakPtrVector, ImageGeom::Pointer image, QString directory, CutPatchesFromImage* filter)
   : m_PatchDims(patchDims)
-  , m_Fraction(fraction)
+  , m_PatchIndices(patchIndices)
   , m_Image(image)
-  , m_BalancePatches(balancePatches)
-  , m_SelectedArray(selectedArray)
-  , m_LabelsArray(labelsArray)
+  , m_SelectedWeakPtrVector(selectedWeakPtrVector)
   , m_Directory(directory)
   , m_Filter(filter)
   {
@@ -71,13 +70,11 @@ public:
   {
     size_t index = 0;
     int64_t numPoints = 0;
-    size_t vertId = 0;
     float delX = 0.0f, delY = 0.0f, delZ = 0.0f;
     double pointXPos = 0.0;
     double pointYPos = 0.0;
     double pointZPos = 0.0;
     int32_t counter = 0;
-    double startTime = std::numeric_limits<double>::max();
     bool influenced = false;
     float xPos = 0.0f;
     float yPos = 0.0f;
@@ -89,10 +86,6 @@ public:
     int64_t progCounter = 0;
     int64_t totalElements = (end - start);
     int64_t progIncrement = static_cast<int64_t>(totalElements / 100);
-
-    size_t m_Seed = std::chrono::steady_clock::now().time_since_epoch().count();
-    m_Seed += start;
-    SIMPL_RANDOMNG_NEW_SEEDED(m_Seed);
 
 	  QVariant var;
 
@@ -110,106 +103,87 @@ public:
     iGeom->setOrigin(0.0, 0.0, 0.0);
     dc->setGeometry(iGeom);
 
-    QVector<size_t> tDims(3, 0);
-    tDims[0] = m_PatchDims[0];
-    tDims[1] = m_PatchDims[1];
-    tDims[2] = m_PatchDims[2];
-    AttributeMatrix::Pointer am = AttributeMatrix::New(tDims, "tempAM", AttributeMatrix::Type::Cell);
-    dc->addOrReplaceAttributeMatrix(am);
-    QVector<size_t> cDims = m_SelectedArray->getComponentDimensions();
-    IDataArray::Pointer patchPtr = m_SelectedArray->createNewArray(tDims[0]*tDims[1]*tDims[2], cDims, "tempAA", true);
-    int err = am->addOrReplaceAttributeArray(patchPtr);
+    IDataArray::Pointer m_SelectedArray;
 
-    AbstractFilter::Pointer filter;
-    QString filename;
-    if(nullptr != filterFactory.get())
+    int32_t numArrays = m_SelectedWeakPtrVector.size();
+    for(size_t iter = 0; iter < numArrays; iter++)
     {
-      filter = filterFactory->create();
-      filter->setDataContainerArray(dca);
-      filter->setProperty("Plane", 0);
-      DataArrayPath tempPath;
-	    tempPath.update("tempDC", "tempAM", "tempAA");
-      var.setValue(tempPath);
-      filter->setProperty("ImageArrayPath", var);
-      filename = m_Directory + "\\Patch";
-    }
+      m_SelectedArray = m_SelectedWeakPtrVector.at(iter).lock();
 
-    for(size_t curIndex = start; curIndex < end; curIndex++)
-    {
-      float randNum = rg.genrand_res53();
-      if (m_BalancePatches)
+      QVector<size_t> tDims(3, 0);
+      tDims[0] = m_PatchDims[0];
+      tDims[1] = m_PatchDims[1];
+      tDims[2] = m_PatchDims[2];
+      AttributeMatrix::Pointer am = AttributeMatrix::New(tDims, "tempAM", AttributeMatrix::Type::Cell);
+      dc->addOrReplaceAttributeMatrix(am);
+      QVector<size_t> cDims = m_SelectedArray->getComponentDimensions();
+      IDataArray::Pointer patchPtr = m_SelectedArray->createNewArray(tDims[0] * tDims[1] * tDims[2], cDims, "tempAA", true);
+      int err = am->addOrReplaceAttributeArray(patchPtr);
+
+      AbstractFilter::Pointer filter;
+      QString filename;
+      if(nullptr != filterFactory.get())
       {
-        if(m_LabelsArray[curIndex] && randNum > m_Fraction[0])
-        {
-          continue;
-        }
-        else if (!m_LabelsArray[curIndex] && randNum > m_Fraction[1])
-        {
-          continue;
-        }
-      }
-      else
-      {
-        if(randNum > m_Fraction[0])
-        {
-          continue;
-        }
+        filter = filterFactory->create();
+        filter->setDataContainerArray(dca);
+        filter->setProperty("Plane", 0);
+        DataArrayPath tempPath;
+        tempPath.update("tempDC", "tempAM", "tempAA");
+        var.setValue(tempPath);
+        filter->setProperty("ImageArrayPath", var);
+        filename = m_Directory + "\\" + m_SelectedArray->getName() + "_Patch";
       }
 
-      if(m_Filter->getCancel())
+      for(size_t i = start; i < end; i++)
       {
-        return;
-      }
-
-      size_t x = curIndex % m_ImageDims[0];
-      size_t y = static_cast<size_t>(curIndex / m_ImageDims[0]) % m_ImageDims[1];
-      size_t z = static_cast<size_t>(curIndex / (m_ImageDims[0] * m_ImageDims[1]));
-
-      if(x >= static_cast<size_t>(m_PatchDims[0] / 2) && y >= static_cast<size_t>(m_PatchDims[1] / 2) && z >= static_cast<size_t>(m_PatchDims[2] / 2) &&
-         x <= (m_ImageDims[0] - static_cast<size_t>(m_PatchDims[0] / 2)) && y <= (m_ImageDims[1] - static_cast<size_t>(m_PatchDims[1] / 2)) &&
-         z <= (m_ImageDims[2] - static_cast<size_t>(m_PatchDims[2] / 2)))
-      {
-        size_t counter = 0;
-        size_t planeChunk, rowChunk;
-        size_t iStart = (x - static_cast<size_t>(m_PatchDims[0] / 2));
-        size_t jStart = (y - static_cast<size_t>(m_PatchDims[1] / 2));
-        size_t kStart = (z - static_cast<size_t>(m_PatchDims[2] / 2));
-        for(size_t k = kStart; k < (kStart + m_PatchDims[2]); k++)
+        if(m_Filter->getCancel())
         {
-          planeChunk = k * m_ImageDims[0] * m_ImageDims[1];
-          for(size_t j = jStart; j < (jStart + m_PatchDims[1]); j++)
+          return;
+        }
+
+        size_t curIndex = m_PatchIndices[i];
+
+        size_t x = curIndex % m_ImageDims[0];
+        size_t y = static_cast<size_t>(curIndex / m_ImageDims[0]) % m_ImageDims[1];
+        size_t z = static_cast<size_t>(curIndex / (m_ImageDims[0] * m_ImageDims[1]));
+
+        if(x >= static_cast<size_t>(m_PatchDims[0] / 2) && y >= static_cast<size_t>(m_PatchDims[1] / 2) && z >= static_cast<size_t>(m_PatchDims[2] / 2) &&
+           x <= (m_ImageDims[0] - static_cast<size_t>(m_PatchDims[0] / 2)) && y <= (m_ImageDims[1] - static_cast<size_t>(m_PatchDims[1] / 2)) &&
+           z <= (m_ImageDims[2] - static_cast<size_t>(m_PatchDims[2] / 2)))
+        {
+          size_t counter = 0;
+          size_t planeChunk, rowChunk;
+          size_t iStart = (x - static_cast<size_t>(m_PatchDims[0] / 2));
+          size_t jStart = (y - static_cast<size_t>(m_PatchDims[1] / 2));
+          size_t kStart = (z - static_cast<size_t>(m_PatchDims[2] / 2));
+          for(size_t k = kStart; k < (kStart + m_PatchDims[2]); k++)
           {
-            rowChunk = j * m_ImageDims[0];
-            patchPtr->copyFromArray(counter,m_SelectedArray, (planeChunk + rowChunk + iStart), m_PatchDims[0]);
-            counter += m_PatchDims[0];
+            planeChunk = k * m_ImageDims[0] * m_ImageDims[1];
+            for(size_t j = jStart; j < (jStart + m_PatchDims[1]); j++)
+            {
+              rowChunk = j * m_ImageDims[0];
+              patchPtr->copyFromArray(counter, m_SelectedArray, (planeChunk + rowChunk + iStart), m_PatchDims[0]);
+              counter += m_PatchDims[0];
+            }
           }
         }
-      }
-      else
-      {
-        continue;
-      }
+        else
+        {
+          continue;
+        }
 
+        QString cFilename = filename + '-' + QString::number(curIndex) + ".tif";
+        var.setValue(cFilename);
+        filter->setProperty("FileName", var);
+        filter->execute();
 
-  	  QString cFilename;
-      if(m_BalancePatches)
-      {
-        cFilename = filename + '-' + QString::number(m_LabelsArray[curIndex]) + '-' + QString::number(curIndex) + ".tif";
+        if(progCounter > progIncrement)
+        {
+          m_Filter->sendThreadSafeProgressMessage(progCounter);
+          progCounter = 0;
+        }
+        progCounter++;
       }
-      else
-      {
-        cFilename = filename + '-' + QString::number(curIndex) + ".tif";
-      }
-      var.setValue(cFilename);
-      filter->setProperty("FileName", var);
-      filter->execute();
-
-      if(progCounter > progIncrement)
-      {
-        m_Filter->sendThreadSafeProgressMessage(progCounter);
-        progCounter = 0;
-      }
-      progCounter++;
     }
   }
 
@@ -222,12 +196,10 @@ public:
 
 private:
   IntVec3Type m_PatchDims;
-  float* m_Fraction;
+  std::vector<size_t> m_PatchIndices;
   ImageGeom::Pointer m_Image;
   QString m_Directory;
-  bool m_BalancePatches;
-  IDataArray::Pointer m_SelectedArray;
-  bool* m_LabelsArray;
+  QVector<IDataArray::WeakPointer> m_SelectedWeakPtrVector;
   CutPatchesFromImage* m_Filter;
 };
 
@@ -239,11 +211,10 @@ private:
 // -----------------------------------------------------------------------------
 CutPatchesFromImage::CutPatchesFromImage()
 : m_OutputDirectory("")
-, m_SelectedArrayPath("", "", "")
+, m_SelectedDataArrayPaths(QVector<DataArrayPath>())
 , m_LabelsArrayPath("", "", "")
 , m_NumPatches(1)
 , m_BalancePatches(false)
-, m_SelectedData(nullptr)
 {
   m_PatchDims[0] = 1;
   m_PatchDims[1] = 1;
@@ -268,8 +239,9 @@ void CutPatchesFromImage::setupFilterParameters()
 
   parameters.push_back(SIMPL_NEW_INT_VEC3_FP("Patch Dimensions", PatchDims, FilterParameter::Parameter, CutPatchesFromImage, 0));
   {
-    DataArraySelectionFilterParameter::RequirementType req = DataArraySelectionFilterParameter::CreateRequirement(SIMPL::Defaults::AnyPrimitive, SIMPL::Defaults::AnyComponentSize, AttributeMatrix::Type::Any, IGeometry::Type::Image);
-    parameters.push_back(SIMPL_NEW_DA_SELECTION_FP("Array to Write", SelectedArrayPath, FilterParameter::RequiredArray, CutPatchesFromImage, req));
+    MultiDataArraySelectionFilterParameter::RequirementType req =
+        MultiDataArraySelectionFilterParameter::CreateRequirement(SIMPL::Defaults::AnyPrimitive, SIMPL::Defaults::AnyComponentSize, AttributeMatrix::Type::Any, IGeometry::Type::Any);
+    parameters.push_back(SIMPL_NEW_MDA_SELECTION_FP("Attribute Arrays to Combine", SelectedDataArrayPaths, FilterParameter::RequiredArray, CutPatchesFromImage, req));
   }
   QStringList linkedProps("LabelsArrayPath");
   parameters.push_back(SIMPL_NEW_LINKED_BOOL_FP("Balance Patches", BalancePatches, FilterParameter::Parameter, CutPatchesFromImage, linkedProps));
@@ -289,7 +261,7 @@ void CutPatchesFromImage::readFilterParameters(AbstractFilterParametersReader* r
 {
   reader->openFilterGroup(this, index);
   setOutputDirectory(reader->readString("OutputDirectory", getOutputDirectory()));
-  setSelectedArrayPath(reader->readDataArrayPath("SelectedArrayPath", getSelectedArrayPath()));
+  setSelectedDataArrayPaths(reader->readDataArrayPathVector("SelectedDataArrayPaths", getSelectedDataArrayPaths()));
   setLabelsArrayPath(reader->readDataArrayPath("LabelsArrayPath", getLabelsArrayPath()));
   setNumPatches(reader->readValue("NumPatches", getNumPatches()));
   setBalancePatches(reader->readValue("BalancePatches", getBalancePatches()));
@@ -304,6 +276,7 @@ void CutPatchesFromImage::initialize()
 {
   m_ProgressCounter = 0;
   m_TotalElements = 0;
+
 }
 
 // -----------------------------------------------------------------------------
@@ -317,6 +290,26 @@ void CutPatchesFromImage::dataCheck()
   DataArrayPath tempPath;
   QVector<IDataArray::Pointer> dataArrays;
 
+  m_SelectedWeakPtrVector.clear();
+
+  QVector<DataArrayPath> paths = getSelectedDataArrayPaths();
+
+  if(!DataArrayPath::ValidateVector(paths))
+  {
+    QString ss = QObject::tr("There are Attribute Arrays selected that are not contained in the same Attribute Matrix. All selected Attribute Arrays must belong to the same Attribute Matrix");
+    setErrorCondition(-11002, ss);
+  }
+
+  for(int32_t i = 0; i < paths.count(); i++)
+  {
+    DataArrayPath path = paths.at(i);
+    IDataArray::WeakPointer ptr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, path);
+    if(nullptr != ptr.lock())
+    {
+      m_SelectedWeakPtrVector.push_back(ptr);
+    }
+  }
+
   if(getPatchDims()[0] <= 0 || getPatchDims()[1] <= 0 || getPatchDims()[2] <= 0)
   {
     QString ss = QObject::tr("All patch dimensions must be positive.\n "
@@ -325,12 +318,6 @@ void CutPatchesFromImage::dataCheck()
                      .arg(getPatchDims()[1])
                      .arg(getPatchDims()[2]);
     setErrorCondition(-11000, ss);
-  }
-
-  m_SelectedDataPtr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getSelectedArrayPath());
-  if(getErrorCode() >= 0)
-  {
-    dataArrays.push_back(m_SelectedDataPtr.lock());
   }
 
   if (m_BalancePatches)
@@ -405,8 +392,8 @@ void CutPatchesFromImage::execute()
   bool doParallel = true;
 #endif
 
-  ImageGeom::Pointer image = getDataContainerArray()->getDataContainer(m_SelectedArrayPath.getDataContainerName())->getGeometryAs<ImageGeom>();
-  int64_t numPossiblePatches = m_SelectedDataPtr.lock()->getNumberOfTuples();
+  ImageGeom::Pointer image = getDataContainerArray()->getDataContainer(getSelectedDataArrayPaths().at(0).getDataContainerName())->getGeometryAs<ImageGeom>();
+  int64_t numPossiblePatches = image->getNumberOfElements();
   
   float fraction[2];
   if(!m_BalancePatches)
@@ -433,20 +420,50 @@ void CutPatchesFromImage::execute()
     fraction[1] = float(m_NumPatches) / (2 * count2);
   }
 
+  notifyStatusMessage("Selecting Patches...");
+
+  std::vector<size_t> patchIndices;
+  size_t m_Seed = std::chrono::steady_clock::now().time_since_epoch().count();
+  SIMPL_RANDOMNG_NEW_SEEDED(m_Seed);
+  for(size_t i = 0; i < numPossiblePatches; i++)
+  {
+    float randNum = rg.genrand_res53();
+    if(m_BalancePatches)
+    {
+      if(m_LabelsArray[i] && randNum > fraction[0])
+      {
+        continue;
+      }
+      else if(!m_LabelsArray[i] && randNum > fraction[1])
+      {
+        continue;
+      }
+    }
+    else
+    {
+      if(randNum > fraction[0])
+      {
+        continue;
+      }
+    }
+    patchIndices.push_back(i);
+  }
+
   notifyStatusMessage("Cutting Patches...");
+  size_t numPatches = patchIndices.size();
 
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
   if(doParallel == true)
   {
 
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, numPossiblePatches), CutPatchesImpl(m_PatchDims, fraction, m_SelectedDataPtr.lock(), m_BalancePatches, m_LabelsArray, image, m_OutputDirectory, this),
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, numPatches), CutPatchesImpl(m_PatchDims, patchIndices, m_SelectedWeakPtrVector, image, m_OutputDirectory, this),
                       tbb::simple_partitioner());
   }
   else
 #endif
   {
-    CutPatchesImpl serial(m_PatchDims, fraction, m_SelectedDataPtr.lock(), m_BalancePatches, m_LabelsArray, image, m_OutputDirectory, this);
-    serial.generate(0, numPossiblePatches);
+    CutPatchesImpl serial(m_PatchDims, patchIndices, m_SelectedWeakPtrVector, image, m_OutputDirectory, this);
+    serial.generate(0, numPatches);
   }
  
   notifyStatusMessage("Complete");
