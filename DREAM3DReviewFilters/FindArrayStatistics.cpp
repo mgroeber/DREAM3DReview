@@ -157,12 +157,12 @@ void FindArrayStatistics::setupFilterParameters()
   parameters.push_back(SIMPL_NEW_AM_SELECTION_FP("Destination Attribute Matrix", DestinationAttributeMatrix, FilterParameter::RequiredArray, FindArrayStatistics, amReq));
 
   parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Length", LengthArrayName, DestinationAttributeMatrix, DestinationAttributeMatrix, FilterParameter::CreatedArray, FindArrayStatistics));
-  //parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Minimum", MinimumArrayName, FilterParameter::CreatedArray, FindArrayStatistics));
-  //parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Maximum", MaximumArrayName, FilterParameter::CreatedArray, FindArrayStatistics));
+  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Minimum", MinimumArrayName, DestinationAttributeMatrix, DestinationAttributeMatrix, FilterParameter::CreatedArray, FindArrayStatistics));
+  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Maximum", MaximumArrayName, DestinationAttributeMatrix, DestinationAttributeMatrix, FilterParameter::CreatedArray, FindArrayStatistics));
   parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Mean", MeanArrayName, DestinationAttributeMatrix, DestinationAttributeMatrix, FilterParameter::CreatedArray, FindArrayStatistics));
-  //parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Median", MedianArrayName, FilterParameter::CreatedArray, FindArrayStatistics));
+  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Median", MedianArrayName, DestinationAttributeMatrix, DestinationAttributeMatrix, FilterParameter::CreatedArray, FindArrayStatistics));
   parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Standard Deviation", StdDeviationArrayName, DestinationAttributeMatrix, DestinationAttributeMatrix, FilterParameter::CreatedArray, FindArrayStatistics));
-  //parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Summation", SummationArrayName, FilterParameter::CreatedArray, FindArrayStatistics));
+  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Summation", SummationArrayName, DestinationAttributeMatrix, DestinationAttributeMatrix, FilterParameter::CreatedArray, FindArrayStatistics));
   parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Standardized Data", StandardizedArrayName, SelectedArrayPath, SelectedArrayPath, FilterParameter::CreatedArray, FindArrayStatistics));
 
   setFilterParameters(parameters);
