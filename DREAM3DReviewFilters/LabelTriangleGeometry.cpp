@@ -93,7 +93,7 @@ void LabelTriangleGeometry::dataCheck()
 
   TriangleGeom::Pointer triangle = getDataContainerArray()->getPrereqGeometryFromDataContainer<TriangleGeom, AbstractFilter>(this, getCADDataContainerName());
 
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   getDataContainerArray()->getDataContainer(getCADDataContainerName())->createNonPrereqAttributeMatrix(this, getTriangleAttributeMatrixName(), tDims, AttributeMatrix::Type::Face);
 
   if(getErrorCode() < 0)
@@ -101,7 +101,7 @@ void LabelTriangleGeometry::dataCheck()
     return;
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   tempPath.update(getCADDataContainerName().getDataContainerName(), getTriangleAttributeMatrixName(), getRegionIdArrayName());
   m_RegionIdPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0,
                                                                                                                      cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
@@ -150,7 +150,7 @@ void LabelTriangleGeometry::execute()
 
   DataContainer::Pointer m = getDataContainerArray()->getDataContainer(getCADDataContainerName());
 
-  QVector<size_t> tDims(1, numTris);
+  std::vector<size_t> tDims(1, numTris);
   m->getAttributeMatrix(getTriangleAttributeMatrixName())->resizeAttributeArrays(tDims);
   updateTriangleInstancePointers();
 

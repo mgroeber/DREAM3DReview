@@ -135,7 +135,7 @@ void ExtractTripleLinesFromTriangleGeometry::dataCheck()
 
   dataArrays.push_back(triangle->getVertices());
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   m_NodeTypesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int8_t>, AbstractFilter>(this, getNodeTypesArrayPath(),
                                                                                                       cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_NodeTypesPtr.lock().get())                                                                  /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
@@ -160,7 +160,7 @@ void ExtractTripleLinesFromTriangleGeometry::dataCheck()
   EdgeGeom::Pointer edge = EdgeGeom::CreateGeometry(0, vertex, SIMPL::Geometry::EdgeGeometry, !getInPreflight());
   edc->setGeometry(edge);
 
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   edc->createNonPrereqAttributeMatrix(this, getVertexAttributeMatrixName(), tDims, AttributeMatrix::Type::Vertex);
   edc->createNonPrereqAttributeMatrix(this, getEdgeAttributeMatrixName(), tDims, AttributeMatrix::Type::Edge);
 
@@ -498,7 +498,7 @@ void ExtractTripleLinesFromTriangleGeometry::extractTripleLines()
   }
 
   AttributeMatrix::Pointer attrMat = getDataContainerArray()->getDataContainer(m_EdgeGeometry)->getAttributeMatrix(m_VertexAttributeMatrixName);
-  QVector<size_t> tDims(1, numTripleLineVerts);
+  std::vector<size_t> tDims(1, numTripleLineVerts);
   attrMat->resizeAttributeArrays(tDims);
   attrMat = getDataContainerArray()->getDataContainer(m_EdgeGeometry)->getAttributeMatrix(m_EdgeAttributeMatrixName);
   tDims[0] = numTripleLineEdges;
@@ -773,7 +773,7 @@ void ExtractTripleLinesFromTriangleGeometry::smoothTripleLines()
   }
 
   AttributeMatrix::Pointer attrMat = getDataContainerArray()->getDataContainer(m_EdgeGeometry)->getAttributeMatrix(m_VertexAttributeMatrixName);
-  QVector<size_t> tDims(1, tripleLineEdge->getNumberOfVertices());
+  std::vector<size_t> tDims(1, tripleLineEdge->getNumberOfVertices());
   attrMat->resizeAttributeArrays(tDims);
   attrMat = getDataContainerArray()->getDataContainer(m_EdgeGeometry)->getAttributeMatrix(m_EdgeAttributeMatrixName);
   tDims[0] = tripleLineEdge->getNumberOfEdges();

@@ -175,7 +175,7 @@ void ApplyTransformationToGeometry::dataCheck()
     setErrorCondition(-702, ss);
   }
 
-  QVector<size_t> cDims = {4, 4};
+  std::vector<size_t> cDims = {4, 4};
 
   switch(getTransformationMatrixType())
   {
@@ -208,7 +208,7 @@ void ApplyTransformationToGeometry::dataCheck()
       return;
     }
     std::vector<std::vector<double>> tableData = getManualTransformationMatrix().getTableData();
-    m_TransformationReference = FloatArrayType::CreateArray(1, cDims, "_INTERNAL_USE_ONLY_ManualTransformationMatrix");
+    m_TransformationReference = FloatArrayType::CreateArray(1, cDims, "_INTERNAL_USE_ONLY_ManualTransformationMatrix", true);
     m_TransformationReference->initializeWithZeros();
     m_TransformationMatrixPtr = m_TransformationReference;
     if(m_TransformationMatrixPtr.lock())
@@ -231,7 +231,7 @@ void ApplyTransformationToGeometry::dataCheck()
     FOrientArrayType om(9);
     FOrientTransformsType::ax2om(FOrientArrayType(m_RotationAxis[0], m_RotationAxis[1], m_RotationAxis[2], rotAngle), om);
 
-    m_TransformationReference = FloatArrayType::CreateArray(1, cDims, "_INTERNAL_USE_ONLY_ManualTransformationMatrix");
+    m_TransformationReference = FloatArrayType::CreateArray(1, cDims, "_INTERNAL_USE_ONLY_ManualTransformationMatrix", true);
     m_TransformationReference->initializeWithZeros();
     m_TransformationMatrixPtr = m_TransformationReference;
     if(m_TransformationMatrixPtr.lock())
@@ -250,7 +250,7 @@ void ApplyTransformationToGeometry::dataCheck()
   }
   case 4: // Translation
   {
-    m_TransformationReference = FloatArrayType::CreateArray(1, cDims, "_INTERNAL_USE_ONLY_ManualTransformationMatrix");
+    m_TransformationReference = FloatArrayType::CreateArray(1, cDims, "_INTERNAL_USE_ONLY_ManualTransformationMatrix", true);
     m_TransformationReference->initializeWithZeros();
     m_TransformationMatrixPtr = m_TransformationReference;
     if(m_TransformationMatrixPtr.lock())
@@ -268,7 +268,7 @@ void ApplyTransformationToGeometry::dataCheck()
   }
   case 5: // Scale
   {
-    m_TransformationReference = FloatArrayType::CreateArray(1, cDims, "_INTERNAL_USE_ONLY_ManualTransformationMatrix");
+    m_TransformationReference = FloatArrayType::CreateArray(1, cDims, "_INTERNAL_USE_ONLY_ManualTransformationMatrix", true);
     m_TransformationReference->initializeWithZeros();
     m_TransformationMatrixPtr = m_TransformationReference;
     if(m_TransformationMatrixPtr.lock())

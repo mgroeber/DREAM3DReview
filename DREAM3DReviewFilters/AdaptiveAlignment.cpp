@@ -119,10 +119,10 @@ void AdaptiveAlignment::setupFilterParameters()
     {
       DataArraySelectionFilterParameter::RequirementType req =
           DataArraySelectionFilterParameter::CreateRequirement(SIMPL::TypeNames::UInt8, SIMPL::Defaults::AnyComponentSize, AttributeMatrix::Type::Cell, IGeometry::Type::Image);
-      QVector<QVector<size_t>> cDims;
-      cDims.push_back(QVector<size_t>(1, 1));
-      cDims.push_back(QVector<size_t>(1, 3));
-      cDims.push_back(QVector<size_t>(1, 4));
+      std::vector<std::vector<size_t>> cDims;
+      cDims.push_back(std::vector<size_t>(1, 1));
+      cDims.push_back(std::vector<size_t>(1, 3));
+      cDims.push_back(std::vector<size_t>(1, 4));
       req.componentDimensions = cDims;
       parameters.push_back(SIMPL_NEW_DA_SELECTION_FP("Image Data", ImageDataArrayPath, FilterParameter::RequiredArray, AdaptiveAlignment, req, 1));
     }
@@ -205,7 +205,7 @@ void AdaptiveAlignment::dataCheck()
     {
       numImageComp = iDataArray->getNumberOfComponents();
     }
-    QVector<size_t> cDims(1, numImageComp);
+    std::vector<size_t> cDims(1, numImageComp);
     m_ImageDataPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<uint8_t>, AbstractFilter>(this, getImageDataArrayPath(),
                                                                                                          cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_ImageDataPtr.lock())                                                                         /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
@@ -248,7 +248,7 @@ void AdaptiveAlignment::preflight()
 
 void AdaptiveAlignment::create_array_for_flattened_image()
 {
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   DataArrayPath tempPath;
   tempPath.update(getImageDataArrayPath().getDataContainerName(), getImageDataArrayPath().getAttributeMatrixName(), "tempFlatImageDataName");
   m_FlatImageDataPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<AnisotropyConstants::DefaultPixelType>, AbstractFilter, AnisotropyConstants::DefaultPixelType>(

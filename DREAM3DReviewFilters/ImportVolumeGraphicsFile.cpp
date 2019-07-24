@@ -160,8 +160,8 @@ void ImportVolumeGraphicsFile::dataCheck()
 
   SizeVec3Type dims = image->getDimensions();
 
-  QVector<size_t> tDims = {dims[0], dims[1], dims[2]};
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> tDims = {dims[0], dims[1], dims[2]};
+  std::vector<size_t> cDims(1, 1);
 
   m->createNonPrereqAttributeMatrix(this, getCellAttributeMatrixName(), tDims, AttributeMatrix::Type::Cell);
 

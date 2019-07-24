@@ -234,7 +234,7 @@ protected:
    */
   template <typename T> void createCompatibleArrays()
   {
-    QVector<size_t> cDims(1, 1);
+    std::vector<size_t> cDims(1, 1);
     DataArrayPath path(getDestinationAttributeMatrix().getDataContainerName(), getDestinationAttributeMatrix().getAttributeMatrixName(), "");
 
     if(m_FindMin)

@@ -34,12 +34,12 @@ namespace Detail
 //
 // -----------------------------------------------------------------------------
 template <typename T>
-IDataArray::Pointer readH5Dataset(hid_t locId, const QString& datasetPath, const QVector<size_t>& tDims, const QVector<size_t>& cDims)
+IDataArray::Pointer readH5Dataset(hid_t locId, const QString& datasetPath, const std::vector<size_t>& tDims, const std::vector<size_t>& cDims)
 {
   herr_t err = -1;
   IDataArray::Pointer ptr;
 
-  ptr = DataArray<T>::CreateArray(tDims, cDims, datasetPath);
+  ptr = DataArray<T>::CreateArray(tDims, cDims, datasetPath, true);
 
   T* data = (T*)(ptr->getVoidPointer(0));
   err = QH5Lite::readPointerDataset(locId, datasetPath, data);
@@ -137,7 +137,7 @@ void ImportMASSIFData::dataCheck()
   }
 
   // Get the geometry info of the arrays
-  QVector<size_t> geoDims;
+  std::vector<size_t> geoDims;
   FloatVec3Type origin;
   FloatVec3Type res;
   getDataContainerGeometry(geoDims, origin, res);
@@ -200,7 +200,7 @@ void ImportMASSIFData::dataCheck()
     H5ScopedGroupSentinel sentinel(&parentId, false);
     // Read dataset into DREAM.3D structure
     QString objectName = QH5Utilities::getObjectNameFromPath(hdf5ArrayPath);
-    QVector<size_t> geometryDims = {geoDims[0], geoDims[1], geoDims[2]};
+    std::vector<size_t> geometryDims = {geoDims[0], geoDims[1], geoDims[2]};
     IDataArray::Pointer dPtr = readIDataArray(parentId, objectName, geometryDims, getInPreflight());
     if(dPtr == IDataArray::NullPointer())
     {
@@ -308,7 +308,7 @@ void ImportMASSIFData::execute()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void ImportMASSIFData::getDataContainerGeometry(QVector<size_t>& tDims, FloatVec3Type& origin, FloatVec3Type& spacing)
+void ImportMASSIFData::getDataContainerGeometry(std::vector<size_t>& tDims, FloatVec3Type& origin, FloatVec3Type& spacing)
 {
   hid_t fileId = QH5Utilities::openFile(m_MassifInputFilePath, true);
   if(fileId < 0)
@@ -454,7 +454,7 @@ const QString ImportMASSIFData::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-IDataArray::Pointer ImportMASSIFData::readIDataArray(hid_t gid, const QString& name, QVector<size_t> geoDims, bool metaDataOnly)
+IDataArray::Pointer ImportMASSIFData::readIDataArray(hid_t gid, const QString& name, std::vector<size_t> geoDims, bool metaDataOnly)
 {
 
   herr_t err = -1;
@@ -482,8 +482,8 @@ IDataArray::Pointer ImportMASSIFData::readIDataArray(hid_t gid, const QString& n
   {
     QString classType;
     // int version = 0;
-    QVector<size_t>& tDims = geoDims;
-    QVector<size_t> cDims;
+    std::vector<size_t>& tDims = geoDims;
+    std::vector<size_t> cDims;
 
     if(geoDims.size() == dims.size())
     {

@@ -109,7 +109,7 @@ void ImportCLIFile::dataCheck()
 
   dc->setGeometry(edge);
 
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   dc->createNonPrereqAttributeMatrix(this, getVertexAttributeMatrixName(), tDims, AttributeMatrix::Type::Vertex);
   dc->createNonPrereqAttributeMatrix(this, getEdgeAttributeMatrixName(), tDims, AttributeMatrix::Type::Edge);
 
@@ -119,7 +119,7 @@ void ImportCLIFile::dataCheck()
   }
 
   DataArrayPath path(getEdgeDataContainerName(), getEdgeAttributeMatrixName(), getLayerIdsArrayName());
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   getDataContainerArray()->createNonPrereqArrayFromPath<Int32ArrayType, AbstractFilter, int32_t>(this, path, 0, cDims);
 
@@ -342,7 +342,7 @@ void ImportCLIFile::execute()
 
   AttributeMatrix::Pointer edgeAttrMat = getDataContainerArray()->getDataContainer(m_EdgeDataContainerName)->getAttributeMatrix(m_EdgeAttributeMatrixName);
   AttributeMatrix::Pointer vertAttrMat = getDataContainerArray()->getDataContainer(m_EdgeDataContainerName)->getAttributeMatrix(m_VertexAttributeMatrixName);
-  QVector<size_t> tDims(1, edge->getNumberOfEdges());
+  std::vector<size_t> tDims(1, edge->getNumberOfEdges());
   edgeAttrMat->resizeAttributeArrays(tDims);
   tDims[0] = edge->getNumberOfVertices();
   vertAttrMat->resizeAttributeArrays(tDims);

@@ -159,7 +159,7 @@ private:
    * @param origin
    * @param res
    */
-  void getDataContainerGeometry(QVector<size_t>& tDims, FloatVec3Type& origin, FloatVec3Type& spacing);
+  void getDataContainerGeometry(std::vector<size_t>& tDims, FloatVec3Type& origin, FloatVec3Type& spacing);
 
   /**
    * @brief readIDataArray
@@ -168,7 +168,7 @@ private:
    * @param metaDataOnly
    * @return
    */
-  IDataArray::Pointer readIDataArray(hid_t gid, const QString& name, QVector<size_t> geoDims, bool metaDataOnly);
+  IDataArray::Pointer readIDataArray(hid_t gid, const QString& name, std::vector<size_t> geoDims, bool metaDataOnly);
 
 public:
   ImportMASSIFData(const ImportMASSIFData&) = delete;            // Copy Constructor Not Implemented

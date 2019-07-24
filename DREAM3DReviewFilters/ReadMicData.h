@@ -220,7 +220,7 @@ protected:
    * @param m
    * @param dims
    */
-  void populateMicData(MicReader* reader, DataContainer::Pointer m, QVector<size_t> dims, MIC_READ_FLAG = MIC_FULL_FILE);
+  void populateMicData(MicReader* reader, DataContainer::Pointer m, std::vector<size_t> dims, MIC_READ_FLAG = MIC_FULL_FILE);
 
 private:
   QScopedPointer<ReadMicDataPrivate> const d_ptr;

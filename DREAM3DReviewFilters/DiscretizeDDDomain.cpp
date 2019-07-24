@@ -192,7 +192,7 @@ void DiscretizeDDDomain::dataCheck()
   m2->setGeometry(image);
 
   // Create the cell attrMat in the new data container
-  QVector<size_t> tDims(3, 0);
+  std::vector<size_t> tDims(3, 0);
   AttributeMatrix::Pointer newCellAttrMat = m2->createNonPrereqAttributeMatrix(this, getOutputAttributeMatrixName(), tDims, AttributeMatrix::Type::Cell, AttributeMatrixID21);
   if(getErrorCode() < 0)
   {
@@ -200,7 +200,7 @@ void DiscretizeDDDomain::dataCheck()
   }
 
   // Get the name and create the array in the new data attrMat
-  QVector<size_t> dims(1, 1);
+  std::vector<size_t> dims(1, 1);
   tempPath.update(getOutputDataContainerName().getDataContainerName(), getOutputAttributeMatrixName(), getOutputArrayName());
   m_OutputArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0, dims, "", DataArrayID31);
   if(nullptr != m_OutputArrayPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
@@ -301,7 +301,7 @@ void DiscretizeDDDomain::execute()
   vdc->getGeometryAs<ImageGeom>()->setDimensions(SizeVec3Type(dcDims[0], dcDims[1], dcDims[2]));
   vdc->getGeometryAs<ImageGeom>()->setSpacing(FloatVec3Type(m_CellSize[0] / 2.0, m_CellSize[1] / 2.0, m_CellSize[2] / 2.0));
 
-  QVector<size_t> tDims(3, 0);
+  std::vector<size_t> tDims(3, 0);
   tDims[0] = dcDims[0];
   tDims[1] = dcDims[1];
   tDims[2] = dcDims[2];

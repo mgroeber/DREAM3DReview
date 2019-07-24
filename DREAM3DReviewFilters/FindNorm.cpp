@@ -126,7 +126,7 @@ void FindNorm::dataCheck()
     dataArrayPaths.push_back(getSelectedArrayPath());
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   m_NormPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, getNormArrayPath(), 0, cDims, "", DataArrayID31);
   if(m_NormPtr.lock())

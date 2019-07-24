@@ -79,7 +79,7 @@ void FindSurfaceRoughness::dataCheck()
     return;
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   m_BoundaryCellsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int8_t>, AbstractFilter>(this, getBoundaryCellsArrayPath(), cDims);
   if(nullptr != m_BoundaryCellsPtr.lock().get())
@@ -94,7 +94,7 @@ void FindSurfaceRoughness::dataCheck()
     return;
   }
 
-  dc->createNonPrereqAttributeMatrix(this, getAttributeMatrixName(), QVector<size_t>(1, 1), AttributeMatrix::Type::CellFeature);
+  dc->createNonPrereqAttributeMatrix(this, getAttributeMatrixName(), std::vector<size_t>(1, 1), AttributeMatrix::Type::CellFeature);
 
   DataArrayPath path(getBoundaryCellsArrayPath().getDataContainerName(), getAttributeMatrixName(), getRoughnessParamsArrayName());
 

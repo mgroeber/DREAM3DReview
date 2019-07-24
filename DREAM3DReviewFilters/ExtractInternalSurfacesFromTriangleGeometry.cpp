@@ -133,7 +133,7 @@ void ExtractInternalSurfacesFromTriangleGeometry::dataCheck()
 
   arrays.push_back(tris->getVertices());
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   m_NodeTypesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int8_t>, AbstractFilter>(this, getNodeTypesArrayPath(), cDims);
   if(m_NodeTypesPtr.lock())
@@ -160,7 +160,7 @@ void ExtractInternalSurfacesFromTriangleGeometry::dataCheck()
 
   DataContainer::Pointer m = getDataContainerArray()->getDataContainer(getTriangleDataContainerName());
   m_AttrMatList = m->getAttributeMatrixNames();
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   QList<QString> tempDataArrayList;
   DataArrayPath tempPath;
   AttributeMatrix::Type tempAttrMatType = AttributeMatrix::Type::Vertex;
@@ -181,7 +181,7 @@ void ExtractInternalSurfacesFromTriangleGeometry::dataCheck()
           IDataArray::Pointer tmpDataArray = tmpAttrMat->getPrereqIDataArray<IDataArray, AbstractFilter>(this, data_array, -90002);
           if(getErrorCode() >= 0)
           {
-            QVector<size_t> cDims = tmpDataArray->getComponentDimensions();
+            std::vector<size_t> cDims = tmpDataArray->getComponentDimensions();
             TemplateHelpers::CreateNonPrereqArrayFromArrayType()(this, tempPath, cDims, tmpDataArray);
           }
         }
@@ -378,8 +378,8 @@ void ExtractInternalSurfacesFromTriangleGeometry::execute()
   tmpVerts.shrink_to_fit();
   tmpTris.shrink_to_fit();
 
-  QVector<size_t> vertDims(1, tmpVerts.size());
-  QVector<size_t> triDims(1, tmpTris.size());
+  std::vector<size_t> vertDims(1, tmpVerts.size());
+  std::vector<size_t> triDims(1, tmpTris.size());
   DataContainer::Pointer m = getDataContainerArray()->getDataContainer(m_TriangleDataContainerName);
   DataContainer::Pointer dc = getDataContainerArray()->getDataContainer(m_InternalTrianglesName);
 

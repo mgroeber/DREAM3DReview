@@ -216,7 +216,7 @@ void LocalDislocationDensityCalculator::dataCheck()
     setErrorCondition(-384, "DataContainer geometry missing Edges");
   }
   // We MUST also have the domain bounds of the edge data container
-  QVector<size_t> dims(1, 6);
+  std::vector<size_t> dims(1, 6);
   tempPath.update(getEdgeDataContainerName().getDataContainerName(), "_MetaData", "DomainBounds");
   m_DomainBoundsPtr =
       getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, tempPath, dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
@@ -237,7 +237,7 @@ void LocalDislocationDensityCalculator::dataCheck()
   m2->setGeometry(image);
 
   // Create the cell attrMat in the new data container
-  QVector<size_t> tDims(3, 0);
+  std::vector<size_t> tDims(3, 0);
   AttributeMatrix::Pointer newCellAttrMat = m2->createNonPrereqAttributeMatrix(this, getOutputAttributeMatrixName(), tDims, AttributeMatrix::Type::Cell, AttributeMatrixID21);
   if(getErrorCode() < 0)
   {
@@ -334,7 +334,7 @@ void LocalDislocationDensityCalculator::execute()
   vdc->getGeometryAs<ImageGeom>()->setDimensions(SizeVec3Type(dcDims[0], dcDims[1], dcDims[2]));
   vdc->getGeometryAs<ImageGeom>()->setSpacing(FloatVec3Type(m_CellSize[0] / 2.0, m_CellSize[1] / 2.0, m_CellSize[2] / 2.0));
 
-  QVector<size_t> tDims(3, 0);
+  std::vector<size_t> tDims(3, 0);
   tDims[0] = dcDims[0];
   tDims[1] = dcDims[1];
   tDims[2] = dcDims[2];
@@ -342,7 +342,7 @@ void LocalDislocationDensityCalculator::execute()
   updateCellInstancePointers();
 
   // Create a temporary array to hold the individual slip system lengths in order to determine dominant system
-  FloatArrayType::Pointer m_IndividualSystemLengthsPtr = FloatArrayType::CreateArray(12 * m_OutputArrayPtr.lock()->getNumberOfTuples(), "INDIVIDUAL_SYSTEM_LENGTHS_INTERNAL_USE_ONLY");
+  FloatArrayType::Pointer m_IndividualSystemLengthsPtr = FloatArrayType::CreateArray(12 * m_OutputArrayPtr.lock()->getNumberOfTuples(), "INDIVIDUAL_SYSTEM_LENGTHS_INTERNAL_USE_ONLY", true);
   float* m_IndividualSystemLengths = m_IndividualSystemLengthsPtr->getPointer(0);
 
   float point1[3], point2[3], corner1[3], corner2[3];

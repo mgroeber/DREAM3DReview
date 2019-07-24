@@ -269,11 +269,11 @@ void FindLayerStatistics::dataCheck()
     numLayers = image->getXPoints();
   }
 
-  QVector<size_t> tDims(1, numLayers);
+  std::vector<size_t> tDims(1, numLayers);
   DataContainer::Pointer m = getDataContainerArray()->getDataContainer(getSelectedArrayPath().getDataContainerName());
   m->createNonPrereqAttributeMatrix(this, getLayerAttributeMatrixName(), tDims, AttributeMatrix::Type::CellFeature);
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   tempPath.update(getSelectedArrayPath().getDataContainerName(), getSelectedArrayPath().getAttributeMatrixName(), getLayerIDsArrayName());
   m_LayerIDsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0,
                                                                                                                      cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
@@ -358,7 +358,7 @@ void FindLayerStatistics::execute()
 
   SizeVec3Type dimsP = m->getGeometryAs<ImageGeom>()->getDimensions();
 
-  Int32ArrayType::Pointer startingPoints = Int32ArrayType::CreateArray(0, "_INTERNAL_USE_ONLY_startingPoints");
+  Int32ArrayType::Pointer startingPoints = Int32ArrayType::CreateArray(0, "_INTERNAL_USE_ONLY_startingPoints", true);
   int32_t* startPoints = nullptr;
   size_t stride[2];
   size_t dims[2];

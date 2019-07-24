@@ -88,7 +88,7 @@ void FindMinkowskiBouligandDimension::dataCheck()
     setErrorCondition(-1, ss);
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), cDims);
   if(nullptr != m_MaskPtr.lock().get())
@@ -103,7 +103,7 @@ void FindMinkowskiBouligandDimension::dataCheck()
     return;
   }
 
-  dc->createNonPrereqAttributeMatrix(this, getAttributeMatrixName(), QVector<size_t>(1, 1), AttributeMatrix::Type::CellFeature);
+  dc->createNonPrereqAttributeMatrix(this, getAttributeMatrixName(), std::vector<size_t>(1, 1), AttributeMatrix::Type::CellFeature);
 
   DataArrayPath path(getMaskArrayPath().getDataContainerName(), getAttributeMatrixName(), getMinkowskiBouligandDimensionArrayName());
 

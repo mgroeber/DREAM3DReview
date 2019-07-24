@@ -155,7 +155,7 @@ void IdentifyDislocationSegments::dataCheck()
   {
     return;
   }
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   AttributeMatrix::Pointer edgeFeatureAttrMat = m->createNonPrereqAttributeMatrix(this, getEdgeFeatureAttributeMatrixName(), tDims, AttributeMatrix::Type::EdgeFeature, AttributeMatrixID21);
   if(getErrorCode() < 0)
   {
@@ -180,7 +180,7 @@ void IdentifyDislocationSegments::dataCheck()
   }
 
   // Get the name and create the array in the new data attrMat
-  QVector<size_t> dims(1, 3);
+  std::vector<size_t> dims(1, 3);
   m_BurgersVectorsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getBurgersVectorsArrayPath(),
                                                                                                           dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_BurgersVectorsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
@@ -249,7 +249,7 @@ void IdentifyDislocationSegments::execute()
 
   int dnum = 0;
   qint32 size = 0;
-  QVector<size_t> tDims(1, dnum);
+  std::vector<size_t> tDims(1, dnum);
   int64_t initialEdgesListSize = 100;
   QVector<int64_t> edgeslist(initialEdgesListSize, -1);
   float refBV[3], refSPN[3];
@@ -327,7 +327,7 @@ void IdentifyDislocationSegments::execute()
   generator.seed(seed);
   std::uniform_int_distribution<int32_t> distribution(rangeMin, rangeMax);
 
-  DataArray<int32_t>::Pointer rndNumbers = DataArray<int32_t>::CreateArray(dnum, "New FeatureIds");
+  DataArray<int32_t>::Pointer rndNumbers = DataArray<int32_t>::CreateArray(dnum, "New FeatureIds", true);
   int32_t* gid = rndNumbers->getPointer(0);
   gid[0] = 0;
   QSet<int32_t> featureIdSet;

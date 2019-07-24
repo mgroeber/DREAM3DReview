@@ -252,8 +252,8 @@ void PointSampleTriangleGeometry::dataCheck()
   VertexGeom::Pointer vertex = VertexGeom::CreateGeometry(m_NumSamples, SIMPL::Geometry::VertexGeometry, !getInPreflight());
   m->setGeometry(vertex);
 
-  QVector<size_t> tDims(1, m_NumSamples);
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> tDims(1, m_NumSamples);
+  std::vector<size_t> cDims(1, 1);
 
   m->createNonPrereqAttributeMatrix(this, getVertexAttributeMatrixName(), tDims, AttributeMatrix::Type::Vertex, AttributeMatrixID21);
 
@@ -300,7 +300,7 @@ void PointSampleTriangleGeometry::dataCheck()
     {
       dataArrays.push_back(ptr.lock());
       m_SelectedWeakPtrVector.push_back(ptr);
-      QVector<size_t> cDims = ptr.lock()->getComponentDimensions();
+      std::vector<size_t> cDims = ptr.lock()->getComponentDimensions();
       DataArrayPath newPath(getVertexGeometry(), getVertexAttributeMatrixName(), ptr.lock()->getName());
       IDataArray::WeakPointer newPtr = TemplateHelpers::CreateNonPrereqArrayFromArrayType()(this, newPath, cDims, ptr.lock());
       m_CreatedWeakPtrVector.push_back(newPtr);
@@ -383,7 +383,7 @@ void PointSampleTriangleGeometry::execute()
   int64_t numTris = triangle->getNumberOfTris();
 
   AttributeMatrix::Pointer attrMat = getDataContainerArray()->getDataContainer(m_VertexGeometry)->getAttributeMatrix(m_VertexAttributeMatrixName);
-  QVector<size_t> tDims(1, m_NumSamples);
+  std::vector<size_t> tDims(1, m_NumSamples);
   attrMat->resizeAttributeArrays(tDims);
 
   VertexGeom::Pointer vertex = getDataContainerArray()->getDataContainer(m_VertexGeometry)->getGeometryAs<VertexGeom>();

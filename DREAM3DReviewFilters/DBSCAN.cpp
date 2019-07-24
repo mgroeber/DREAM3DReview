@@ -223,7 +223,7 @@ void DBSCAN::dataCheck()
   }
   }
 
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   m->createNonPrereqAttributeMatrix(this, getFeatureAttributeMatrixName(), tDims, destAttrMatType, AttributeMatrixID21);
 
   if(getEpsilon() <= 0)
@@ -237,7 +237,7 @@ void DBSCAN::dataCheck()
     return;
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   QVector<DataArrayPath> dataArrayPaths;
 
   m_InDataPtr =
@@ -308,7 +308,7 @@ void DBSCAN::execute()
   }
   else
   {
-    BoolArrayType::Pointer tmpMask = BoolArrayType::CreateArray(numTuples, "_INTERNAL_USE_ONLY_tmpMask");
+    BoolArrayType::Pointer tmpMask = BoolArrayType::CreateArray(numTuples, "_INTERNAL_USE_ONLY_tmpMask", true);
     tmpMask->initializeWithValue(true);
     EXECUTE_TEMPLATE(this, DBSCANTemplate, m_InDataPtr.lock(), this, m_InDataPtr.lock(), tmpMask, m_FeatureIdsPtr.lock(), m_Epsilon, m_MinPnts, m_DistanceMetric);
   }
@@ -323,7 +323,7 @@ void DBSCAN::execute()
     }
   }
 
-  QVector<size_t> tDims(1, maxCluster + 1);
+  std::vector<size_t> tDims(1, maxCluster + 1);
   featAttrMat->resizeAttributeArrays(tDims);
 
 }

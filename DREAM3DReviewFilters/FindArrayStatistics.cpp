@@ -214,7 +214,7 @@ void FindArrayStatistics::dataCheck()
     {
       return;
     }
-    QVector<size_t> tDims = destAttrMat->getTupleDimensions();
+    std::vector<size_t> tDims = destAttrMat->getTupleDimensions();
     if(tDims.size() != 1)
     {
       QString ss =
@@ -239,7 +239,7 @@ void FindArrayStatistics::dataCheck()
     }
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   if(getComputeByIndex())
   {

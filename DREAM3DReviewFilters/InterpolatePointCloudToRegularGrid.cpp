@@ -157,7 +157,8 @@ void InterpolatePointCloudToRegularGrid::readFilterParameters(AbstractFilterPara
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-template <typename T> void createCompatibleNeighborList(AbstractFilter* filter, DataArrayPath path, QVector<size_t> cDims, std::vector<IDataArray::WeakPointer>& dynamicArrays)
+template <typename T>
+void createCompatibleNeighborList(AbstractFilter* filter, DataArrayPath path, std::vector<size_t> cDims, std::vector<IDataArray::WeakPointer>& dynamicArrays)
 {
   IDataArray::WeakPointer ptr = filter->getDataContainerArray()->createNonPrereqArrayFromPath<NeighborList<T>, AbstractFilter, T>(filter, path, 0, cDims);
   dynamicArrays.push_back(ptr);
@@ -231,7 +232,7 @@ void InterpolatePointCloudToRegularGrid::dataCheck()
   DataContainer::Pointer interpolatedDC = getDataContainerArray()->getDataContainer(getInterpolatedDataContainerName());
   m_AttrMatList = m->getAttributeMatrixNames();
   SizeVec3Type dims = image->getDimensions();
-  QVector<size_t> tDims = {dims[0], dims[1], dims[2]};
+  std::vector<size_t> tDims = {dims[0], dims[1], dims[2]};
   QList<QString> tempDataArrayList;
   DataArrayPath tempPath;
   QString tempAttrMatName;
@@ -300,7 +301,7 @@ void InterpolatePointCloudToRegularGrid::dataCheck()
   // If we are in a vertex attribute matrix, create data arrays for all in the new interpolated data attribute matrix
   // Else, we are in a feature/ensemble attribute matrix, and just deep copy it into the new data container
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   if(!getDataContainerName().isEmpty())
   {
@@ -325,7 +326,7 @@ void InterpolatePointCloudToRegularGrid::dataCheck()
             {
               m_SourceArraysToInterpolate.push_back(tmpDataArray);
               dataArrays.push_back(tmpDataArray);
-              QVector<size_t> tmpDims = tmpDataArray->getComponentDimensions();
+              std::vector<size_t> tmpDims = tmpDataArray->getComponentDimensions();
               if(tmpDims != cDims)
               {
                 QString ss = QObject::tr("Attribute Arrays selected for interpolation must be scalar arrays");
@@ -344,7 +345,7 @@ void InterpolatePointCloudToRegularGrid::dataCheck()
             {
               m_SourceArraysToCopy.push_back(tmpDataArray);
               dataArrays.push_back(tmpDataArray);
-              QVector<size_t> tmpDims = tmpDataArray->getComponentDimensions();
+              std::vector<size_t> tmpDims = tmpDataArray->getComponentDimensions();
               if(tmpDims != cDims)
               {
                 QString ss = QObject::tr("Attribute Arrays selected for copying must be scalar arrays");

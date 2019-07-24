@@ -161,7 +161,7 @@ void FindDynamicArrayStatistics::dataCheck()
 
   EXECUTE_FUNCTION_TEMPLATE_NEIGHBORLIST(this, createCompatibleArrays, m_InputArrayPtr.lock(), dataArrayPaths)
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   if(m_FindLength)
   {

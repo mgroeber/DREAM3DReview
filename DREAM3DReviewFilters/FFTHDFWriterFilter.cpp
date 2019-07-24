@@ -143,7 +143,7 @@ void FFTHDFWriterFilter::dataCheck()
 
   QVector<DataArrayPath> dataArrayPaths;
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getFeatureIdsArrayPath(),
                                                                                                         cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeatureIdsPtr.lock())                                                                         /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
@@ -248,7 +248,7 @@ void FFTHDFWriterFilter::execute()
   scopedFileSentinel.addGroupId(&dcaGid);
 
   AttributeMatrix::Pointer attrMat = getDataContainerArray()->getAttributeMatrix(m_FeatureIdsArrayPath);
-  QVector<size_t> tDims = attrMat->getTupleDimensions();
+  std::vector<size_t> tDims = attrMat->getTupleDimensions();
   m_FeatureIdsPtr.lock()->writeH5Data(dcaGid, tDims);
   //     H5Lite::writePointerDataset;
 

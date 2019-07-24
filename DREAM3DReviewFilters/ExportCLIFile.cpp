@@ -147,7 +147,7 @@ void ExportCLIFile::dataCheck()
     dataArrays.push_back(edge->getEdges());
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   m_LayerIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<Int32ArrayType, AbstractFilter>(this, getLayerIdsArrayPath(), cDims);
   if(m_LayerIdsPtr.lock())
   {

@@ -163,7 +163,7 @@ void InterpolateMeshToRegularGrid::createRegularGrid()
     }
   }
 
-  QVector<size_t> iDims(3, 0);
+  std::vector<size_t> iDims(3, 0);
 
   if(m_ScaleOrSpecifyNumCells == 1)
   {
@@ -598,7 +598,7 @@ void InterpolateMeshToRegularGrid::dataCheck()
   // Get the list of all attribute matrices in the input data container and add them to the regular grid data container
   DataContainer::Pointer m = getDataContainerArray()->getDataContainer(getSelectedDataContainerName());
   m_AttrMatList = m->getAttributeMatrixNames();
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   QList<QString> tempDataArrayList;
   DataArrayPath tempPath;
   AttributeMatrix::Type tempAttrMatType = AttributeMatrix::Type::Vertex;
@@ -634,7 +634,7 @@ void InterpolateMeshToRegularGrid::dataCheck()
             IDataArray::Pointer tmpDataArray = tmpAttrMat->getPrereqIDataArray<IDataArray, AbstractFilter>(this, *jt, -90002);
             if(getErrorCode() >= 0)
             {
-              QVector<size_t> cDims = tmpDataArray->getComponentDimensions();
+              std::vector<size_t> cDims = tmpDataArray->getComponentDimensions();
               if(tempAttrMatType == AttributeMatrix::Type::Vertex)
               {
                 getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0, cDims);
@@ -709,7 +709,7 @@ void InterpolateMeshToRegularGrid::execute()
       // If we are in a vertex attribute matrix, we know the return data type will be float due to the cell averaging
       if(tempAttrMatType == AttributeMatrix::Type::Vertex)
       {
-        QVector<size_t> cDims = tmpInPtr->getComponentDimensions();
+        std::vector<size_t> cDims = tmpInPtr->getComponentDimensions();
         DataArray<float>::Pointer tmpVertInPtr = DataArray<float>::CreateArray(numElements, cDims, "_INTERNAL_USE_ONLY_tmpVertArray", true);
 
         EXECUTE_FUNCTION_TEMPLATE(this, findVertexAverage, tmpInPtr, this, tmpInPtr, tmpVertInPtr, m, true);

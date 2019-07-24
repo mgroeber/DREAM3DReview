@@ -200,7 +200,7 @@ void SliceTriangleGeometry::dataCheck()
   EdgeGeom::Pointer edge = EdgeGeom::CreateGeometry(0, vertices, SIMPL::Geometry::EdgeGeometry, !getInPreflight());
   m->setGeometry(edge);
 
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   m->createNonPrereqAttributeMatrix(this, getEdgeAttributeMatrixName(), tDims, AttributeMatrix::Type::Edge);
   m->createNonPrereqAttributeMatrix(this, getSliceAttributeMatrixName(), tDims, AttributeMatrix::Type::EdgeFeature);
   if(getErrorCode() < 0)
@@ -208,7 +208,7 @@ void SliceTriangleGeometry::dataCheck()
     return;
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   if(m_HaveRegionIds)
   {
     m_TriRegionIdPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getRegionIdArrayPath(),
@@ -597,7 +597,7 @@ void SliceTriangleGeometry::execute()
   float* verts = edge->getVertexPointer(0);
   MeshIndexType* edges = edge->getEdgePointer(0);
 
-  QVector<size_t> tDims(1, numEdges);
+  std::vector<size_t> tDims(1, numEdges);
   m->getAttributeMatrix(getEdgeAttributeMatrixName())->resizeAttributeArrays(tDims);
   updateEdgeInstancePointers();
   tDims[0] = m_NumberOfSlices;

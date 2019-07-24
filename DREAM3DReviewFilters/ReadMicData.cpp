@@ -168,7 +168,7 @@ void ReadMicData::flushCache()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void ReadMicData::populateMicData(MicReader* reader, DataContainer::Pointer m, QVector<size_t> dims, MIC_READ_FLAG flag)
+void ReadMicData::populateMicData(MicReader* reader, DataContainer::Pointer m, std::vector<size_t> dims, MIC_READ_FLAG flag)
 {
   QFileInfo fi(m_InputFile);
   QDateTime timeStamp(fi.lastModified());
@@ -282,7 +282,7 @@ void ReadMicData::dataCheck()
   ImageGeom::Pointer image = ImageGeom::CreateGeometry(SIMPL::Geometry::ImageGeometry);
   m->setGeometry(image);
 
-  QVector<size_t> tDims(3, 0);
+  std::vector<size_t> tDims(3, 0);
   AttributeMatrix::Pointer cellAttrMat = m->createNonPrereqAttributeMatrix(this, getCellAttributeMatrixName(), tDims, AttributeMatrix::Type::Cell, AttributeMatrixID21);
   if(getErrorCode() < 0)
   {
@@ -311,7 +311,7 @@ void ReadMicData::dataCheck()
 
   if(!m_InputFile.isEmpty()) // User set a filename, so lets check it
   {
-    QVector<size_t> dims(3, 0);
+    std::vector<size_t> dims(3, 0);
 
     QString ext = fi.suffix();
     QVector<QString> names;
@@ -325,7 +325,8 @@ void ReadMicData::dataCheck()
       cellAttrMat->resizeAttributeArrays(dims);
       MicFields micfeatures;
       names = micfeatures.getFilterFeatures<QVector<QString>>();
-      QVector<size_t> dims(1, 1);
+      dims.resize(1);
+      dims[0] = 1;
       for(qint32 i = 0; i < names.size(); ++i)
       {
         if(reader->getPointerType(names[i]) == Ebsd::Int32)
@@ -347,7 +348,7 @@ void ReadMicData::dataCheck()
       return;
     }
 
-    QVector<size_t> dim(1, 3);
+    std::vector<size_t> dim(1, 3);
     tempPath.update(getDataContainerName().getDataContainerName(), getCellAttributeMatrixName(), getCellEulerAnglesArrayName());
     m_CellEulerAnglesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(
         this, tempPath, 0, dim);               /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
@@ -381,7 +382,7 @@ void ReadMicData::dataCheck()
       m_LatticeConstants = m_LatticeConstantsPtr.lock()->getPointer(0);
     } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-    StringDataArray::Pointer materialNames = StringDataArray::CreateArray(cellEnsembleAttrMat->getNumberOfTuples(), SIMPL::EnsembleData::PhaseName);
+    StringDataArray::Pointer materialNames = StringDataArray::CreateArray(cellEnsembleAttrMat->getNumberOfTuples(), SIMPL::EnsembleData::PhaseName, true);
     cellEnsembleAttrMat->insertOrAssign(materialNames);
   }
 }
@@ -467,7 +468,7 @@ void ReadMicData::readMicFile()
   Int32ArrayType::Pointer iArray = Int32ArrayType::NullPointer();
   size_t totalPoints = m->getGeometryAs<ImageGeom>()->getNumberOfElements();
   // Prepare the Cell Attribute Matrix with the correct number of tuples based on the total points being read from the file.
-  QVector<size_t> tDims(3, 0);
+  std::vector<size_t> tDims(3, 0);
   tDims[0] = m->getGeometryAs<ImageGeom>()->getXPoints();
   tDims[1] = m->getGeometryAs<ImageGeom>()->getYPoints();
   tDims[2] = m->getGeometryAs<ImageGeom>()->getZPoints();
@@ -502,18 +503,18 @@ void ReadMicData::readMicFile()
         phasePtr[i] = 1;
       }
     }
-    iArray = Int32ArrayType::CreateArray(totalPoints, SIMPL::CellData::Phases);
+    iArray = Int32ArrayType::CreateArray(totalPoints, SIMPL::CellData::Phases, true);
     ::memcpy(iArray->getPointer(0), phasePtr, sizeof(int32_t) * totalPoints);
     cellAttrMat->insertOrAssign(iArray);
   }
 
-  QVector<size_t> compDims(1, 3); // Initially set this up for the Euler Angle 1x3
+  std::vector<size_t> compDims(1, 3); // Initially set this up for the Euler Angle 1x3
   {
     //  radianconversion = M_PI / 180.0;
     f1 = reinterpret_cast<float*>(reader->getPointerByName(Mic::Euler1));
     f2 = reinterpret_cast<float*>(reader->getPointerByName(Mic::Euler2));
     f3 = reinterpret_cast<float*>(reader->getPointerByName(Mic::Euler3));
-    fArray = FloatArrayType::CreateArray(totalPoints, compDims, SIMPL::CellData::EulerAngles);
+    fArray = FloatArrayType::CreateArray(totalPoints, compDims, SIMPL::CellData::EulerAngles, true);
     float* cellEulerAngles = fArray->getPointer(0);
     for(size_t i = 0; i < totalPoints; i++)
     {
@@ -527,14 +528,14 @@ void ReadMicData::readMicFile()
   compDims[0] = 1; // Now reset the size of the first dimension to 1
   {
     phasePtr = reinterpret_cast<int*>(reader->getPointerByName(Mic::Phase));
-    iArray = Int32ArrayType::CreateArray(totalPoints, compDims, SIMPL::CellData::Phases);
+    iArray = Int32ArrayType::CreateArray(totalPoints, compDims, SIMPL::CellData::Phases, true);
     ::memcpy(iArray->getPointer(0), phasePtr, sizeof(int32_t) * totalPoints);
     cellAttrMat->insertOrAssign(iArray);
   }
 
   {
     f1 = reinterpret_cast<float*>(reader->getPointerByName(Mic::Confidence));
-    fArray = FloatArrayType::CreateArray(totalPoints, compDims, Mic::Confidence);
+    fArray = FloatArrayType::CreateArray(totalPoints, compDims, Mic::Confidence, true);
     ::memcpy(fArray->getPointer(0), f1, sizeof(float) * totalPoints);
     cellAttrMat->insertOrAssign(fArray);
   }
@@ -606,10 +607,10 @@ int ReadMicData::loadMaterialInfo(MicReader* reader)
     return getErrorCode();
   }
 
-  DataArray<unsigned int>::Pointer crystalStructures = DataArray<unsigned int>::CreateArray(phases.size() + 1, getCrystalStructuresArrayName());
+  DataArray<unsigned int>::Pointer crystalStructures = DataArray<unsigned int>::CreateArray(phases.size() + 1, getCrystalStructuresArrayName(), true);
   StringDataArray::Pointer materialNames = StringDataArray::CreateArray(phases.size() + 1, getMaterialNameArrayName());
-  QVector<size_t> dims(1, 6);
-  FloatArrayType::Pointer latticeConstants = FloatArrayType::CreateArray(phases.size() + 1, dims, getLatticeConstantsArrayName());
+  std::vector<size_t> dims(1, 6);
+  FloatArrayType::Pointer latticeConstants = FloatArrayType::CreateArray(phases.size() + 1, dims, getLatticeConstantsArrayName(), true);
 
   // Initialize the zero'th element to unknowns. The other elements will
   // be filled in based on values from the data file
@@ -648,7 +649,7 @@ int ReadMicData::loadMaterialInfo(MicReader* reader)
   }
 
   // Resize the AttributeMatrix based on the size of the crystal structures array
-  QVector<size_t> tDims(1, crystalStructures->getNumberOfTuples());
+  std::vector<size_t> tDims(1, crystalStructures->getNumberOfTuples());
   attrMatrix->resizeAttributeArrays(tDims);
   // Now add the attributeArray to the AttributeMatrix
   attrMatrix->insertOrAssign(crystalStructures);

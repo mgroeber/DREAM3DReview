@@ -193,7 +193,7 @@ void ParaDisReader::dataCheck()
   {
     return;
   }
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   AttributeMatrix::Pointer amV = m->createNonPrereqAttributeMatrix(this, getVertexAttributeMatrixName(), tDims, AttributeMatrix::Type::Vertex, AttributeMatrixID21);
   if(getErrorCode() < 0)
   {
@@ -223,7 +223,7 @@ void ParaDisReader::dataCheck()
     QString ss = QObject::tr("The input file does not exist.");
     setErrorCondition(-388, ss);
   }
-  QVector<size_t> dims(1, 1);
+  std::vector<size_t> dims(1, 1);
   tempPath.update(getEdgeDataContainerName().getDataContainerName(), getVertexAttributeMatrixName(), getNumberOfArmsArrayName());
   m_NumberOfArmsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0, dims);
   if(nullptr != m_NumberOfArmsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
@@ -443,7 +443,7 @@ int ParaDisReader::readHeader()
   EdgeGeom::Pointer edgeGeom = m->getGeometryAs<EdgeGeom>();
   edgeGeom->resizeVertexList(m_NumVerts);
 
-  QVector<size_t> tDims(1, m_NumVerts);
+  std::vector<size_t> tDims(1, m_NumVerts);
   vertexAttrMat->resizeAttributeArrays(tDims);
   updateVertexInstancePointers();
 
@@ -584,7 +584,7 @@ int ParaDisReader::readFile()
   MeshIndexType* edge = edgeGeom->getEdgePointer(0);
 
   // Resize the edge attribute matrix to the number of vertices
-  QVector<size_t> tDims(1, m_NumEdges);
+  std::vector<size_t> tDims(1, m_NumEdges);
   edgeAttrMat->resizeAttributeArrays(tDims);
   updateEdgeInstancePointers();
 

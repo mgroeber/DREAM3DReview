@@ -130,7 +130,7 @@ void RemoveFlaggedVertices::dataCheck()
 
   dataArrays.push_back(vertex->getVertices());
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), cDims);
   if(m_MaskPtr.lock())
@@ -156,7 +156,7 @@ void RemoveFlaggedVertices::dataCheck()
 
   DataContainer::Pointer m = getDataContainerArray()->getDataContainer(getVertexGeometry());
   m_AttrMatList = m->getAttributeMatrixNames();
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   QList<QString> tempDataArrayList;
   DataArrayPath tempPath;
   AttributeMatrix::Type tempAttrMatType = AttributeMatrix::Type::Vertex;
@@ -187,7 +187,7 @@ void RemoveFlaggedVertices::dataCheck()
           IDataArray::Pointer tmpDataArray = tmpAttrMat->getPrereqIDataArray<IDataArray, AbstractFilter>(this, data_array, -90002);
           if(getErrorCode() >= 0)
           {
-            QVector<size_t> cDims = tmpDataArray->getComponentDimensions();
+            std::vector<size_t> cDims = tmpDataArray->getComponentDimensions();
             TemplateHelpers::CreateNonPrereqArrayFromArrayType()(this, tempPath, cDims, tmpDataArray);
           }
         }
@@ -275,7 +275,7 @@ void RemoveFlaggedVertices::execute()
 
   DataContainer::Pointer m = getDataContainerArray()->getDataContainer(getVertexGeometry());
   AttributeMatrix::Type tempAttrMatType = AttributeMatrix::Type::Vertex;
-  QVector<size_t> tDims(1, maskPoints.size());
+  std::vector<size_t> tDims(1, maskPoints.size());
 
   for(auto&& attr_mat : m_AttrMatList)
   {

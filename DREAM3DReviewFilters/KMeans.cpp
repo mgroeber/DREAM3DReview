@@ -230,11 +230,11 @@ void KMeans::dataCheck()
   }
   }
 
-  QVector<size_t> tDims(1, m_InitClusters + 1);
+  std::vector<size_t> tDims(1, m_InitClusters + 1);
   m->createNonPrereqAttributeMatrix(this, getFeatureAttributeMatrixName(), tDims, destAttrMatType, AttributeMatrixID21);
 
   DataArrayPath tempPath;
-  QVector<size_t> cDims;
+  std::vector<size_t> cDims;
   QVector<DataArrayPath> dataArrayPaths;
 
   m_InDataPtr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getSelectedArrayPath());
@@ -315,7 +315,7 @@ void KMeans::execute()
   else
   {
     size_t numTuples = m_InDataPtr.lock()->getNumberOfTuples();
-    BoolArrayType::Pointer tmpMask = BoolArrayType::CreateArray(numTuples, "_INTERNAL_USE_ONLY_tmpMask");
+    BoolArrayType::Pointer tmpMask = BoolArrayType::CreateArray(numTuples, "_INTERNAL_USE_ONLY_tmpMask", true);
     tmpMask->initializeWithValue(true);
     EXECUTE_TEMPLATE(this, KMeansTemplate, m_InDataPtr.lock(), this, m_InDataPtr.lock(), m_MeansArrayPtr.lock(), tmpMask, m_InitClusters, m_FeatureIdsPtr.lock(), m_DistanceMetric);
   }

@@ -318,7 +318,7 @@ void AverageVertexArrayToEdgeFaceCellArray::dataCheck()
     numElements = edge->getNumberOfElements();
   }
 
-  QVector<size_t> cDims = m_InVertexArrayPtr.lock()->getComponentDimensions();
+  std::vector<size_t> cDims = m_InVertexArrayPtr.lock()->getComponentDimensions();
   size_t numVertexTuples = m_InVertexArrayPtr.lock()->getNumberOfTuples();
 
   m_AverageCellArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(

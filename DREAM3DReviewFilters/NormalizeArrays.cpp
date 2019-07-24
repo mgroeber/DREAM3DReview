@@ -190,7 +190,7 @@ void NormalizeArrays::dataCheck()
     return;
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   QString dcName = paths[0].getDataContainerName();
   QString amName = paths[0].getAttributeMatrixName();
 
@@ -300,7 +300,11 @@ public:
       {
         double min = *std::min_element(std::begin(m_Arrays[i]), std::end(m_Arrays[i]));
         double max = *std::max_element(std::begin(m_Arrays[i]), std::end(m_Arrays[i]));
-        std::for_each(std::begin(m_Arrays[i]), std::end(m_Arrays[i]), [&](double& val) { val = m_RangeMin + (((val - min) * (m_RangeMax - m_RangeMin)) / (max - min)); });
+        size_t count = m_Arrays.size();
+        for(auto& val : m_Arrays[i])
+        {
+          val = m_RangeMin + (((val - min) * (m_RangeMax - m_RangeMin)) / (max - min));
+        }
       }
       else if(m_NormalizeType == 1)
       {
@@ -310,7 +314,10 @@ public:
         std::transform(std::begin(m_Arrays[i]), std::end(m_Arrays[i]), std::begin(difference), [&](double val) { return val - mean; });
         double squaredSum = std::inner_product(std::begin(difference), std::end(difference), std::begin(difference), 0.0f);
         double stdDev = std::sqrt(squaredSum / m_Arrays[i].size());
-        std::for_each(std::begin(m_Arrays[i]), std::end(m_Arrays[i]), [&](double& val) { val = (val - mean) / stdDev; });
+        for(auto& val : m_Arrays[i])
+        {
+          val = (val - mean) / stdDev;
+        }
       }
     }
   }

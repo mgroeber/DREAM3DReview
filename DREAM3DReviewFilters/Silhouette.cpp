@@ -146,7 +146,7 @@ void Silhouette::dataCheck()
   clearWarningCode();
 
   QVector<DataArrayPath> dataArrayPaths;
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
 
   m_SilhouetteArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double>, AbstractFilter>(this, getSilhouetteArrayPath(), 0, cDims, "", DataArrayID31);
   if(m_SilhouetteArrayPtr.lock())
@@ -230,7 +230,7 @@ void Silhouette::execute()
   }
   else
   {
-    BoolArrayType::Pointer tmpMask = BoolArrayType::CreateArray(numTuples, "_INTERNAL_USE_ONLY_tmpMask");
+    BoolArrayType::Pointer tmpMask = BoolArrayType::CreateArray(numTuples, "_INTERNAL_USE_ONLY_tmpMask", true);
     tmpMask->initializeWithValue(true);
     EXECUTE_TEMPLATE(this, SilhouetteTemplate, m_InDataPtr.lock(), this, m_InDataPtr.lock(), m_SilhouetteArrayPtr.lock(), tmpMask, uniqueIds.size(), m_FeatureIdsPtr.lock(), m_DistanceMetric)
   }

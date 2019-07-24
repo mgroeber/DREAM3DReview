@@ -84,7 +84,7 @@ public:
     AttributeMatrix::Pointer attrMat = m->getAttributeMatrix(attrMatName);
 
     // get size+dimensions of dataset
-    QVector<size_t> udims = attrMat->getTupleDimensions();
+    std::vector<size_t> udims = attrMat->getTupleDimensions();
     size_t totalPoints = attrMat->getNumberOfTuples();
 
     // create and setup import filter
@@ -161,7 +161,7 @@ class ItkBridge2
       AttributeMatrix::Pointer attrMat = m->getAttributeMatrix(attrMatName);
 
       //get size+dimensions of dataset
-      QVector<size_t> udims = attrMat->getTupleDimensions();
+      std::vector<size_t> udims = attrMat->getTupleDimensions();
       size_t totalPoints = attrMat->getNumberOfTuples();
 
       //create and setup import filter
@@ -232,7 +232,7 @@ public:
     AttributeMatrix::Pointer attrMat = m->getAttributeMatrix(attrMatName);
 
     // get size+dimensions of dataset
-    QVector<size_t> udims = attrMat->getTupleDimensions();
+    std::vector<size_t> udims = attrMat->getTupleDimensions();
     size_t totalPoints = attrMat->getNumberOfTuples();
 
     // create and setup import filter
@@ -336,7 +336,7 @@ public:
     AttributeMatrix::Pointer attrMat = m->getAttributeMatrix(attrMatName);
 
     // get size+dimensions of dataset
-    QVector<size_t> udims = attrMat->getTupleDimensions();
+    std::vector<size_t> udims = attrMat->getTupleDimensions();
     size_t totalPoints = attrMat->getNumberOfTuples();
 
     // create and setup import filter
@@ -385,13 +385,13 @@ public:
   }
 
   template <typename TPixel>
-  static typename itk::ImportImageFilter<TPixel, AnisotropyConstants::ImageDimension>::Pointer Dream3DtoITKImportFilterDataArray(size_t totalPoints, QVector<size_t> udims, float sampleOrigin[3],
+  static typename itk::ImportImageFilter<TPixel, AnisotropyConstants::ImageDimension>::Pointer Dream3DtoITKImportFilterDataArray(size_t totalPoints, std::vector<size_t> udims, float sampleOrigin[3],
                                                                                                                                  float voxelResolution[3], ComponentType* data)
   {
     //      AttributeMatrix::Pointer attrMat = m->getAttributeMatrix(attrMatName);
 
     // get size+dimensions of dataset
-    //      QVector<size_t> udims = attrMat->getTupleDimensions();
+    //      std::vector<size_t> udims = attrMat->getTupleDimensions();
     //      size_t totalPoints = attrMat->getNumberOfTuples();
 
     // create and setup import filter

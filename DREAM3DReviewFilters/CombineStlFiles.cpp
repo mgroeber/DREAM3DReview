@@ -134,10 +134,10 @@ void CombineStlFiles::dataCheck()
   TriangleGeom::Pointer triangleGeom = TriangleGeom::CreateGeometry(0, sharedVertList, SIMPL::Geometry::TriangleGeometry, !getInPreflight());
   sm->setGeometry(triangleGeom);
 
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   sm->createNonPrereqAttributeMatrix(this, getFaceAttributeMatrixName(), tDims, AttributeMatrix::Type::Face);
 
-  QVector<size_t> cDims(1, 3);
+  std::vector<size_t> cDims(1, 3);
   DataArrayPath path(getTriangleDataContainerName(), getFaceAttributeMatrixName(), getFaceNormalsArrayName());
   m_FaceNormalsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double>, AbstractFilter, double>(
       this, path, 0, cDims);                   /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
@@ -223,7 +223,7 @@ void CombineStlFiles::execute()
 
   TriangleGeom::Pointer combined = getDataContainerArray()->getDataContainer(m_TriangleDataContainerName)->getGeometryAs<TriangleGeom>();
   AttributeMatrix::Pointer faceAttrmat = getDataContainerArray()->getAttributeMatrix(DataArrayPath(m_TriangleDataContainerName, m_FaceAttributeMatrixName, ""));
-  QVector<size_t> tDims(1, totalTriangles);
+  std::vector<size_t> tDims(1, totalTriangles);
   combined->resizeTriList(totalTriangles);
   combined->resizeVertexList(totalVertices);
   faceAttrmat->resizeAttributeArrays(tDims);

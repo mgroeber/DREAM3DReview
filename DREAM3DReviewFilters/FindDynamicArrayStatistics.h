@@ -173,7 +173,7 @@ protected:
    */
   template <typename T> void createCompatibleArrays(QVector<DataArrayPath>& dataArrayPaths)
   {
-    QVector<size_t> cDims(1, 1);
+    std::vector<size_t> cDims(1, 1);
 
     if(m_FindMin)
     {

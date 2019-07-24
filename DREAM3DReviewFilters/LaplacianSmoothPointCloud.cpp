@@ -124,7 +124,7 @@ void LaplacianSmoothPointCloud::dataCheck()
 
   if(getUseMask() == true)
   {
-    QVector<size_t> cDims(1, 1);
+    std::vector<size_t> cDims(1, 1);
     m_MaskPtr =
         getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_MaskPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
@@ -190,7 +190,7 @@ void LaplacianSmoothPointCloud::execute()
 
   int64_t progressInt = 0;
 
-  FloatArrayType::Pointer newCoordsPtr = FloatArrayType::CreateArray(3 * numVerts, "newCoords");
+  FloatArrayType::Pointer newCoordsPtr = FloatArrayType::CreateArray(3 * numVerts, "newCoords", true);
   newCoordsPtr->initializeWithValue(0.0f);
   float* newCoords = newCoordsPtr->getPointer(0);
 

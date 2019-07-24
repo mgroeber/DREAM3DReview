@@ -43,7 +43,7 @@ inline QList<QDateTime> TDMSTimeStampsToQDateTimes(DataArray<uint8_t>::Pointer p
 
 template <typename T> inline typename DataArray<T>::Pointer ReadValueFromFile(std::ifstream& filestream, std::string name)
 {
-  typename DataArray<T>::Pointer data = DataArray<T>::CreateArray(1, QString::fromStdString(name));
+  typename DataArray<T>::Pointer data = DataArray<T>::CreateArray(1, QString::fromStdString(name), true);
   T* p = data->getPointer(0);
   filestream.read(reinterpret_cast<char*>(p), sizeof(T));
   return data;
@@ -51,7 +51,7 @@ template <typename T> inline typename DataArray<T>::Pointer ReadValueFromFile(st
 
 inline DataArray<uint8_t>::Pointer ReadTimeStampFromFile(std::ifstream& filestream, std::string name)
 {
-  DataArray<uint8_t>::Pointer data = DataArray<uint8_t>::CreateArray(16, QString::fromStdString(name));
+  DataArray<uint8_t>::Pointer data = DataArray<uint8_t>::CreateArray(16, QString::fromStdString(name), true);
   uint8_t* p = data->getPointer(0);
   filestream.read(reinterpret_cast<char*>(p), 16);
   return data;
@@ -59,7 +59,7 @@ inline DataArray<uint8_t>::Pointer ReadTimeStampFromFile(std::ifstream& filestre
 
 inline StringDataArray::Pointer ReadStringFromFile(std::ifstream& filestream, std::string name)
 {
-  StringDataArray::Pointer data = StringDataArray::CreateArray(1, QString::fromStdString(name));
+  StringDataArray::Pointer data = StringDataArray::CreateArray(1, QString::fromStdString(name), true);
   char buffer[4];
   filestream.read(buffer, 4);
   uint32_t length = *(reinterpret_cast<uint32_t*>(buffer));

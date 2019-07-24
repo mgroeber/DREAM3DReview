@@ -200,10 +200,10 @@ void ComputeUmeyamaTransform::dataCheck()
     return;
   }
 
-  QVector<size_t> tDims(1, 1);
+  std::vector<size_t> tDims(1, 1);
   m->createNonPrereqAttributeMatrix(this, getTransformationAttributeMatrixName(), tDims, AttributeMatrix::Type::Generic, AttributeMatrixID21);
 
-  QVector<size_t> cDims(2, 4);
+  std::vector<size_t> cDims(2, 4);
   DataArrayPath path(getSourcePointSet().getDataContainerName(), getTransformationAttributeMatrixName(), getTransformationMatrixName());
 
   m_TransformationMatrixPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, path, 0, cDims, "", DataArrayID31);

@@ -139,7 +139,7 @@ void KDistanceGraph::dataCheck()
     return;
   }
 
-  QVector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims(1, 1);
   QVector<DataArrayPath> dataArrayPaths;
 
   m_InDataPtr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getSelectedArrayPath());
@@ -207,7 +207,7 @@ void KDistanceGraph::execute()
   else
   {
     size_t numTuples = m_InDataPtr.lock()->getNumberOfTuples();
-    BoolArrayType::Pointer tmpMask = BoolArrayType::CreateArray(numTuples, "_INTERNAL_USE_ONLY_tmpMask");
+    BoolArrayType::Pointer tmpMask = BoolArrayType::CreateArray(numTuples, "_INTERNAL_USE_ONLY_tmpMask", true);
     tmpMask->initializeWithValue(true);
     EXECUTE_TEMPLATE(this, KDistanceTemplate, m_InDataPtr.lock(), this, m_InDataPtr.lock(), m_KDistanceArrayPtr.lock(), tmpMask, m_MinDist, m_DistanceMetric)
   }

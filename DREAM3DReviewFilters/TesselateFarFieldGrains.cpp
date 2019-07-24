@@ -470,7 +470,7 @@ void TesselateFarFieldGrains::dataCheck()
 
   // Input Ensemble Data That we require
 
-  QVector<size_t> dims(1, 1);
+  std::vector<size_t> dims(1, 1);
   m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), dims);
   if(nullptr != m_MaskPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -494,7 +494,7 @@ void TesselateFarFieldGrains::dataCheck()
     m_CellPhases = m_CellPhasesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  QVector<size_t> tDims(1, 0);
+  std::vector<size_t> tDims(1, 0);
   AttributeMatrix::Pointer cellFeatureAttrMat = m->createNonPrereqAttributeMatrix(this, getOutputCellFeatureAttributeMatrixName(), tDims, AttributeMatrix::Type::CellFeature, AttributeMatrixID21);
   if(getErrorCode() < 0)
   {
@@ -754,7 +754,7 @@ void TesselateFarFieldGrains::load_features()
     {
       setErrorCondition(-600, "The number of features is Zero and should be greater than Zero");
     }
-    QVector<size_t> tDims(1, currentFeature + numFeatures);
+    std::vector<size_t> tDims(1, currentFeature + numFeatures);
     cellFeatureAttrMat->setTupleDimensions(tDims);
     updateFeatureInstancePointers();
 
@@ -921,11 +921,11 @@ void TesselateFarFieldGrains::assign_voxels()
 
   FloatVec3Type spacing = m->getGeometryAs<ImageGeom>()->getSpacing();
 
-  Int32ArrayType::Pointer newownersPtr = Int32ArrayType::CreateArray(totalPoints, "newowners");
+  Int32ArrayType::Pointer newownersPtr = Int32ArrayType::CreateArray(totalPoints, "newowners", true);
   newownersPtr->initializeWithValue(-1);
   int32_t* newowners = newownersPtr->getPointer(0);
 
-  FloatArrayType::Pointer ellipfuncsPtr = FloatArrayType::CreateArray(totalPoints, "ellipfuncs");
+  FloatArrayType::Pointer ellipfuncsPtr = FloatArrayType::CreateArray(totalPoints, "ellipfuncs", true);
   ellipfuncsPtr->initializeWithValue(-1);
   float* ellipfuncs = ellipfuncsPtr->getPointer(0);
 
@@ -1106,7 +1106,7 @@ void TesselateFarFieldGrains::assign_gaps_only()
   neighpoints[4] = xPoints;
   neighpoints[5] = xPoints * yPoints;
 
-  Int32ArrayType::Pointer neighborsPtr = Int32ArrayType::CreateArray(m->getGeometryAs<ImageGeom>()->getNumberOfElements(), "Neighbors");
+  Int32ArrayType::Pointer neighborsPtr = Int32ArrayType::CreateArray(m->getGeometryAs<ImageGeom>()->getNumberOfElements(), "Neighbors", true);
   neighborsPtr->initializeWithValue(-1);
   m_Neighbors = neighborsPtr->getPointer(0);
 
