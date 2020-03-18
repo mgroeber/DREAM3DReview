@@ -35,9 +35,12 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -47,7 +50,19 @@
 class DREAM3DReview_EXPORT NormalizeArrays : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(NormalizeArrays SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(NormalizeArrays)
+  PYB11_FILTER_NEW_MACRO(NormalizeArrays)
+  PYB11_FILTER_PARAMETER(QVector<DataArrayPath>, SelectedDataArrayPaths)
+  PYB11_FILTER_PARAMETER(int, NormalizeType)
+  PYB11_FILTER_PARAMETER(double, RangeMin)
+  PYB11_FILTER_PARAMETER(double, RangeMax)
+  PYB11_FILTER_PARAMETER(QString, Postfix)
+  PYB11_FILTER_PARAMETER(bool, UseMask)
+  PYB11_FILTER_PARAMETER(DataArrayPath, MaskArrayPath)
+  PYB11_FILTER_PARAMETER(double, DefaultValue)
   PYB11_PROPERTY(QVector<DataArrayPath> SelectedDataArrayPaths READ getSelectedDataArrayPaths WRITE setSelectedDataArrayPaths)
   PYB11_PROPERTY(int NormalizeType READ getNormalizeType WRITE setNormalizeType)
   PYB11_PROPERTY(double RangeMin READ getRangeMin WRITE setRangeMin)
@@ -56,56 +71,143 @@ class DREAM3DReview_EXPORT NormalizeArrays : public AbstractFilter
   PYB11_PROPERTY(bool UseMask READ getUseMask WRITE setUseMask)
   PYB11_PROPERTY(DataArrayPath MaskArrayPath READ getMaskArrayPath WRITE setMaskArrayPath)
   PYB11_PROPERTY(double DefaultValue READ getDefaultValue WRITE setDefaultValue)
+#endif
 
 public:
-  SIMPL_SHARED_POINTERS(NormalizeArrays)
-  SIMPL_FILTER_NEW_MACRO(NormalizeArrays)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(NormalizeArrays, AbstractFilter)
+  using Self = NormalizeArrays;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<NormalizeArrays> New();
+
+  /**
+   * @brief Returns the name of the class for NormalizeArrays
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for NormalizeArrays
+   */
+  static QString ClassName();
 
   ~NormalizeArrays() override;
 
-  SIMPL_FILTER_PARAMETER(QVector<DataArrayPath>, SelectedDataArrayPaths)
+  /**
+   * @brief Setter property for SelectedDataArrayPaths
+   */
+  void setSelectedDataArrayPaths(const QVector<DataArrayPath>& value);
+  /**
+   * @brief Getter property for SelectedDataArrayPaths
+   * @return Value of SelectedDataArrayPaths
+   */
+  QVector<DataArrayPath> getSelectedDataArrayPaths() const;
+
   Q_PROPERTY(QVector<DataArrayPath> SelectedDataArrayPaths READ getSelectedDataArrayPaths WRITE setSelectedDataArrayPaths)
 
-  SIMPL_FILTER_PARAMETER(int, NormalizeType)
+  /**
+   * @brief Setter property for NormalizeType
+   */
+  void setNormalizeType(int value);
+  /**
+   * @brief Getter property for NormalizeType
+   * @return Value of NormalizeType
+   */
+  int getNormalizeType() const;
+
   Q_PROPERTY(int NormalizeType READ getNormalizeType WRITE setNormalizeType)
 
-  SIMPL_FILTER_PARAMETER(double, RangeMin)
+  /**
+   * @brief Setter property for RangeMin
+   */
+  void setRangeMin(double value);
+  /**
+   * @brief Getter property for RangeMin
+   * @return Value of RangeMin
+   */
+  double getRangeMin() const;
+
   Q_PROPERTY(double RangeMin READ getRangeMin WRITE setRangeMin)
 
-  SIMPL_FILTER_PARAMETER(double, RangeMax)
+  /**
+   * @brief Setter property for RangeMax
+   */
+  void setRangeMax(double value);
+  /**
+   * @brief Getter property for RangeMax
+   * @return Value of RangeMax
+   */
+  double getRangeMax() const;
+
   Q_PROPERTY(double RangeMax READ getRangeMax WRITE setRangeMax)
 
-  SIMPL_FILTER_PARAMETER(QString, Postfix)
+  /**
+   * @brief Setter property for Postfix
+   */
+  void setPostfix(const QString& value);
+  /**
+   * @brief Getter property for Postfix
+   * @return Value of Postfix
+   */
+  QString getPostfix() const;
+
   Q_PROPERTY(QString Postfix READ getPostfix WRITE setPostfix)
 
-  SIMPL_FILTER_PARAMETER(bool, UseMask)
+  /**
+   * @brief Setter property for UseMask
+   */
+  void setUseMask(bool value);
+  /**
+   * @brief Getter property for UseMask
+   * @return Value of UseMask
+   */
+  bool getUseMask() const;
+
   Q_PROPERTY(bool UseMask READ getUseMask WRITE setUseMask)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, MaskArrayPath)
+  /**
+   * @brief Setter property for MaskArrayPath
+   */
+  void setMaskArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for MaskArrayPath
+   * @return Value of MaskArrayPath
+   */
+  DataArrayPath getMaskArrayPath() const;
+
   Q_PROPERTY(DataArrayPath MaskArrayPath READ getMaskArrayPath WRITE setMaskArrayPath)
 
-  SIMPL_FILTER_PARAMETER(double, DefaultValue)
+  /**
+   * @brief Setter property for DefaultValue
+   */
+  void setDefaultValue(double value);
+  /**
+   * @brief Getter property for DefaultValue
+   * @return Value of DefaultValue
+   */
+  double getDefaultValue() const;
+
   Q_PROPERTY(double DefaultValue READ getDefaultValue WRITE setDefaultValue)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -115,23 +217,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -148,34 +250,6 @@ public:
    */
   void execute() override;
 
-  /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-signals:
-  /**
-    * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
-
 protected:
   NormalizeArrays();
 
@@ -184,7 +258,7 @@ protected:
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -192,9 +266,20 @@ protected:
   void initialize();
 
 private:
+  std::weak_ptr<DataArray<bool>> m_MaskPtr;
+  bool* m_Mask = nullptr;
+
+  QVector<DataArrayPath> m_SelectedDataArrayPaths = {};
+  int m_NormalizeType = {};
+  double m_RangeMin = {};
+  double m_RangeMax = {};
+  QString m_Postfix = {};
+  bool m_UseMask = {};
+  DataArrayPath m_MaskArrayPath = {};
+  double m_DefaultValue = {};
+
   std::vector<IDataArray::WeakPointer> m_SelectedWeakPtrVector;
   std::vector<DoubleArrayType::Pointer> m_NormalizedArraysPtrVector;
-  DEFINE_DATAARRAY_VARIABLE(bool, Mask)
 
 public:
   NormalizeArrays(const NormalizeArrays&) = delete; // Copy Constructor Not Implemented

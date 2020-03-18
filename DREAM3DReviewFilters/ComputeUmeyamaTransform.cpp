@@ -33,9 +33,14 @@
 *
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "ComputeUmeyamaTransform.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/BooleanFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataContainerSelectionFilterParameter.h"
@@ -46,6 +51,8 @@
 #include "SIMPLib/Geometry/IGeometry2D.h"
 #include "SIMPLib/Geometry/IGeometry3D.h"
 #include "SIMPLib/Geometry/VertexGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -68,7 +75,6 @@ enum createdPathID : RenameDataPath::DataID_t
 ComputeUmeyamaTransform::ComputeUmeyamaTransform()
 : m_SourcePointSet("")
 , m_DestPointSet("")
-, m_UseScaling(false)
 , m_TransformationAttributeMatrixName("TransformationData")
 , m_TransformationMatrixName("TransformationMatrix")
 {
@@ -126,8 +132,8 @@ void ComputeUmeyamaTransform::dataCheck()
   clearErrorCode();
   clearWarningCode();
 
-  IGeometry::Pointer movingGeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry, AbstractFilter>(this, getSourcePointSet());
-  IGeometry::Pointer fixedGeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry, AbstractFilter>(this, getDestPointSet());
+  IGeometry::Pointer movingGeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry>(this, getSourcePointSet());
+  IGeometry::Pointer fixedGeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry>(this, getDestPointSet());
 
   if(getErrorCode() < 0)
   {
@@ -206,26 +212,13 @@ void ComputeUmeyamaTransform::dataCheck()
   std::vector<size_t> cDims(2, 4);
   DataArrayPath path(getSourcePointSet().getDataContainerName(), getTransformationAttributeMatrixName(), getTransformationMatrixName());
 
-  m_TransformationMatrixPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, path, 0, cDims, "", DataArrayID31);
+  m_TransformationMatrixPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, path, 0, cDims, "", DataArrayID31);
   if(nullptr != m_TransformationMatrixPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_TransformationMatrix = m_TransformationMatrixPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void ComputeUmeyamaTransform::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -331,7 +324,7 @@ AbstractFilter::Pointer ComputeUmeyamaTransform::newFilterInstance(bool copyFilt
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ComputeUmeyamaTransform::getCompiledLibraryName() const
+QString ComputeUmeyamaTransform::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -339,7 +332,7 @@ const QString ComputeUmeyamaTransform::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ComputeUmeyamaTransform::getBrandingString() const
+QString ComputeUmeyamaTransform::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -347,7 +340,7 @@ const QString ComputeUmeyamaTransform::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ComputeUmeyamaTransform::getFilterVersion() const
+QString ComputeUmeyamaTransform::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -357,7 +350,7 @@ const QString ComputeUmeyamaTransform::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ComputeUmeyamaTransform::getGroupName() const
+QString ComputeUmeyamaTransform::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterGroups::DREAM3DReviewFilters;
 }
@@ -365,7 +358,7 @@ const QString ComputeUmeyamaTransform::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid ComputeUmeyamaTransform::getUuid()
+QUuid ComputeUmeyamaTransform::getUuid() const
 {
   return QUuid("{3192d494-d1ec-5ee7-a345-e9963f02aaab}");
 }
@@ -373,7 +366,7 @@ const QUuid ComputeUmeyamaTransform::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ComputeUmeyamaTransform::getSubGroupName() const
+QString ComputeUmeyamaTransform::getSubGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::RegistrationFilters;
 }
@@ -381,7 +374,96 @@ const QString ComputeUmeyamaTransform::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ComputeUmeyamaTransform::getHumanLabel() const
+QString ComputeUmeyamaTransform::getHumanLabel() const
 {
   return "Compute Umeyama Transform";
+}
+
+// -----------------------------------------------------------------------------
+ComputeUmeyamaTransform::Pointer ComputeUmeyamaTransform::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<ComputeUmeyamaTransform> ComputeUmeyamaTransform::New()
+{
+  struct make_shared_enabler : public ComputeUmeyamaTransform
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString ComputeUmeyamaTransform::getNameOfClass() const
+{
+  return QString("ComputeUmeyamaTransform");
+}
+
+// -----------------------------------------------------------------------------
+QString ComputeUmeyamaTransform::ClassName()
+{
+  return QString("ComputeUmeyamaTransform");
+}
+
+// -----------------------------------------------------------------------------
+void ComputeUmeyamaTransform::setSourcePointSet(const DataArrayPath& value)
+{
+  m_SourcePointSet = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath ComputeUmeyamaTransform::getSourcePointSet() const
+{
+  return m_SourcePointSet;
+}
+
+// -----------------------------------------------------------------------------
+void ComputeUmeyamaTransform::setDestPointSet(const DataArrayPath& value)
+{
+  m_DestPointSet = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath ComputeUmeyamaTransform::getDestPointSet() const
+{
+  return m_DestPointSet;
+}
+
+// -----------------------------------------------------------------------------
+void ComputeUmeyamaTransform::setUseScaling(bool value)
+{
+  m_UseScaling = value;
+}
+
+// -----------------------------------------------------------------------------
+bool ComputeUmeyamaTransform::getUseScaling() const
+{
+  return m_UseScaling;
+}
+
+// -----------------------------------------------------------------------------
+void ComputeUmeyamaTransform::setTransformationAttributeMatrixName(const QString& value)
+{
+  m_TransformationAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ComputeUmeyamaTransform::getTransformationAttributeMatrixName() const
+{
+  return m_TransformationAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void ComputeUmeyamaTransform::setTransformationMatrixName(const QString& value)
+{
+  m_TransformationMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ComputeUmeyamaTransform::getTransformationMatrixName() const
+{
+  return m_TransformationMatrixName;
 }

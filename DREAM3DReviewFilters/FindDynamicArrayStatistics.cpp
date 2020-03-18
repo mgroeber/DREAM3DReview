@@ -11,12 +11,17 @@
 * Subsequent changes to the codes by others may elect to add a copyright and license
 * for those changes.
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "FindDynamicArrayStatistics.h"
 
 #include <functional>
 #include <numeric>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/DataArrays/NeighborList.hpp"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
@@ -24,6 +29,7 @@
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedBooleanFilterParameter.h"
 #include "SIMPLib/Math/SIMPLibMath.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -180,19 +186,6 @@ void FindDynamicArrayStatistics::dataCheck()
   getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrayPaths);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void FindDynamicArrayStatistics::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -422,7 +415,7 @@ AbstractFilter::Pointer FindDynamicArrayStatistics::newFilterInstance(bool copyF
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindDynamicArrayStatistics::getCompiledLibraryName() const
+QString FindDynamicArrayStatistics::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -430,7 +423,7 @@ const QString FindDynamicArrayStatistics::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindDynamicArrayStatistics::getBrandingString() const
+QString FindDynamicArrayStatistics::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -438,7 +431,7 @@ const QString FindDynamicArrayStatistics::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindDynamicArrayStatistics::getFilterVersion() const
+QString FindDynamicArrayStatistics::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -449,7 +442,7 @@ const QString FindDynamicArrayStatistics::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindDynamicArrayStatistics::getGroupName() const
+QString FindDynamicArrayStatistics::getGroupName() const
 {
   return SIMPL::FilterGroups::StatisticsFilters;
 }
@@ -457,7 +450,7 @@ const QString FindDynamicArrayStatistics::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindDynamicArrayStatistics::getSubGroupName() const
+QString FindDynamicArrayStatistics::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::MiscFilters;
 }
@@ -465,7 +458,7 @@ const QString FindDynamicArrayStatistics::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindDynamicArrayStatistics::getHumanLabel() const
+QString FindDynamicArrayStatistics::getHumanLabel() const
 {
   return "Find Dynamic Array Statistics";
 }
@@ -473,7 +466,215 @@ const QString FindDynamicArrayStatistics::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid FindDynamicArrayStatistics::getUuid()
+QUuid FindDynamicArrayStatistics::getUuid() const
 {
   return QUuid("{73ee33b6-7622-5004-8b88-4d145514fb6a}");
+}
+// -----------------------------------------------------------------------------
+FindDynamicArrayStatistics::Pointer FindDynamicArrayStatistics::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<FindDynamicArrayStatistics> FindDynamicArrayStatistics::New()
+{
+  struct make_shared_enabler : public FindDynamicArrayStatistics
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString FindDynamicArrayStatistics::getNameOfClass() const
+{
+  return QString("FindDynamicArrayStatistics");
+}
+
+// -----------------------------------------------------------------------------
+QString FindDynamicArrayStatistics::ClassName()
+{
+  return QString("FindDynamicArrayStatistics");
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setFindLength(bool value)
+{
+  m_FindLength = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindDynamicArrayStatistics::getFindLength() const
+{
+  return m_FindLength;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setFindMin(bool value)
+{
+  m_FindMin = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindDynamicArrayStatistics::getFindMin() const
+{
+  return m_FindMin;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setFindMax(bool value)
+{
+  m_FindMax = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindDynamicArrayStatistics::getFindMax() const
+{
+  return m_FindMax;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setFindMean(bool value)
+{
+  m_FindMean = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindDynamicArrayStatistics::getFindMean() const
+{
+  return m_FindMean;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setFindMedian(bool value)
+{
+  m_FindMedian = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindDynamicArrayStatistics::getFindMedian() const
+{
+  return m_FindMedian;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setFindStdDeviation(bool value)
+{
+  m_FindStdDeviation = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindDynamicArrayStatistics::getFindStdDeviation() const
+{
+  return m_FindStdDeviation;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setFindSummation(bool value)
+{
+  m_FindSummation = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindDynamicArrayStatistics::getFindSummation() const
+{
+  return m_FindSummation;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setLengthArrayPath(const DataArrayPath& value)
+{
+  m_LengthArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindDynamicArrayStatistics::getLengthArrayPath() const
+{
+  return m_LengthArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setMinimumArrayPath(const DataArrayPath& value)
+{
+  m_MinimumArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindDynamicArrayStatistics::getMinimumArrayPath() const
+{
+  return m_MinimumArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setMaximumArrayPath(const DataArrayPath& value)
+{
+  m_MaximumArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindDynamicArrayStatistics::getMaximumArrayPath() const
+{
+  return m_MaximumArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setMeanArrayPath(const DataArrayPath& value)
+{
+  m_MeanArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindDynamicArrayStatistics::getMeanArrayPath() const
+{
+  return m_MeanArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setMedianArrayPath(const DataArrayPath& value)
+{
+  m_MedianArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindDynamicArrayStatistics::getMedianArrayPath() const
+{
+  return m_MedianArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setStdDeviationArrayPath(const DataArrayPath& value)
+{
+  m_StdDeviationArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindDynamicArrayStatistics::getStdDeviationArrayPath() const
+{
+  return m_StdDeviationArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setSummationArrayPath(const DataArrayPath& value)
+{
+  m_SummationArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindDynamicArrayStatistics::getSummationArrayPath() const
+{
+  return m_SummationArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindDynamicArrayStatistics::setSelectedArrayPath(const DataArrayPath& value)
+{
+  m_SelectedArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindDynamicArrayStatistics::getSelectedArrayPath() const
+{
+  return m_SelectedArrayPath;
 }

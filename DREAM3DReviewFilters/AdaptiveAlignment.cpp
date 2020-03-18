@@ -33,9 +33,14 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "AdaptiveAlignment.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
@@ -46,10 +51,12 @@
 #include "SIMPLib/FilterParameters/OutputFileFilterParameter.h"
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
 #include "SIMPLib/Geometry/ImageGeom.h"
+#include "SIMPLib/ITK/itkBridge.h"
 #include "SIMPLib/Utilities/FileSystemPathHelper.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
-#include "DREAM3DReview/DREAM3DReviewFilters/ItkBridge.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
 
 #include "itkHoughTransform2DCirclesImageFilter.h"
@@ -171,7 +178,7 @@ void AdaptiveAlignment::dataCheck()
   clearWarningCode();
   DataArrayPath tempPath;
 
-  ImageGeom::Pointer image = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom, AbstractFilter>(this, getDataContainerName());
+  ImageGeom::Pointer image = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom>(this, getDataContainerName());
   if(getErrorCode() < 0)
   {
     return;
@@ -185,7 +192,7 @@ void AdaptiveAlignment::dataCheck()
   }
 
   tempPath.update(getDataContainerName(), getCellAttributeMatrixName(), "");
-  getDataContainerArray()->getPrereqAttributeMatrixFromPath<AbstractFilter>(this, tempPath, -301);
+  getDataContainerArray()->getPrereqAttributeMatrixFromPath(this, tempPath, -301);
 
   if(getWriteAlignmentShifts())
   {
@@ -196,7 +203,7 @@ void AdaptiveAlignment::dataCheck()
   {
     int32_t numImageComp = 1;
     QVector<DataArrayPath> imageDataArrayPaths;
-    IDataArray::Pointer iDataArray = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getImageDataArrayPath());
+    IDataArray::Pointer iDataArray = getDataContainerArray()->getPrereqIDataArrayFromPath(this, getImageDataArrayPath());
     if(getErrorCode() < 0)
     {
       return;
@@ -206,7 +213,7 @@ void AdaptiveAlignment::dataCheck()
       numImageComp = iDataArray->getNumberOfComponents();
     }
     std::vector<size_t> cDims(1, numImageComp);
-    m_ImageDataPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<uint8_t>, AbstractFilter>(this, getImageDataArrayPath(),
+    m_ImageDataPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<uint8_t>>(this, getImageDataArrayPath(),
                                                                                                          cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_ImageDataPtr.lock())                                                                         /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
@@ -217,7 +224,7 @@ void AdaptiveAlignment::dataCheck()
       imageDataArrayPaths.push_back(getImageDataArrayPath());
     }
 
-    getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, imageDataArrayPaths);
+    getDataContainerArray()->validateNumberOfTuples(this, imageDataArrayPaths);
 
     DataContainer::Pointer m1 = getDataContainerArray()->getDataContainer(getDataContainerName());
     SizeVec3Type udims1 = m1->getGeometryAs<ImageGeom>()->getDimensions();
@@ -233,25 +240,13 @@ void AdaptiveAlignment::dataCheck()
   }
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void AdaptiveAlignment::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 void AdaptiveAlignment::create_array_for_flattened_image()
 {
   std::vector<size_t> cDims(1, 1);
   DataArrayPath tempPath;
   tempPath.update(getImageDataArrayPath().getDataContainerName(), getImageDataArrayPath().getAttributeMatrixName(), "tempFlatImageDataName");
-  m_FlatImageDataPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<AnisotropyConstants::DefaultPixelType>, AbstractFilter, AnisotropyConstants::DefaultPixelType>(
+  m_FlatImageDataPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<AnisotropyConstants::DefaultPixelType>>(
       this, tempPath, 0, cDims);           /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FlatImageDataPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -698,7 +693,7 @@ void AdaptiveAlignment::execute()
 {
   clearErrorCode();
   clearWarningCode();
-  dataCheck();
+  AdaptiveAlignment::dataCheck();
   if(getErrorCode() < 0)
   {
     return;
@@ -880,7 +875,7 @@ AbstractFilter::Pointer AdaptiveAlignment::newFilterInstance(bool copyFilterPara
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignment::getCompiledLibraryName() const
+QString AdaptiveAlignment::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -888,7 +883,7 @@ const QString AdaptiveAlignment::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignment::getBrandingString() const
+QString AdaptiveAlignment::getBrandingString() const
 {
   return "Anisotropy";
 }
@@ -896,7 +891,7 @@ const QString AdaptiveAlignment::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignment::getFilterVersion() const
+QString AdaptiveAlignment::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -906,7 +901,7 @@ const QString AdaptiveAlignment::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignment::getGroupName() const
+QString AdaptiveAlignment::getGroupName() const
 {
   return SIMPL::FilterGroups::ReconstructionFilters;
 }
@@ -914,7 +909,7 @@ const QString AdaptiveAlignment::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid AdaptiveAlignment::getUuid()
+QUuid AdaptiveAlignment::getUuid() const
 {
   return QUuid("{b7394157-f142-59af-902d-7a29ff4f3ccd}");
 }
@@ -922,7 +917,7 @@ const QUuid AdaptiveAlignment::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignment::getSubGroupName() const
+QString AdaptiveAlignment::getSubGroupName() const
 {
   return AnisotropyConstants::FilterSubGroups::AnisotropicAlignment;
 }
@@ -930,7 +925,204 @@ const QString AdaptiveAlignment::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignment::getHumanLabel() const
+QString AdaptiveAlignment::getHumanLabel() const
 {
   return "Adaptive Alignment";
+}
+
+// -----------------------------------------------------------------------------
+AdaptiveAlignment::Pointer AdaptiveAlignment::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<AdaptiveAlignment> AdaptiveAlignment::New()
+{
+  struct make_shared_enabler : public AdaptiveAlignment
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignment::getNameOfClass() const
+{
+  return QString("AdaptiveAlignment");
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignment::ClassName()
+{
+  return QString("AdaptiveAlignment");
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setDataContainerName(const QString& value)
+{
+  m_DataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignment::getDataContainerName() const
+{
+  return m_DataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setCellAttributeMatrixName(const QString& value)
+{
+  m_CellAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignment::getCellAttributeMatrixName() const
+{
+  return m_CellAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setWriteAlignmentShifts(bool value)
+{
+  m_WriteAlignmentShifts = value;
+}
+
+// -----------------------------------------------------------------------------
+bool AdaptiveAlignment::getWriteAlignmentShifts() const
+{
+  return m_WriteAlignmentShifts;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setAlignmentShiftFileName(const QString& value)
+{
+  m_AlignmentShiftFileName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignment::getAlignmentShiftFileName() const
+{
+  return m_AlignmentShiftFileName;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setGlobalCorrection(int value)
+{
+  m_GlobalCorrection = value;
+}
+
+// -----------------------------------------------------------------------------
+int AdaptiveAlignment::getGlobalCorrection() const
+{
+  return m_GlobalCorrection;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setInputPath(const QString& value)
+{
+  m_InputPath = value;
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignment::getInputPath() const
+{
+  return m_InputPath;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setShiftX(float value)
+{
+  m_ShiftX = value;
+}
+
+// -----------------------------------------------------------------------------
+float AdaptiveAlignment::getShiftX() const
+{
+  return m_ShiftX;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setShiftY(float value)
+{
+  m_ShiftY = value;
+}
+
+// -----------------------------------------------------------------------------
+float AdaptiveAlignment::getShiftY() const
+{
+  return m_ShiftY;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setImageDataArrayPath(const DataArrayPath& value)
+{
+  m_ImageDataArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AdaptiveAlignment::getImageDataArrayPath() const
+{
+  return m_ImageDataArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setNewCellArrayName(const QString& value)
+{
+  m_NewCellArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignment::getNewCellArrayName() const
+{
+  return m_NewCellArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setMinRadius(float value)
+{
+  m_MinRadius = value;
+}
+
+// -----------------------------------------------------------------------------
+float AdaptiveAlignment::getMinRadius() const
+{
+  return m_MinRadius;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setMaxRadius(float value)
+{
+  m_MaxRadius = value;
+}
+
+// -----------------------------------------------------------------------------
+float AdaptiveAlignment::getMaxRadius() const
+{
+  return m_MaxRadius;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setNumberCircles(int value)
+{
+  m_NumberCircles = value;
+}
+
+// -----------------------------------------------------------------------------
+int AdaptiveAlignment::getNumberCircles() const
+{
+  return m_NumberCircles;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignment::setIgnoredDataArrayPaths(const QVector<DataArrayPath>& value)
+{
+  m_IgnoredDataArrayPaths = value;
+}
+
+// -----------------------------------------------------------------------------
+QVector<DataArrayPath> AdaptiveAlignment::getIgnoredDataArrayPaths() const
+{
+  return m_IgnoredDataArrayPaths;
 }

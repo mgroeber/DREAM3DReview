@@ -36,9 +36,11 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 
@@ -52,22 +54,52 @@
 class DREAM3DReview_EXPORT AdaptiveAlignmentFeature : public AdaptiveAlignment
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(AdaptiveAlignmentFeature SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(AdaptiveAlignmentFeature)
+  PYB11_FILTER_NEW_MACRO(AdaptiveAlignmentFeature)
+  PYB11_FILTER_PARAMETER(DataArrayPath, GoodVoxelsArrayPath)
   PYB11_PROPERTY(DataArrayPath GoodVoxelsArrayPath READ getGoodVoxelsArrayPath WRITE setGoodVoxelsArrayPath)
+#endif
+
 public:
-  SIMPL_SHARED_POINTERS(AdaptiveAlignmentFeature)
-  SIMPL_FILTER_NEW_MACRO(AdaptiveAlignmentFeature)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(AdaptiveAlignmentFeature, AdaptiveAlignment)
+  using Self = AdaptiveAlignmentFeature;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<AdaptiveAlignmentFeature> New();
+
+  /**
+   * @brief Returns the name of the class for AdaptiveAlignmentFeature
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for AdaptiveAlignmentFeature
+   */
+  static QString ClassName();
 
   virtual ~AdaptiveAlignmentFeature();
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, GoodVoxelsArrayPath)
+  /**
+   * @brief Setter property for GoodVoxelsArrayPath
+   */
+  void setGoodVoxelsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for GoodVoxelsArrayPath
+   * @return Value of GoodVoxelsArrayPath
+   */
+  DataArrayPath getGoodVoxelsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath GoodVoxelsArrayPath READ getGoodVoxelsArrayPath WRITE setGoodVoxelsArrayPath)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is
@@ -75,14 +107,14 @@ public:
    * used to denote the filter's association with specific plugins
    * @return Branding string
    */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -92,23 +124,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -125,11 +157,6 @@ public:
    */
   void execute() override;
 
-  /**
-   * @brief preflight Reimplemented from @see AbstractFilter class
-   */
-  void preflight() override;
-
 protected:
   AdaptiveAlignmentFeature();
 
@@ -137,7 +164,7 @@ protected:
    * @brief dataCheck Checks for the appropriate parameter values and
    * availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -184,7 +211,10 @@ protected:
                                std::vector<std::vector<int64_t>>& newyshift, std::vector<uint64_t>& curindex);
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(bool, GoodVoxels)
+  std::weak_ptr<DataArray<bool>> m_GoodVoxelsPtr;
+  bool* m_GoodVoxels = nullptr;
+
+  DataArrayPath m_GoodVoxelsArrayPath = {};
 
 public:
   AdaptiveAlignmentFeature(const AdaptiveAlignmentFeature&) = delete;            // Copy Constructor Not Implemented

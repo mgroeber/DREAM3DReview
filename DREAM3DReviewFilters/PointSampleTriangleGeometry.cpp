@@ -33,13 +33,18 @@
 *
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "PointSampleTriangleGeometry.h"
 
 #include <cassert>
 #include <cstring>
 #include <ctime>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
@@ -56,6 +61,9 @@
 #include "SIMPLib/Geometry/IGeometry3D.h"
 #include "SIMPLib/Geometry/IGeometryGrid.h"
 #include "SIMPLib/Geometry/TriangleGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataArrays/IDataArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -184,7 +192,7 @@ void PointSampleTriangleGeometry::dataCheck()
   }
   case 1: // From other Geometry
   {
-    IGeometry::Pointer igeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry, AbstractFilter>(this, getParentGeometry());
+    IGeometry::Pointer igeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry>(this, getParentGeometry());
     if(getErrorCode() < 0)
     {
       return;
@@ -239,8 +247,8 @@ void PointSampleTriangleGeometry::dataCheck()
 
   QVector<IDataArray::Pointer> dataArrays;
 
-  TriangleGeom::Pointer triangle = getDataContainerArray()->getPrereqGeometryFromDataContainer<TriangleGeom, AbstractFilter>(this, getTriangleGeometry());
-  DataContainer::Pointer m = getDataContainerArray()->createNonPrereqDataContainer<AbstractFilter>(this, getVertexGeometry(), DataContainerID);
+  TriangleGeom::Pointer triangle = getDataContainerArray()->getPrereqGeometryFromDataContainer<TriangleGeom>(this, getTriangleGeometry());
+  DataContainer::Pointer m = getDataContainerArray()->createNonPrereqDataContainer(this, getVertexGeometry(), DataContainerID);
 
   if(getErrorCode() < 0)
   {
@@ -257,7 +265,7 @@ void PointSampleTriangleGeometry::dataCheck()
 
   m->createNonPrereqAttributeMatrix(this, getVertexAttributeMatrixName(), tDims, AttributeMatrix::Type::Vertex, AttributeMatrixID21);
 
-  m_TriangleAreasPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<double>, AbstractFilter>(this, getTriangleAreasArrayPath(), cDims);
+  m_TriangleAreasPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<double>>(this, getTriangleAreasArrayPath(), cDims);
   if(m_TriangleAreasPtr.lock())
   {
     m_TriangleAreas = m_TriangleAreasPtr.lock()->getPointer(0);
@@ -269,7 +277,7 @@ void PointSampleTriangleGeometry::dataCheck()
 
   if(getUseMask())
   {
-    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), cDims);
+    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getMaskArrayPath(), cDims);
     if(m_MaskPtr.lock())
     {
       m_Mask = m_MaskPtr.lock()->getPointer(0);
@@ -295,7 +303,7 @@ void PointSampleTriangleGeometry::dataCheck()
 
   for(auto&& path : paths)
   {
-    IDataArray::WeakPointer ptr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, path);
+    IDataArray::WeakPointer ptr = getDataContainerArray()->getPrereqIDataArrayFromPath(this, path);
     if(getErrorCode() >= 0)
     {
       dataArrays.push_back(ptr.lock());
@@ -307,22 +315,9 @@ void PointSampleTriangleGeometry::dataCheck()
     }
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrays);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrays);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void PointSampleTriangleGeometry::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -473,7 +468,7 @@ AbstractFilter::Pointer PointSampleTriangleGeometry::newFilterInstance(bool copy
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PointSampleTriangleGeometry::getCompiledLibraryName() const
+QString PointSampleTriangleGeometry::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -481,7 +476,7 @@ const QString PointSampleTriangleGeometry::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PointSampleTriangleGeometry::getBrandingString() const
+QString PointSampleTriangleGeometry::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -489,7 +484,7 @@ const QString PointSampleTriangleGeometry::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PointSampleTriangleGeometry::getFilterVersion() const
+QString PointSampleTriangleGeometry::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -500,7 +495,7 @@ const QString PointSampleTriangleGeometry::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PointSampleTriangleGeometry::getGroupName() const
+QString PointSampleTriangleGeometry::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterGroups::DREAM3DReviewFilters;
 }
@@ -508,7 +503,7 @@ const QString PointSampleTriangleGeometry::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid PointSampleTriangleGeometry::getUuid()
+QUuid PointSampleTriangleGeometry::getUuid() const
 {
   return QUuid("{119861c5-e303-537e-b210-2e62936222e9}");
 }
@@ -516,7 +511,7 @@ const QUuid PointSampleTriangleGeometry::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PointSampleTriangleGeometry::getSubGroupName() const
+QString PointSampleTriangleGeometry::getSubGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::GeometryFilters;
 }
@@ -524,7 +519,156 @@ const QString PointSampleTriangleGeometry::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PointSampleTriangleGeometry::getHumanLabel() const
+QString PointSampleTriangleGeometry::getHumanLabel() const
 {
   return "Point Sample Triangle Geometry";
+}
+
+// -----------------------------------------------------------------------------
+PointSampleTriangleGeometry::Pointer PointSampleTriangleGeometry::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<PointSampleTriangleGeometry> PointSampleTriangleGeometry::New()
+{
+  struct make_shared_enabler : public PointSampleTriangleGeometry
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString PointSampleTriangleGeometry::getNameOfClass() const
+{
+  return QString("PointSampleTriangleGeometry");
+}
+
+// -----------------------------------------------------------------------------
+QString PointSampleTriangleGeometry::ClassName()
+{
+  return QString("PointSampleTriangleGeometry");
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setSamplesNumberType(int value)
+{
+  m_SamplesNumberType = value;
+}
+
+// -----------------------------------------------------------------------------
+int PointSampleTriangleGeometry::getSamplesNumberType() const
+{
+  return m_SamplesNumberType;
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setTriangleGeometry(const DataArrayPath& value)
+{
+  m_TriangleGeometry = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath PointSampleTriangleGeometry::getTriangleGeometry() const
+{
+  return m_TriangleGeometry;
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setVertexGeometry(const QString& value)
+{
+  m_VertexGeometry = value;
+}
+
+// -----------------------------------------------------------------------------
+QString PointSampleTriangleGeometry::getVertexGeometry() const
+{
+  return m_VertexGeometry;
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setVertexAttributeMatrixName(const QString& value)
+{
+  m_VertexAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString PointSampleTriangleGeometry::getVertexAttributeMatrixName() const
+{
+  return m_VertexAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setNumberOfSamples(int value)
+{
+  m_NumberOfSamples = value;
+}
+
+// -----------------------------------------------------------------------------
+int PointSampleTriangleGeometry::getNumberOfSamples() const
+{
+  return m_NumberOfSamples;
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setParentGeometry(const DataArrayPath& value)
+{
+  m_ParentGeometry = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath PointSampleTriangleGeometry::getParentGeometry() const
+{
+  return m_ParentGeometry;
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setTriangleAreasArrayPath(const DataArrayPath& value)
+{
+  m_TriangleAreasArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath PointSampleTriangleGeometry::getTriangleAreasArrayPath() const
+{
+  return m_TriangleAreasArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setUseMask(bool value)
+{
+  m_UseMask = value;
+}
+
+// -----------------------------------------------------------------------------
+bool PointSampleTriangleGeometry::getUseMask() const
+{
+  return m_UseMask;
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setMaskArrayPath(const DataArrayPath& value)
+{
+  m_MaskArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath PointSampleTriangleGeometry::getMaskArrayPath() const
+{
+  return m_MaskArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void PointSampleTriangleGeometry::setSelectedDataArrayPaths(const QVector<DataArrayPath>& value)
+{
+  m_SelectedDataArrayPaths = value;
+}
+
+// -----------------------------------------------------------------------------
+QVector<DataArrayPath> PointSampleTriangleGeometry::getSelectedDataArrayPaths() const
+{
+  return m_SelectedDataArrayPaths;
 }

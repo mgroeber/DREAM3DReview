@@ -1,6 +1,8 @@
 #ifndef _tdmsfileproxy_h
 #define _tdmsfileproxy_h
 
+#include <memory>
+
 #include "TDMSObject.h"
 #include "TDMSSegment.h"
 

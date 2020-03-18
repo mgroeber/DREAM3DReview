@@ -12,6 +12,8 @@
 * for those changes.
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "FindLayerStatistics.h"
 
 #ifdef SIMPLib_USE_PARALLEL_ALGORITHMS
@@ -21,7 +23,10 @@
 #include <tbb/task_scheduler_init.h>
 #endif
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/ChoiceFilterParameter.h"
@@ -31,6 +36,8 @@
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
 #include "SIMPLib/Geometry/ImageGeom.h"
 #include "SIMPLib/Math/SIMPLibMath.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -234,7 +241,7 @@ void FindLayerStatistics::dataCheck()
 
   DataArrayPath tempPath;
 
-  m_InDataPtr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getSelectedArrayPath());
+  m_InDataPtr = getDataContainerArray()->getPrereqIDataArrayFromPath(this, getSelectedArrayPath());
   if(nullptr != m_InDataPtr.lock())
   {
     if(TemplateHelpers::CanDynamicCast<BoolArrayType>()(m_InDataPtr.lock()))
@@ -244,7 +251,7 @@ void FindLayerStatistics::dataCheck()
     }
   }
 
-  ImageGeom::Pointer image = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom, AbstractFilter>(this, getSelectedArrayPath().getDataContainerName());
+  ImageGeom::Pointer image = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom>(this, getSelectedArrayPath().getDataContainerName());
   if(getErrorCode() < 0)
   {
     return;
@@ -275,7 +282,7 @@ void FindLayerStatistics::dataCheck()
 
   std::vector<size_t> cDims(1, 1);
   tempPath.update(getSelectedArrayPath().getDataContainerName(), getSelectedArrayPath().getAttributeMatrixName(), getLayerIDsArrayName());
-  m_LayerIDsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0,
+  m_LayerIDsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, 0,
                                                                                                                      cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_LayerIDsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -283,7 +290,7 @@ void FindLayerStatistics::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getSelectedArrayPath().getDataContainerName(), getLayerAttributeMatrixName(), getLayerMinArrayName());
-  m_LayerMinPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0,
+  m_LayerMinPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0,
                                                                                                                  cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_LayerMinPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -291,7 +298,7 @@ void FindLayerStatistics::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getSelectedArrayPath().getDataContainerName(), getLayerAttributeMatrixName(), getLayerMaxArrayName());
-  m_LayerMaxPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0,
+  m_LayerMaxPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0,
                                                                                                                  cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_LayerMaxPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -299,7 +306,7 @@ void FindLayerStatistics::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getSelectedArrayPath().getDataContainerName(), getLayerAttributeMatrixName(), getLayerAvgArrayName());
-  m_LayerAvgPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0,
+  m_LayerAvgPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0,
                                                                                                                  cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_LayerAvgPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -307,7 +314,7 @@ void FindLayerStatistics::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getSelectedArrayPath().getDataContainerName(), getLayerAttributeMatrixName(), getLayerStdArrayName());
-  m_LayerStdPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0,
+  m_LayerStdPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0,
                                                                                                                  cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_LayerStdPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -315,7 +322,7 @@ void FindLayerStatistics::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getSelectedArrayPath().getDataContainerName(), getLayerAttributeMatrixName(), getLayerVarArrayName());
-  m_LayerVarPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0,
+  m_LayerVarPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0,
                                                                                                                  cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_LayerVarPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -323,18 +330,6 @@ void FindLayerStatistics::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void FindLayerStatistics::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -610,7 +605,7 @@ AbstractFilter::Pointer FindLayerStatistics::newFilterInstance(bool copyFilterPa
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindLayerStatistics::getCompiledLibraryName() const
+QString FindLayerStatistics::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -618,7 +613,7 @@ const QString FindLayerStatistics::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindLayerStatistics::getBrandingString() const
+QString FindLayerStatistics::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -626,7 +621,7 @@ const QString FindLayerStatistics::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindLayerStatistics::getFilterVersion() const
+QString FindLayerStatistics::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -637,7 +632,7 @@ const QString FindLayerStatistics::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindLayerStatistics::getGroupName() const
+QString FindLayerStatistics::getGroupName() const
 {
   return SIMPL::FilterGroups::StatisticsFilters;
 }
@@ -645,7 +640,7 @@ const QString FindLayerStatistics::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindLayerStatistics::getSubGroupName() const
+QString FindLayerStatistics::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::ImageFilters;
 }
@@ -653,7 +648,7 @@ const QString FindLayerStatistics::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindLayerStatistics::getHumanLabel() const
+QString FindLayerStatistics::getHumanLabel() const
 {
   return "Find Layer Statistics";
 }
@@ -661,7 +656,144 @@ const QString FindLayerStatistics::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid FindLayerStatistics::getUuid()
+QUuid FindLayerStatistics::getUuid() const
 {
   return QUuid("{c85277c7-9f02-5891-8141-04523658737d}");
+}
+
+// -----------------------------------------------------------------------------
+FindLayerStatistics::Pointer FindLayerStatistics::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<FindLayerStatistics> FindLayerStatistics::New()
+{
+  struct make_shared_enabler : public FindLayerStatistics
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString FindLayerStatistics::getNameOfClass() const
+{
+  return QString("FindLayerStatistics");
+}
+
+// -----------------------------------------------------------------------------
+QString FindLayerStatistics::ClassName()
+{
+  return QString("FindLayerStatistics");
+}
+
+// -----------------------------------------------------------------------------
+void FindLayerStatistics::setSelectedArrayPath(const DataArrayPath& value)
+{
+  m_SelectedArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindLayerStatistics::getSelectedArrayPath() const
+{
+  return m_SelectedArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindLayerStatistics::setPlane(unsigned int value)
+{
+  m_Plane = value;
+}
+
+// -----------------------------------------------------------------------------
+unsigned int FindLayerStatistics::getPlane() const
+{
+  return m_Plane;
+}
+
+// -----------------------------------------------------------------------------
+void FindLayerStatistics::setLayerIDsArrayName(const QString& value)
+{
+  m_LayerIDsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindLayerStatistics::getLayerIDsArrayName() const
+{
+  return m_LayerIDsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindLayerStatistics::setLayerAttributeMatrixName(const QString& value)
+{
+  m_LayerAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindLayerStatistics::getLayerAttributeMatrixName() const
+{
+  return m_LayerAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void FindLayerStatistics::setLayerMinArrayName(const QString& value)
+{
+  m_LayerMinArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindLayerStatistics::getLayerMinArrayName() const
+{
+  return m_LayerMinArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindLayerStatistics::setLayerMaxArrayName(const QString& value)
+{
+  m_LayerMaxArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindLayerStatistics::getLayerMaxArrayName() const
+{
+  return m_LayerMaxArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindLayerStatistics::setLayerAvgArrayName(const QString& value)
+{
+  m_LayerAvgArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindLayerStatistics::getLayerAvgArrayName() const
+{
+  return m_LayerAvgArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindLayerStatistics::setLayerStdArrayName(const QString& value)
+{
+  m_LayerStdArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindLayerStatistics::getLayerStdArrayName() const
+{
+  return m_LayerStdArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindLayerStatistics::setLayerVarArrayName(const QString& value)
+{
+  m_LayerVarArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindLayerStatistics::getLayerVarArrayName() const
+{
+  return m_LayerVarArrayName;
 }

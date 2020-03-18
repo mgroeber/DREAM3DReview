@@ -14,9 +14,14 @@
 #ifndef _finddynamicarraystatistics_h_
 #define _finddynamicarraystatistics_h_
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
+#include <memory>
+
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
+
+class IDataArray;
+using IDataArrayWkPtrType = std::weak_ptr<IDataArray>;
 
 /**
  * @brief The FindDynamicArrayStatistics class. See [Filter documentation](@ref finddynamicarraystatistics) for details.
@@ -26,75 +31,224 @@ class FindDynamicArrayStatistics : public AbstractFilter
   Q_OBJECT
 
 public:
-  SIMPL_SHARED_POINTERS(FindDynamicArrayStatistics)
-  SIMPL_FILTER_NEW_MACRO(FindDynamicArrayStatistics)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(FindDynamicArrayStatistics, AbstractFilter)
+  using Self = FindDynamicArrayStatistics;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<FindDynamicArrayStatistics> New();
+
+  /**
+   * @brief Returns the name of the class for FindDynamicArrayStatistics
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for FindDynamicArrayStatistics
+   */
+  static QString ClassName();
 
   ~FindDynamicArrayStatistics() override;
 
-  SIMPL_FILTER_PARAMETER(bool, FindLength)
+  /**
+   * @brief Setter property for FindLength
+   */
+  void setFindLength(bool value);
+  /**
+   * @brief Getter property for FindLength
+   * @return Value of FindLength
+   */
+  bool getFindLength() const;
+
   Q_PROPERTY(bool FindLength READ getFindLength WRITE setFindLength)
 
-  SIMPL_FILTER_PARAMETER(bool, FindMin)
+  /**
+   * @brief Setter property for FindMin
+   */
+  void setFindMin(bool value);
+  /**
+   * @brief Getter property for FindMin
+   * @return Value of FindMin
+   */
+  bool getFindMin() const;
+
   Q_PROPERTY(bool FindMin READ getFindMin WRITE setFindMin)
 
-  SIMPL_FILTER_PARAMETER(bool, FindMax)
+  /**
+   * @brief Setter property for FindMax
+   */
+  void setFindMax(bool value);
+  /**
+   * @brief Getter property for FindMax
+   * @return Value of FindMax
+   */
+  bool getFindMax() const;
+
   Q_PROPERTY(bool FindMax READ getFindMax WRITE setFindMax)
 
-  SIMPL_FILTER_PARAMETER(bool, FindMean)
+  /**
+   * @brief Setter property for FindMean
+   */
+  void setFindMean(bool value);
+  /**
+   * @brief Getter property for FindMean
+   * @return Value of FindMean
+   */
+  bool getFindMean() const;
+
   Q_PROPERTY(bool FindMean READ getFindMean WRITE setFindMean)
 
-  SIMPL_FILTER_PARAMETER(bool, FindMedian)
+  /**
+   * @brief Setter property for FindMedian
+   */
+  void setFindMedian(bool value);
+  /**
+   * @brief Getter property for FindMedian
+   * @return Value of FindMedian
+   */
+  bool getFindMedian() const;
+
   Q_PROPERTY(bool FindMedian READ getFindMedian WRITE setFindMedian)
 
-  SIMPL_FILTER_PARAMETER(bool, FindStdDeviation)
+  /**
+   * @brief Setter property for FindStdDeviation
+   */
+  void setFindStdDeviation(bool value);
+  /**
+   * @brief Getter property for FindStdDeviation
+   * @return Value of FindStdDeviation
+   */
+  bool getFindStdDeviation() const;
+
   Q_PROPERTY(bool FindStdDeviation READ getFindStdDeviation WRITE setFindStdDeviation)
 
-  SIMPL_FILTER_PARAMETER(bool, FindSummation)
+  /**
+   * @brief Setter property for FindSummation
+   */
+  void setFindSummation(bool value);
+  /**
+   * @brief Getter property for FindSummation
+   * @return Value of FindSummation
+   */
+  bool getFindSummation() const;
+
   Q_PROPERTY(bool FindSummation READ getFindSummation WRITE setFindSummation)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, LengthArrayPath)
+  /**
+   * @brief Setter property for LengthArrayPath
+   */
+  void setLengthArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for LengthArrayPath
+   * @return Value of LengthArrayPath
+   */
+  DataArrayPath getLengthArrayPath() const;
+
   Q_PROPERTY(DataArrayPath LengthArrayPath READ getLengthArrayPath WRITE setLengthArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, MinimumArrayPath)
+  /**
+   * @brief Setter property for MinimumArrayPath
+   */
+  void setMinimumArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for MinimumArrayPath
+   * @return Value of MinimumArrayPath
+   */
+  DataArrayPath getMinimumArrayPath() const;
+
   Q_PROPERTY(DataArrayPath MinimumArrayPath READ getMinimumArrayPath WRITE setMinimumArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, MaximumArrayPath)
+  /**
+   * @brief Setter property for MaximumArrayPath
+   */
+  void setMaximumArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for MaximumArrayPath
+   * @return Value of MaximumArrayPath
+   */
+  DataArrayPath getMaximumArrayPath() const;
+
   Q_PROPERTY(DataArrayPath MaximumArrayPath READ getMaximumArrayPath WRITE setMaximumArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, MeanArrayPath)
+  /**
+   * @brief Setter property for MeanArrayPath
+   */
+  void setMeanArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for MeanArrayPath
+   * @return Value of MeanArrayPath
+   */
+  DataArrayPath getMeanArrayPath() const;
+
   Q_PROPERTY(DataArrayPath MeanArrayPath READ getMeanArrayPath WRITE setMeanArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, MedianArrayPath)
+  /**
+   * @brief Setter property for MedianArrayPath
+   */
+  void setMedianArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for MedianArrayPath
+   * @return Value of MedianArrayPath
+   */
+  DataArrayPath getMedianArrayPath() const;
+
   Q_PROPERTY(DataArrayPath MedianArrayPath READ getMedianArrayPath WRITE setMedianArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, StdDeviationArrayPath)
+  /**
+   * @brief Setter property for StdDeviationArrayPath
+   */
+  void setStdDeviationArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for StdDeviationArrayPath
+   * @return Value of StdDeviationArrayPath
+   */
+  DataArrayPath getStdDeviationArrayPath() const;
+
   Q_PROPERTY(DataArrayPath StdDeviationArrayPath READ getStdDeviationArrayPath WRITE setStdDeviationArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, SummationArrayPath)
+  /**
+   * @brief Setter property for SummationArrayPath
+   */
+  void setSummationArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for SummationArrayPath
+   * @return Value of SummationArrayPath
+   */
+  DataArrayPath getSummationArrayPath() const;
+
   Q_PROPERTY(DataArrayPath SummationArrayPath READ getSummationArrayPath WRITE setSummationArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, SelectedArrayPath)
+  /**
+   * @brief Setter property for SelectedArrayPath
+   */
+  void setSelectedArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for SelectedArrayPath
+   * @return Value of SelectedArrayPath
+   */
+  DataArrayPath getSelectedArrayPath() const;
+
   Q_PROPERTY(DataArrayPath SelectedArrayPath READ getSelectedArrayPath WRITE setSelectedArrayPath)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -104,17 +258,17 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -132,15 +286,10 @@ public:
   void execute() override;
 
   /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-  /**
   * @brief getUuid Return the unique identifier for this filter.
   * @return A QUuid object.
   */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
 signals:
   /**
@@ -248,14 +397,39 @@ protected:
   void initialize();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(int32_t, Length)
-  DEFINE_IDATAARRAY_VARIABLE(Minimum)
-  DEFINE_IDATAARRAY_VARIABLE(Maximum)
-  DEFINE_IDATAARRAY_VARIABLE(Mean)
-  DEFINE_IDATAARRAY_VARIABLE(Median)
-  DEFINE_IDATAARRAY_VARIABLE(StandardDeviation)
-  DEFINE_IDATAARRAY_VARIABLE(Summation)
-  DEFINE_IDATAARRAY_VARIABLE(InputArray)
+  IDataArrayWkPtrType m_MinimumPtr;
+  void* m_Minimum = nullptr;
+  IDataArrayWkPtrType m_MaximumPtr;
+  void* m_Maximum = nullptr;
+  IDataArrayWkPtrType m_MeanPtr;
+  void* m_Mean = nullptr;
+  IDataArrayWkPtrType m_MedianPtr;
+  void* m_Median = nullptr;
+  IDataArrayWkPtrType m_StandardDeviationPtr;
+  void* m_StandardDeviation = nullptr;
+  IDataArrayWkPtrType m_SummationPtr;
+  void* m_Summation = nullptr;
+  IDataArrayWkPtrType m_InputArrayPtr;
+  void* m_InputArray = nullptr;
+
+  std::weak_ptr<DataArray<int32_t>> m_LengthPtr;
+  int32_t* m_Length = nullptr;
+
+  bool m_FindLength = {};
+  bool m_FindMin = {};
+  bool m_FindMax = {};
+  bool m_FindMean = {};
+  bool m_FindMedian = {};
+  bool m_FindStdDeviation = {};
+  bool m_FindSummation = {};
+  DataArrayPath m_LengthArrayPath = {};
+  DataArrayPath m_MinimumArrayPath = {};
+  DataArrayPath m_MaximumArrayPath = {};
+  DataArrayPath m_MeanArrayPath = {};
+  DataArrayPath m_MedianArrayPath = {};
+  DataArrayPath m_StdDeviationArrayPath = {};
+  DataArrayPath m_SummationArrayPath = {};
+  DataArrayPath m_SelectedArrayPath = {};
 
   FindDynamicArrayStatistics(const FindDynamicArrayStatistics&) = delete; // Copy Constructor Not Implemented
   FindDynamicArrayStatistics(FindDynamicArrayStatistics&&) = delete;      // Move Constructor Not Implemented

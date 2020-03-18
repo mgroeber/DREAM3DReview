@@ -33,9 +33,14 @@
 *
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "KMeans.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/ChoiceFilterParameter.h"
@@ -44,6 +49,8 @@
 #include "SIMPLib/FilterParameters/LinkedBooleanFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedPathCreationFilterParameter.h"
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "util/ClusteringAlgorithms/KMeansTemplate.hpp"
 
@@ -151,7 +158,7 @@ void KMeans::dataCheck()
   }
 
   DataContainer::Pointer m = getDataContainerArray()->getPrereqDataContainer(this, getSelectedArrayPath().getDataContainerName(), false);
-  AttributeMatrix::Pointer attrMat = getDataContainerArray()->getPrereqAttributeMatrixFromPath<AbstractFilter>(this, getSelectedArrayPath(), -301);
+  AttributeMatrix::Pointer attrMat = getDataContainerArray()->getPrereqAttributeMatrixFromPath(this, getSelectedArrayPath(), -301);
 
   if(getErrorCode() < 0)
   {
@@ -237,7 +244,7 @@ void KMeans::dataCheck()
   std::vector<size_t> cDims;
   QVector<DataArrayPath> dataArrayPaths;
 
-  m_InDataPtr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getSelectedArrayPath());
+  m_InDataPtr = getDataContainerArray()->getPrereqIDataArrayFromPath(this, getSelectedArrayPath());
   if(getErrorCode() >= 0)
   {
     dataArrayPaths.push_back(getSelectedArrayPath());
@@ -246,7 +253,7 @@ void KMeans::dataCheck()
   {
     cDims = m_InDataPtr.lock()->getComponentDimensions();
     tempPath.update(getSelectedArrayPath().getDataContainerName(), getFeatureAttributeMatrixName(), getMeansArrayName());
-    m_MeansArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double>, AbstractFilter, double>(this, tempPath, 0, cDims, "", DataArrayID31);
+    m_MeansArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double>>(this, tempPath, 0, cDims, "", DataArrayID31);
     if(m_MeansArrayPtr.lock())
     {
       m_MeansArray = m_MeansArrayPtr.lock()->getPointer(0);
@@ -256,7 +263,7 @@ void KMeans::dataCheck()
   cDims[0] = 1;
   tempPath.update(getSelectedArrayPath().getDataContainerName(), getSelectedArrayPath().getAttributeMatrixName(), getFeatureIdsArrayName());
 
-  m_FeatureIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0, cDims, "", DataArrayID32);
+  m_FeatureIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, 0, cDims, "", DataArrayID32);
   if(m_FeatureIdsPtr.lock())
   {
     m_FeatureIds = m_FeatureIdsPtr.lock()->getPointer(0);
@@ -268,7 +275,7 @@ void KMeans::dataCheck()
 
   if(m_UseMask)
   {
-    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<BoolArrayType, AbstractFilter>(this, getMaskArrayPath(), cDims);
+    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<BoolArrayType>(this, getMaskArrayPath(), cDims);
     if(m_MaskPtr.lock())
     {
       m_Mask = m_MaskPtr.lock()->getPointer(0);
@@ -279,21 +286,9 @@ void KMeans::dataCheck()
     }
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrayPaths);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrayPaths);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void KMeans::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -338,7 +333,7 @@ AbstractFilter::Pointer KMeans::newFilterInstance(bool copyFilterParameters) con
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString KMeans::getCompiledLibraryName() const
+QString KMeans::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -346,7 +341,7 @@ const QString KMeans::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString KMeans::getBrandingString() const
+QString KMeans::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -354,7 +349,7 @@ const QString KMeans::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString KMeans::getFilterVersion() const
+QString KMeans::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -365,7 +360,7 @@ const QString KMeans::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString KMeans::getGroupName() const
+QString KMeans::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterGroups::DREAM3DReviewFilters;
 }
@@ -373,7 +368,7 @@ const QString KMeans::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid KMeans::getUuid()
+QUuid KMeans::getUuid() const
 {
   return QUuid("{b56a04de-0ca0-509d-809f-52219fca9c98}");
 }
@@ -381,7 +376,7 @@ const QUuid KMeans::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString KMeans::getSubGroupName() const
+QString KMeans::getSubGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::ClusteringFilters;
 }
@@ -389,7 +384,132 @@ const QString KMeans::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString KMeans::getHumanLabel() const
+QString KMeans::getHumanLabel() const
 {
   return "K Means";
+}
+
+// -----------------------------------------------------------------------------
+KMeans::Pointer KMeans::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<KMeans> KMeans::New()
+{
+  struct make_shared_enabler : public KMeans
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString KMeans::getNameOfClass() const
+{
+  return QString("KMeans");
+}
+
+// -----------------------------------------------------------------------------
+QString KMeans::ClassName()
+{
+  return QString("KMeans");
+}
+
+// -----------------------------------------------------------------------------
+void KMeans::setSelectedArrayPath(const DataArrayPath& value)
+{
+  m_SelectedArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath KMeans::getSelectedArrayPath() const
+{
+  return m_SelectedArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void KMeans::setUseMask(bool value)
+{
+  m_UseMask = value;
+}
+
+// -----------------------------------------------------------------------------
+bool KMeans::getUseMask() const
+{
+  return m_UseMask;
+}
+
+// -----------------------------------------------------------------------------
+void KMeans::setMaskArrayPath(const DataArrayPath& value)
+{
+  m_MaskArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath KMeans::getMaskArrayPath() const
+{
+  return m_MaskArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void KMeans::setFeatureIdsArrayName(const QString& value)
+{
+  m_FeatureIdsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString KMeans::getFeatureIdsArrayName() const
+{
+  return m_FeatureIdsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void KMeans::setMeansArrayName(const QString& value)
+{
+  m_MeansArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString KMeans::getMeansArrayName() const
+{
+  return m_MeansArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void KMeans::setInitClusters(int value)
+{
+  m_InitClusters = value;
+}
+
+// -----------------------------------------------------------------------------
+int KMeans::getInitClusters() const
+{
+  return m_InitClusters;
+}
+
+// -----------------------------------------------------------------------------
+void KMeans::setFeatureAttributeMatrixName(const QString& value)
+{
+  m_FeatureAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString KMeans::getFeatureAttributeMatrixName() const
+{
+  return m_FeatureAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void KMeans::setDistanceMetric(int value)
+{
+  m_DistanceMetric = value;
+}
+
+// -----------------------------------------------------------------------------
+int KMeans::getDistanceMetric() const
+{
+  return m_DistanceMetric;
 }

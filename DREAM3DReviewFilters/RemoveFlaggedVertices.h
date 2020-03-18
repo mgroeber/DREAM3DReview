@@ -35,9 +35,11 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -47,45 +49,94 @@
 class DREAM3DReview_EXPORT RemoveFlaggedVertices : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(RemoveFlaggedVertices SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(RemoveFlaggedVertices)
+  PYB11_FILTER_NEW_MACRO(RemoveFlaggedVertices)
+  PYB11_FILTER_PARAMETER(DataArrayPath, VertexGeometry)
+  PYB11_FILTER_PARAMETER(DataArrayPath, MaskArrayPath)
+  PYB11_FILTER_PARAMETER(QString, ReducedVertexGeometry)
   PYB11_PROPERTY(DataArrayPath VertexGeometry READ getVertexGeometry WRITE setVertexGeometry)
   PYB11_PROPERTY(DataArrayPath MaskArrayPath READ getMaskArrayPath WRITE setMaskArrayPath)
   PYB11_PROPERTY(QString ReducedVertexGeometry READ getReducedVertexGeometry WRITE setReducedVertexGeometry)
+#endif
 
 public:
-  SIMPL_SHARED_POINTERS(RemoveFlaggedVertices)
-  SIMPL_FILTER_NEW_MACRO(RemoveFlaggedVertices)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(RemoveFlaggedVertices, AbstractFilter)
+  using Self = RemoveFlaggedVertices;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<RemoveFlaggedVertices> New();
+
+  /**
+   * @brief Returns the name of the class for RemoveFlaggedVertices
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for RemoveFlaggedVertices
+   */
+  static QString ClassName();
 
   ~RemoveFlaggedVertices() override;
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, VertexGeometry)
+  /**
+   * @brief Setter property for VertexGeometry
+   */
+  void setVertexGeometry(const DataArrayPath& value);
+  /**
+   * @brief Getter property for VertexGeometry
+   * @return Value of VertexGeometry
+   */
+  DataArrayPath getVertexGeometry() const;
+
   Q_PROPERTY(DataArrayPath VertexGeometry READ getVertexGeometry WRITE setVertexGeometry)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, MaskArrayPath)
+  /**
+   * @brief Setter property for MaskArrayPath
+   */
+  void setMaskArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for MaskArrayPath
+   * @return Value of MaskArrayPath
+   */
+  DataArrayPath getMaskArrayPath() const;
+
   Q_PROPERTY(DataArrayPath MaskArrayPath READ getMaskArrayPath WRITE setMaskArrayPath)
 
-  SIMPL_FILTER_PARAMETER(QString, ReducedVertexGeometry)
+  /**
+   * @brief Setter property for ReducedVertexGeometry
+   */
+  void setReducedVertexGeometry(const QString& value);
+  /**
+   * @brief Getter property for ReducedVertexGeometry
+   * @return Value of ReducedVertexGeometry
+   */
+  QString getReducedVertexGeometry() const;
+
   Q_PROPERTY(QString ReducedVertexGeometry READ getReducedVertexGeometry WRITE setReducedVertexGeometry)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -95,23 +146,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -128,41 +179,13 @@ public:
    */
   void execute() override;
 
-  /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
-
 protected:
   RemoveFlaggedVertices();
 
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
   * @brief Initializes all the private instance variables
@@ -170,7 +193,12 @@ protected:
   void initialize();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(bool, Mask)
+  std::weak_ptr<DataArray<bool>> m_MaskPtr;
+  bool* m_Mask = nullptr;
+
+  DataArrayPath m_VertexGeometry = {};
+  DataArrayPath m_MaskArrayPath = {};
+  QString m_ReducedVertexGeometry = {};
 
   QList<QString> m_AttrMatList;
 

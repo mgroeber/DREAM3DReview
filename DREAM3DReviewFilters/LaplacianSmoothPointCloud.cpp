@@ -11,9 +11,14 @@
 * Subsequent changes to the codes by others may elect to add a copyright and license
 * for those changes.
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "LaplacianSmoothPointCloud.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataContainerSelectionFilterParameter.h"
@@ -23,6 +28,7 @@
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
 #include "SIMPLib/Geometry/VertexGeom.h"
 #include "SIMPLib/Math/MatrixMath.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -30,15 +36,7 @@
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-LaplacianSmoothPointCloud::LaplacianSmoothPointCloud()
-: m_DataContainerName("")
-, m_Lambda(0.1f)
-, m_NumIterations(1)
-, m_UseMask(false)
-, m_MaskArrayPath("", "", "")
-, m_Mask(nullptr)
-{
-}
+LaplacianSmoothPointCloud::LaplacianSmoothPointCloud() = default;
 
 // -----------------------------------------------------------------------------
 //
@@ -100,7 +98,7 @@ void LaplacianSmoothPointCloud::dataCheck()
 
   QVector<IDataArray::Pointer> dataArrays;
 
-  VertexGeom::Pointer vertices = getDataContainerArray()->getPrereqGeometryFromDataContainer<VertexGeom, AbstractFilter>(this, getDataContainerName());
+  VertexGeom::Pointer vertices = getDataContainerArray()->getPrereqGeometryFromDataContainer<VertexGeom>(this, getDataContainerName());
   if(getErrorCode() < 0)
   {
     return;
@@ -126,7 +124,7 @@ void LaplacianSmoothPointCloud::dataCheck()
   {
     std::vector<size_t> cDims(1, 1);
     m_MaskPtr =
-        getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
+        getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getMaskArrayPath(), cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_MaskPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
       m_Mask = m_MaskPtr.lock()->getPointer(0);
@@ -137,22 +135,9 @@ void LaplacianSmoothPointCloud::dataCheck()
     }
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrays);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrays);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void LaplacianSmoothPointCloud::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -236,7 +221,7 @@ AbstractFilter::Pointer LaplacianSmoothPointCloud::newFilterInstance(bool copyFi
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LaplacianSmoothPointCloud::getCompiledLibraryName() const
+QString LaplacianSmoothPointCloud::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -244,7 +229,7 @@ const QString LaplacianSmoothPointCloud::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LaplacianSmoothPointCloud::getBrandingString() const
+QString LaplacianSmoothPointCloud::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -252,7 +237,7 @@ const QString LaplacianSmoothPointCloud::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LaplacianSmoothPointCloud::getFilterVersion() const
+QString LaplacianSmoothPointCloud::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -263,7 +248,7 @@ const QString LaplacianSmoothPointCloud::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LaplacianSmoothPointCloud::getGroupName() const
+QString LaplacianSmoothPointCloud::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::PointCloudFilters;
 }
@@ -271,7 +256,7 @@ const QString LaplacianSmoothPointCloud::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LaplacianSmoothPointCloud::getSubGroupName() const
+QString LaplacianSmoothPointCloud::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::SmoothingFilters;
 }
@@ -279,7 +264,7 @@ const QString LaplacianSmoothPointCloud::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LaplacianSmoothPointCloud::getHumanLabel() const
+QString LaplacianSmoothPointCloud::getHumanLabel() const
 {
   return "Smooth Point Cloud (Laplacian)";
 }
@@ -287,7 +272,96 @@ const QString LaplacianSmoothPointCloud::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid LaplacianSmoothPointCloud::getUuid()
+QUuid LaplacianSmoothPointCloud::getUuid() const
 {
   return QUuid("{1cf52f08-a11a-5870-a38c-ea8958071bd8}");
+}
+
+// -----------------------------------------------------------------------------
+LaplacianSmoothPointCloud::Pointer LaplacianSmoothPointCloud::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<LaplacianSmoothPointCloud> LaplacianSmoothPointCloud::New()
+{
+  struct make_shared_enabler : public LaplacianSmoothPointCloud
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString LaplacianSmoothPointCloud::getNameOfClass() const
+{
+  return QString("LaplacianSmoothPointCloud");
+}
+
+// -----------------------------------------------------------------------------
+QString LaplacianSmoothPointCloud::ClassName()
+{
+  return QString("LaplacianSmoothPointCloud");
+}
+
+// -----------------------------------------------------------------------------
+void LaplacianSmoothPointCloud::setDataContainerName(const DataArrayPath& value)
+{
+  m_DataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath LaplacianSmoothPointCloud::getDataContainerName() const
+{
+  return m_DataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void LaplacianSmoothPointCloud::setLambda(float value)
+{
+  m_Lambda = value;
+}
+
+// -----------------------------------------------------------------------------
+float LaplacianSmoothPointCloud::getLambda() const
+{
+  return m_Lambda;
+}
+
+// -----------------------------------------------------------------------------
+void LaplacianSmoothPointCloud::setNumIterations(int value)
+{
+  m_NumIterations = value;
+}
+
+// -----------------------------------------------------------------------------
+int LaplacianSmoothPointCloud::getNumIterations() const
+{
+  return m_NumIterations;
+}
+
+// -----------------------------------------------------------------------------
+void LaplacianSmoothPointCloud::setUseMask(bool value)
+{
+  m_UseMask = value;
+}
+
+// -----------------------------------------------------------------------------
+bool LaplacianSmoothPointCloud::getUseMask() const
+{
+  return m_UseMask;
+}
+
+// -----------------------------------------------------------------------------
+void LaplacianSmoothPointCloud::setMaskArrayPath(const DataArrayPath& value)
+{
+  m_MaskArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath LaplacianSmoothPointCloud::getMaskArrayPath() const
+{
+  return m_MaskArrayPath;
 }

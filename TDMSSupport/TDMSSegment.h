@@ -1,6 +1,8 @@
 #ifndef _tdmssegment_h
 #define _tdmssegment_h
 
+#include <memory>
+
 #include "TDMSLeadIn.h"
 #include "TDMSObject.h"
 

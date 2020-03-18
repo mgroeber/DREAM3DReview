@@ -14,9 +14,11 @@
 #ifndef _exportclifile_h_
 #define _exportclifile_h_
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
+#include <memory>
+
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 /**
  * @brief The ExportCLIFile class. See [Filter documentation](@ref exportclifile) for details.
@@ -26,54 +28,141 @@ class ExportCLIFile : public AbstractFilter
   Q_OBJECT
 
 public:
-  SIMPL_SHARED_POINTERS(ExportCLIFile)
-  SIMPL_FILTER_NEW_MACRO(ExportCLIFile)
-  SIMPL_TYPE_MACRO_SUPER(ExportCLIFile, AbstractFilter)
+  using Self = ExportCLIFile;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+
+  static Pointer NullPointer();
+
+  static std::shared_ptr<ExportCLIFile> New();
+
+  /**
+   * @brief Returns the name of the class for ExportCLIFile
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for ExportCLIFile
+   */
+  static QString ClassName();
 
   ~ExportCLIFile() override;
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, EdgeGeometry)
+  /**
+   * @brief Setter property for EdgeGeometry
+   */
+  void setEdgeGeometry(const DataArrayPath& value);
+  /**
+   * @brief Getter property for EdgeGeometry
+   * @return Value of EdgeGeometry
+   */
+  DataArrayPath getEdgeGeometry() const;
+
   Q_PROPERTY(DataArrayPath EdgeGeometry READ getEdgeGeometry WRITE setEdgeGeometry)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, LayerIdsArrayPath)
+  /**
+   * @brief Setter property for LayerIdsArrayPath
+   */
+  void setLayerIdsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for LayerIdsArrayPath
+   * @return Value of LayerIdsArrayPath
+   */
+  DataArrayPath getLayerIdsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath LayerIdsArrayPath READ getLayerIdsArrayPath WRITE setLayerIdsArrayPath)
 
-  SIMPL_FILTER_PARAMETER(bool, SplitByGroup)
+  /**
+   * @brief Setter property for SplitByGroup
+   */
+  void setSplitByGroup(bool value);
+  /**
+   * @brief Getter property for SplitByGroup
+   * @return Value of SplitByGroup
+   */
+  bool getSplitByGroup() const;
+
   Q_PROPERTY(bool SplitByGroup READ getSplitByGroup WRITE setSplitByGroup)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, GroupIdsArrayPath)
+  /**
+   * @brief Setter property for GroupIdsArrayPath
+   */
+  void setGroupIdsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for GroupIdsArrayPath
+   * @return Value of GroupIdsArrayPath
+   */
+  DataArrayPath getGroupIdsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath GroupIdsArrayPath READ getGroupIdsArrayPath WRITE setGroupIdsArrayPath)
 
-  SIMPL_FILTER_PARAMETER(QString, OutputDirectory)
+  /**
+   * @brief Setter property for OutputDirectory
+   */
+  void setOutputDirectory(const QString& value);
+  /**
+   * @brief Getter property for OutputDirectory
+   * @return Value of OutputDirectory
+   */
+  QString getOutputDirectory() const;
+
   Q_PROPERTY(QString OutputDirectory READ getOutputDirectory WRITE setOutputDirectory)
 
-  SIMPL_FILTER_PARAMETER(QString, OutputFilePrefix)
+  /**
+   * @brief Setter property for OutputFilePrefix
+   */
+  void setOutputFilePrefix(const QString& value);
+  /**
+   * @brief Getter property for OutputFilePrefix
+   * @return Value of OutputFilePrefix
+   */
+  QString getOutputFilePrefix() const;
+
   Q_PROPERTY(QString OutputFilePrefix READ getOutputFilePrefix WRITE setOutputFilePrefix)
 
-  SIMPL_FILTER_PARAMETER(double, UnitsScaleFactor)
+  /**
+   * @brief Setter property for UnitsScaleFactor
+   */
+  void setUnitsScaleFactor(double value);
+  /**
+   * @brief Getter property for UnitsScaleFactor
+   * @return Value of UnitsScaleFactor
+   */
+  double getUnitsScaleFactor() const;
+
   Q_PROPERTY(double UnitsScaleFactor READ getUnitsScaleFactor WRITE setUnitsScaleFactor)
 
-  SIMPL_FILTER_PARAMETER(int, Precision)
+  /**
+   * @brief Setter property for Precision
+   */
+  void setPrecision(int value);
+  /**
+   * @brief Getter property for Precision
+   * @return Value of Precision
+   */
+  int getPrecision() const;
+
   Q_PROPERTY(int Precision READ getPrecision WRITE setPrecision)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -83,17 +172,17 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -106,38 +195,10 @@ public:
   void execute() override;
 
   /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-  /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
+  QUuid getUuid() const override;
 
 protected:
   ExportCLIFile();
@@ -145,7 +206,7 @@ protected:
   /**
   * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
   */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
   * @brief Initializes all the private instance variables.
@@ -153,12 +214,25 @@ protected:
   void initialize();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(int32_t, LayerIds)
-  DEFINE_DATAARRAY_VARIABLE(int32_t, GroupIds)
+  std::weak_ptr<DataArray<int32_t>> m_LayerIdsPtr;
+  int32_t* m_LayerIds = nullptr;
+  std::weak_ptr<DataArray<int32_t>> m_GroupIdsPtr;
+  int32_t* m_GroupIds = nullptr;
 
-  ExportCLIFile(const ExportCLIFile&);  // Copy Constructor Not Implemented
-  ExportCLIFile(ExportCLIFile&&);       // Move Constructor Not Implemented
-  void operator=(const ExportCLIFile&); // Operator '=' Not Implemented
+  DataArrayPath m_EdgeGeometry = {};
+  DataArrayPath m_LayerIdsArrayPath = {};
+  bool m_SplitByGroup = {};
+  DataArrayPath m_GroupIdsArrayPath = {};
+  QString m_OutputDirectory = {};
+  QString m_OutputFilePrefix = {};
+  double m_UnitsScaleFactor = {};
+  int m_Precision = {};
+
+public:
+  ExportCLIFile(const ExportCLIFile&) = delete;            // Copy Constructor Not Implemented
+  ExportCLIFile(ExportCLIFile&&) = delete;                 // Move Constructor Not Implemented
+  ExportCLIFile& operator=(const ExportCLIFile&) = delete; // Copy Assignment Not Implemented
+  ExportCLIFile& operator=(ExportCLIFile&&) = delete;      // Move Assignment Not Implemented
 };
 
 #endif /* _exportclifile_h_ */

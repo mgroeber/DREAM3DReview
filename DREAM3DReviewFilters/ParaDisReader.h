@@ -36,18 +36,20 @@
 
 #pragma once
 
+#include <memory>
+
 #include <QtCore/QFile>
 #include <QtCore/QString>
 #include <vector>
 
+#include "SIMPLib/SIMPLib.h"
 #include "SIMPLib/Common/Constants.h"
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/CoreFilters/FileReader.h"
 #include "SIMPLib/DataArrays/IDataArray.h"
 #include "SIMPLib/DataContainers/DataContainer.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/Geometry/MeshStructs.h"
-#include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
@@ -62,7 +64,21 @@
 class DREAM3DReview_EXPORT ParaDisReader : public FileReader
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(ParaDisReader SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(ParaDisReader)
+  PYB11_FILTER_NEW_MACRO(ParaDisReader)
+  PYB11_FILTER_PARAMETER(DataArrayPath, EdgeDataContainerName)
+  PYB11_FILTER_PARAMETER(QString, VertexAttributeMatrixName)
+  PYB11_FILTER_PARAMETER(QString, EdgeAttributeMatrixName)
+  PYB11_FILTER_PARAMETER(QString, InputFile)
+  PYB11_FILTER_PARAMETER(float, BurgersVector)
+  PYB11_FILTER_PARAMETER(QString, NumberOfArmsArrayName)
+  PYB11_FILTER_PARAMETER(QString, NodeConstraintsArrayName)
+  PYB11_FILTER_PARAMETER(QString, BurgersVectorsArrayName)
+  PYB11_FILTER_PARAMETER(QString, SlipPlaneNormalsArrayName)
+  PYB11_FILTER_PARAMETER(QString, DomainBoundsArrayName)
   PYB11_PROPERTY(DataArrayPath EdgeDataContainerName READ getEdgeDataContainerName WRITE setEdgeDataContainerName)
   PYB11_PROPERTY(QString VertexAttributeMatrixName READ getVertexAttributeMatrixName WRITE setVertexAttributeMatrixName)
   PYB11_PROPERTY(QString EdgeAttributeMatrixName READ getEdgeAttributeMatrixName WRITE setEdgeAttributeMatrixName)
@@ -73,56 +89,161 @@ class DREAM3DReview_EXPORT ParaDisReader : public FileReader
   PYB11_PROPERTY(QString BurgersVectorsArrayName READ getBurgersVectorsArrayName WRITE setBurgersVectorsArrayName)
   PYB11_PROPERTY(QString SlipPlaneNormalsArrayName READ getSlipPlaneNormalsArrayName WRITE setSlipPlaneNormalsArrayName)
   PYB11_PROPERTY(QString DomainBoundsArrayName READ getDomainBoundsArrayName WRITE setDomainBoundsArrayName)
+#endif
+
 public:
-  SIMPL_SHARED_POINTERS(ParaDisReader)
-  SIMPL_FILTER_NEW_MACRO(ParaDisReader)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(ParaDisReader, FileReader)
+  using Self = ParaDisReader;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<ParaDisReader> New();
+
+  /**
+   * @brief Returns the name of the class for ParaDisReader
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for ParaDisReader
+   */
+  static QString ClassName();
 
   virtual ~ParaDisReader();
-  SIMPL_FILTER_PARAMETER(DataArrayPath, EdgeDataContainerName)
+  /**
+   * @brief Setter property for EdgeDataContainerName
+   */
+  void setEdgeDataContainerName(const DataArrayPath& value);
+  /**
+   * @brief Getter property for EdgeDataContainerName
+   * @return Value of EdgeDataContainerName
+   */
+  DataArrayPath getEdgeDataContainerName() const;
+
   Q_PROPERTY(DataArrayPath EdgeDataContainerName READ getEdgeDataContainerName WRITE setEdgeDataContainerName)
-  SIMPL_FILTER_PARAMETER(QString, VertexAttributeMatrixName)
+  /**
+   * @brief Setter property for VertexAttributeMatrixName
+   */
+  void setVertexAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for VertexAttributeMatrixName
+   * @return Value of VertexAttributeMatrixName
+   */
+  QString getVertexAttributeMatrixName() const;
+
   Q_PROPERTY(QString VertexAttributeMatrixName READ getVertexAttributeMatrixName WRITE setVertexAttributeMatrixName)
-  SIMPL_FILTER_PARAMETER(QString, EdgeAttributeMatrixName)
+  /**
+   * @brief Setter property for EdgeAttributeMatrixName
+   */
+  void setEdgeAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for EdgeAttributeMatrixName
+   * @return Value of EdgeAttributeMatrixName
+   */
+  QString getEdgeAttributeMatrixName() const;
+
   Q_PROPERTY(QString EdgeAttributeMatrixName READ getEdgeAttributeMatrixName WRITE setEdgeAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, InputFile)
+  /**
+   * @brief Setter property for InputFile
+   */
+  void setInputFile(const QString& value);
+  /**
+   * @brief Getter property for InputFile
+   * @return Value of InputFile
+   */
+  QString getInputFile() const;
+
   Q_PROPERTY(QString InputFile READ getInputFile WRITE setInputFile)
-  SIMPL_FILTER_PARAMETER(float, BurgersVector)
+  /**
+   * @brief Setter property for BurgersVector
+   */
+  void setBurgersVector(float value);
+  /**
+   * @brief Getter property for BurgersVector
+   * @return Value of BurgersVector
+   */
+  float getBurgersVector() const;
+
   Q_PROPERTY(float BurgersVector READ getBurgersVector WRITE setBurgersVector)
 
-  SIMPL_FILTER_PARAMETER(QString, NumberOfArmsArrayName)
+  /**
+   * @brief Setter property for NumberOfArmsArrayName
+   */
+  void setNumberOfArmsArrayName(const QString& value);
+  /**
+   * @brief Getter property for NumberOfArmsArrayName
+   * @return Value of NumberOfArmsArrayName
+   */
+  QString getNumberOfArmsArrayName() const;
+
   Q_PROPERTY(QString NumberOfArmsArrayName READ getNumberOfArmsArrayName WRITE setNumberOfArmsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, NodeConstraintsArrayName)
+  /**
+   * @brief Setter property for NodeConstraintsArrayName
+   */
+  void setNodeConstraintsArrayName(const QString& value);
+  /**
+   * @brief Getter property for NodeConstraintsArrayName
+   * @return Value of NodeConstraintsArrayName
+   */
+  QString getNodeConstraintsArrayName() const;
+
   Q_PROPERTY(QString NodeConstraintsArrayName READ getNodeConstraintsArrayName WRITE setNodeConstraintsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, BurgersVectorsArrayName)
+  /**
+   * @brief Setter property for BurgersVectorsArrayName
+   */
+  void setBurgersVectorsArrayName(const QString& value);
+  /**
+   * @brief Getter property for BurgersVectorsArrayName
+   * @return Value of BurgersVectorsArrayName
+   */
+  QString getBurgersVectorsArrayName() const;
+
   Q_PROPERTY(QString BurgersVectorsArrayName READ getBurgersVectorsArrayName WRITE setBurgersVectorsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, SlipPlaneNormalsArrayName)
+  /**
+   * @brief Setter property for SlipPlaneNormalsArrayName
+   */
+  void setSlipPlaneNormalsArrayName(const QString& value);
+  /**
+   * @brief Getter property for SlipPlaneNormalsArrayName
+   * @return Value of SlipPlaneNormalsArrayName
+   */
+  QString getSlipPlaneNormalsArrayName() const;
+
   Q_PROPERTY(QString SlipPlaneNormalsArrayName READ getSlipPlaneNormalsArrayName WRITE setSlipPlaneNormalsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, DomainBoundsArrayName)
+  /**
+   * @brief Setter property for DomainBoundsArrayName
+   */
+  void setDomainBoundsArrayName(const QString& value);
+  /**
+   * @brief Getter property for DomainBoundsArrayName
+   * @return Value of DomainBoundsArrayName
+   */
+  QString getDomainBoundsArrayName() const;
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
    */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -132,23 +253,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -165,11 +286,6 @@ public:
    * @brief execute Reimplemented from @see AbstractFilter class
    */
   void execute() override;
-
-  /**
-   * @brief preflight Reimplemented from @see AbstractFilter class
-   */
-  void preflight() override;
 
 protected:
   ParaDisReader();
@@ -189,7 +305,7 @@ protected:
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -207,11 +323,28 @@ protected:
   void updateEdgeInstancePointers();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(int32_t, NumberOfArms)
-  DEFINE_DATAARRAY_VARIABLE(int32_t, NodeConstraints)
-  DEFINE_DATAARRAY_VARIABLE(float, BurgersVectors)
-  DEFINE_DATAARRAY_VARIABLE(float, SlipPlaneNormals)
-  DEFINE_DATAARRAY_VARIABLE(float, DomainBounds)
+  std::weak_ptr<DataArray<int32_t>> m_NumberOfArmsPtr;
+  int32_t* m_NumberOfArms = nullptr;
+  std::weak_ptr<DataArray<int32_t>> m_NodeConstraintsPtr;
+  int32_t* m_NodeConstraints = nullptr;
+  std::weak_ptr<DataArray<float>> m_BurgersVectorsPtr;
+  float* m_BurgersVectors = nullptr;
+  std::weak_ptr<DataArray<float>> m_SlipPlaneNormalsPtr;
+  float* m_SlipPlaneNormals = nullptr;
+  std::weak_ptr<DataArray<float>> m_DomainBoundsPtr;
+  float* m_DomainBounds = nullptr;
+
+  DataArrayPath m_EdgeDataContainerName = {};
+  QString m_VertexAttributeMatrixName = {};
+  QString m_EdgeAttributeMatrixName = {};
+  QString m_InputFile = {};
+  float m_BurgersVector = {};
+  QString m_NumberOfArmsArrayName = {};
+  QString m_NodeConstraintsArrayName = {};
+  QString m_BurgersVectorsArrayName = {};
+  QString m_SlipPlaneNormalsArrayName = {};
+  QString m_DomainBoundsArrayName = {};
+
   QFile m_InStream;
 
   int m_NumVerts;

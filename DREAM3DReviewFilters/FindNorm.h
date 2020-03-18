@@ -35,9 +35,14 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
+
+class IDataArray;
+using IDataArrayWkPtrType = std::weak_ptr<IDataArray>;
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -47,45 +52,94 @@
 class DREAM3DReview_EXPORT FindNorm : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(FindNorm SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(FindNorm)
+  PYB11_FILTER_NEW_MACRO(FindNorm)
+  PYB11_FILTER_PARAMETER(DataArrayPath, SelectedArrayPath)
+  PYB11_FILTER_PARAMETER(DataArrayPath, NormArrayPath)
+  PYB11_FILTER_PARAMETER(float, PSpace)
   PYB11_PROPERTY(DataArrayPath SelectedArrayPath READ getSelectedArrayPath WRITE setSelectedArrayPath)
   PYB11_PROPERTY(DataArrayPath NormArrayPath READ getNormArrayPath WRITE setNormArrayPath)
   PYB11_PROPERTY(float PSpace READ getPSpace WRITE setPSpace)
+#endif
 
 public:
-  SIMPL_SHARED_POINTERS(FindNorm)
-  SIMPL_FILTER_NEW_MACRO(FindNorm)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(FindNorm, AbstractFilter)
+  using Self = FindNorm;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<FindNorm> New();
+
+  /**
+   * @brief Returns the name of the class for FindNorm
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for FindNorm
+   */
+  static QString ClassName();
 
   ~FindNorm() override;
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, SelectedArrayPath)
+  /**
+   * @brief Setter property for SelectedArrayPath
+   */
+  void setSelectedArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for SelectedArrayPath
+   * @return Value of SelectedArrayPath
+   */
+  DataArrayPath getSelectedArrayPath() const;
+
   Q_PROPERTY(DataArrayPath SelectedArrayPath READ getSelectedArrayPath WRITE setSelectedArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, NormArrayPath)
+  /**
+   * @brief Setter property for NormArrayPath
+   */
+  void setNormArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for NormArrayPath
+   * @return Value of NormArrayPath
+   */
+  DataArrayPath getNormArrayPath() const;
+
   Q_PROPERTY(DataArrayPath NormArrayPath READ getNormArrayPath WRITE setNormArrayPath)
 
-  SIMPL_FILTER_PARAMETER(float, PSpace)
+  /**
+   * @brief Setter property for PSpace
+   */
+  void setPSpace(float value);
+  /**
+   * @brief Getter property for PSpace
+   * @return Value of PSpace
+   */
+  float getPSpace() const;
+
   Q_PROPERTY(float PSpace READ getPSpace WRITE setPSpace)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -95,23 +149,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -128,41 +182,13 @@ public:
    */
   void execute() override;
 
-  /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-signals:
-  /**
-    * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
-
 protected:
   FindNorm();
 
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -170,8 +196,15 @@ protected:
   void initialize();
 
 private:
-  DEFINE_IDATAARRAY_VARIABLE(InArray)
-  DEFINE_DATAARRAY_VARIABLE(float, Norm)
+  IDataArrayWkPtrType m_InArrayPtr;
+  void* m_InArray = nullptr;
+
+  std::weak_ptr<DataArray<float>> m_NormPtr;
+  float* m_Norm = nullptr;
+
+  DataArrayPath m_SelectedArrayPath = {};
+  DataArrayPath m_NormArrayPath = {};
+  float m_PSpace = {};
 
 public:
   FindNorm(const FindNorm&) = delete;            // Copy Constructor Not Implemented

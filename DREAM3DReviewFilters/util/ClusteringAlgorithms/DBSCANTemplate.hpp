@@ -43,7 +43,6 @@
 #include <tbb/task_scheduler_init.h>
 #endif
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
@@ -125,8 +124,34 @@ template<typename T>
 class DBSCANTemplate
 {
 public:
-  SIMPL_SHARED_POINTERS(DBSCANTemplate)
-  SIMPL_TYPE_MACRO(DBSCANTemplate)
+  using Self = DBSCANTemplate;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer()
+  {
+    return Pointer(static_cast<Self*>(nullptr));
+  }
+
+  /**
+   * @brief Returns the name of the class for DBSCANTemplate
+   */
+  /**
+   * @brief Returns the name of the class for DBSCANTemplate
+   */
+  QString getNameOfClass() const
+  {
+    return QString("DBSCANTemplate");
+  }
+
+  /**
+   * @brief Returns the name of the class for DBSCANTemplate
+   */
+  QString ClassName()
+  {
+    return QString("DBSCANTemplate");
+  }
 
   DBSCANTemplate() {}
   virtual ~DBSCANTemplate() {}

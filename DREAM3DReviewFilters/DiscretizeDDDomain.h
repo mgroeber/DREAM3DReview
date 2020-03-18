@@ -36,17 +36,19 @@
 
 #pragma once
 
+#include <memory>
+
 #include <QtCore/QString>
 #include <set>
 
+#include "SIMPLib/SIMPLib.h"
 #include "SIMPLib/Common/Constants.h"
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/DataArrays/IDataArray.h"
 #include "SIMPLib/DataContainers/DataContainer.h"
 #include "SIMPLib/FilterParameters/FloatVec3FilterParameter.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/Geometry/MeshStructs.h"
-#include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 
@@ -62,53 +64,123 @@
 class DREAM3DReview_EXPORT DiscretizeDDDomain : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(DiscretizeDDDomain SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(DiscretizeDDDomain)
+  PYB11_FILTER_NEW_MACRO(DiscretizeDDDomain)
+  PYB11_FILTER_PARAMETER(DataArrayPath, EdgeDataContainerName)
+  PYB11_FILTER_PARAMETER(FloatVec3Type, CellSize)
+  PYB11_FILTER_PARAMETER(DataArrayPath, OutputDataContainerName)
+  PYB11_FILTER_PARAMETER(QString, OutputAttributeMatrixName)
+  PYB11_FILTER_PARAMETER(QString, OutputArrayName)
   PYB11_PROPERTY(DataArrayPath EdgeDataContainerName READ getEdgeDataContainerName WRITE setEdgeDataContainerName)
   PYB11_PROPERTY(FloatVec3Type CellSize READ getCellSize WRITE setCellSize)
   PYB11_PROPERTY(DataArrayPath OutputDataContainerName READ getOutputDataContainerName WRITE setOutputDataContainerName)
   PYB11_PROPERTY(QString OutputAttributeMatrixName READ getOutputAttributeMatrixName WRITE setOutputAttributeMatrixName)
   PYB11_PROPERTY(QString OutputArrayName READ getOutputArrayName WRITE setOutputArrayName)
+#endif
+
 public:
-  SIMPL_SHARED_POINTERS(DiscretizeDDDomain)
-  SIMPL_FILTER_NEW_MACRO(DiscretizeDDDomain)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(DiscretizeDDDomain, AbstractFilter)
+  using Self = DiscretizeDDDomain;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<DiscretizeDDDomain> New();
+
+  /**
+   * @brief Returns the name of the class for DiscretizeDDDomain
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for DiscretizeDDDomain
+   */
+  static QString ClassName();
 
   ~DiscretizeDDDomain() override;
-  SIMPL_FILTER_PARAMETER(DataArrayPath, EdgeDataContainerName)
+  /**
+   * @brief Setter property for EdgeDataContainerName
+   */
+  void setEdgeDataContainerName(const DataArrayPath& value);
+  /**
+   * @brief Getter property for EdgeDataContainerName
+   * @return Value of EdgeDataContainerName
+   */
+  DataArrayPath getEdgeDataContainerName() const;
+
   Q_PROPERTY(DataArrayPath EdgeDataContainerName READ getEdgeDataContainerName WRITE setEdgeDataContainerName)
 
-  SIMPL_FILTER_PARAMETER(FloatVec3Type, CellSize)
+  /**
+   * @brief Setter property for CellSize
+   */
+  void setCellSize(const FloatVec3Type& value);
+  /**
+   * @brief Getter property for CellSize
+   * @return Value of CellSize
+   */
+  FloatVec3Type getCellSize() const;
+
   Q_PROPERTY(FloatVec3Type CellSize READ getCellSize WRITE setCellSize)
 
   // The user selects a new DataContainerName
-  SIMPL_FILTER_PARAMETER(DataArrayPath, OutputDataContainerName)
+  /**
+   * @brief Setter property for OutputDataContainerName
+   */
+  void setOutputDataContainerName(const DataArrayPath& value);
+  /**
+   * @brief Getter property for OutputDataContainerName
+   * @return Value of OutputDataContainerName
+   */
+  DataArrayPath getOutputDataContainerName() const;
+
   Q_PROPERTY(DataArrayPath OutputDataContainerName READ getOutputDataContainerName WRITE setOutputDataContainerName)
   // Name the new AttributeMatrix that will get created
-  SIMPL_FILTER_PARAMETER(QString, OutputAttributeMatrixName)
+  /**
+   * @brief Setter property for OutputAttributeMatrixName
+   */
+  void setOutputAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for OutputAttributeMatrixName
+   * @return Value of OutputAttributeMatrixName
+   */
+  QString getOutputAttributeMatrixName() const;
+
   Q_PROPERTY(QString OutputAttributeMatrixName READ getOutputAttributeMatrixName WRITE setOutputAttributeMatrixName)
 
   // Give the created data array a name
-  SIMPL_FILTER_PARAMETER(QString, OutputArrayName)
+  /**
+   * @brief Setter property for OutputArrayName
+   */
+  void setOutputArrayName(const QString& value);
+  /**
+   * @brief Getter property for OutputArrayName
+   * @return Value of OutputArrayName
+   */
+  QString getOutputArrayName() const;
+
   Q_PROPERTY(QString OutputArrayName READ getOutputArrayName WRITE setOutputArrayName)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
    */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -118,23 +190,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
   /**
    * @brief This method will instantiate all the end user settable options/parameters
    * for this filter
@@ -152,17 +224,6 @@ public:
    */
   void execute() override;
 
-  /**
-   * @brief This function runs some sanity checks on the DataContainer and inputs
-   * in an attempt to ensure the filter can process the inputs.
-   */
-  void preflight() override;
-
-signals:
-  void updateFilterParameters(AbstractFilter* filter);
-  void parametersChanged();
-  void preflightAboutToExecute();
-  void preflightExecuted();
 
 protected:
   DiscretizeDDDomain();
@@ -170,7 +231,7 @@ protected:
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -178,7 +239,14 @@ protected:
   void initialize();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(int32_t, OutputArray)
+  std::weak_ptr<DataArray<int32_t>> m_OutputArrayPtr;
+  int32_t* m_OutputArray = nullptr;
+
+  DataArrayPath m_EdgeDataContainerName = {};
+  FloatVec3Type m_CellSize = {};
+  DataArrayPath m_OutputDataContainerName = {};
+  QString m_OutputAttributeMatrixName = {};
+  QString m_OutputArrayName = {};
 
 public:
   DiscretizeDDDomain(const DiscretizeDDDomain&) = delete;            // Copy Constructor Not Implemented

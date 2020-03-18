@@ -35,16 +35,18 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #pragma once
 
+#include <memory>
+
 #include <QtCore/QDateTime>
 #include <QtCore/QScopedPointer>
 #include <QtCore/QString>
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
+#include "SIMPLib/SIMPLib.h"
 #include "SIMPLib/DataArrays/IDataArray.h"
 #include "SIMPLib/DataArrays/StringDataArray.h"
 #include "SIMPLib/DataContainers/DataContainer.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
-#include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewFilters/HEDM/MicPhase.h"
 
@@ -81,71 +83,193 @@ class ReadMicDataPrivate;
 class DREAM3DReview_EXPORT ReadMicData : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(ReadMicData SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(ReadMicData)
+  PYB11_FILTER_NEW_MACRO(ReadMicData)
+  PYB11_FILTER_PARAMETER(DataArrayPath, DataContainerName)
+  PYB11_FILTER_PARAMETER(QString, CellEnsembleAttributeMatrixName)
+  PYB11_FILTER_PARAMETER(QString, CellAttributeMatrixName)
+  PYB11_FILTER_PARAMETER(bool, FileWasRead)
+  PYB11_FILTER_PARAMETER(QString, InputFile)
   PYB11_PROPERTY(DataArrayPath DataContainerName READ getDataContainerName WRITE setDataContainerName)
   PYB11_PROPERTY(QString CellEnsembleAttributeMatrixName READ getCellEnsembleAttributeMatrixName WRITE setCellEnsembleAttributeMatrixName)
   PYB11_PROPERTY(QString CellAttributeMatrixName READ getCellAttributeMatrixName WRITE setCellAttributeMatrixName)
   PYB11_PROPERTY(bool FileWasRead READ getFileWasRead WRITE setFileWasRead)
   PYB11_PROPERTY(QString InputFile READ getInputFile WRITE setInputFile)
+#endif
+
   Q_DECLARE_PRIVATE(ReadMicData)
 
 public:
-  SIMPL_SHARED_POINTERS(ReadMicData)
-  SIMPL_FILTER_NEW_MACRO(ReadMicData)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(ReadMicData, AbstractFilter)
+  using Self = ReadMicData;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<ReadMicData> New();
+
+  /**
+   * @brief Returns the name of the class for ReadMicData
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for ReadMicData
+   */
+  static QString ClassName();
 
   ~ReadMicData() override;
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, DataContainerName)
+  /**
+   * @brief Setter property for DataContainerName
+   */
+  void setDataContainerName(const DataArrayPath& value);
+  /**
+   * @brief Getter property for DataContainerName
+   * @return Value of DataContainerName
+   */
+  DataArrayPath getDataContainerName() const;
+
   Q_PROPERTY(DataArrayPath DataContainerName READ getDataContainerName WRITE setDataContainerName)
 
-  SIMPL_FILTER_PARAMETER(QString, CellEnsembleAttributeMatrixName)
+  /**
+   * @brief Setter property for CellEnsembleAttributeMatrixName
+   */
+  void setCellEnsembleAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for CellEnsembleAttributeMatrixName
+   * @return Value of CellEnsembleAttributeMatrixName
+   */
+  QString getCellEnsembleAttributeMatrixName() const;
+
   Q_PROPERTY(QString CellEnsembleAttributeMatrixName READ getCellEnsembleAttributeMatrixName WRITE setCellEnsembleAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, CellAttributeMatrixName)
+  /**
+   * @brief Setter property for CellAttributeMatrixName
+   */
+  void setCellAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for CellAttributeMatrixName
+   * @return Value of CellAttributeMatrixName
+   */
+  QString getCellAttributeMatrixName() const;
+
   Q_PROPERTY(QString CellAttributeMatrixName READ getCellAttributeMatrixName WRITE setCellAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(bool, FileWasRead)
+  /**
+   * @brief Setter property for FileWasRead
+   */
+  void setFileWasRead(bool value);
+  /**
+   * @brief Getter property for FileWasRead
+   * @return Value of FileWasRead
+   */
+  bool getFileWasRead() const;
+
   Q_PROPERTY(bool FileWasRead READ getFileWasRead)
 
-  SIMPL_INSTANCE_STRING_PROPERTY(PhaseNameArrayName)
-  SIMPL_INSTANCE_STRING_PROPERTY(MaterialNameArrayName)
+  /**
+   * @brief Setter property for PhaseNameArrayName
+   */
+  void setPhaseNameArrayName(const QString& value);
+  /**
+   * @brief Getter property for PhaseNameArrayName
+   * @return Value of PhaseNameArrayName
+   */
+  QString getPhaseNameArrayName() const;
 
-  SIMPL_FILTER_PARAMETER(QString, InputFile)
+  /**
+   * @brief Setter property for MaterialNameArrayName
+   */
+  void setMaterialNameArrayName(const QString& value);
+  /**
+   * @brief Getter property for MaterialNameArrayName
+   * @return Value of MaterialNameArrayName
+   */
+  QString getMaterialNameArrayName() const;
+
+  /**
+   * @brief Setter property for InputFile
+   */
+  void setInputFile(const QString& value);
+  /**
+   * @brief Getter property for InputFile
+   * @return Value of InputFile
+   */
+  QString getInputFile() const;
+
   Q_PROPERTY(QString InputFile READ getInputFile WRITE setInputFile)
 
-  SIMPL_INSTANCE_PROPERTY(QString, CellEulerAnglesArrayName)
-  SIMPL_INSTANCE_PROPERTY(QString, CellPhasesArrayName)
-  SIMPL_INSTANCE_PROPERTY(QString, CrystalStructuresArrayName)
-  SIMPL_INSTANCE_PROPERTY(QString, LatticeConstantsArrayName)
+  /**
+   * @brief Setter property for CellEulerAnglesArrayName
+   */
+  void setCellEulerAnglesArrayName(const QString& value);
+  /**
+   * @brief Getter property for CellEulerAnglesArrayName
+   * @return Value of CellEulerAnglesArrayName
+   */
+  QString getCellEulerAnglesArrayName() const;
+
+  /**
+   * @brief Setter property for CellPhasesArrayName
+   */
+  void setCellPhasesArrayName(const QString& value);
+  /**
+   * @brief Getter property for CellPhasesArrayName
+   * @return Value of CellPhasesArrayName
+   */
+  QString getCellPhasesArrayName() const;
+
+  /**
+   * @brief Setter property for CrystalStructuresArrayName
+   */
+  void setCrystalStructuresArrayName(const QString& value);
+  /**
+   * @brief Getter property for CrystalStructuresArrayName
+   * @return Value of CrystalStructuresArrayName
+   */
+  QString getCrystalStructuresArrayName() const;
+
+  /**
+   * @brief Setter property for LatticeConstantsArrayName
+   */
+  void setLatticeConstantsArrayName(const QString& value);
+  /**
+   * @brief Getter property for LatticeConstantsArrayName
+   * @return Value of LatticeConstantsArrayName
+   */
+  QString getLatticeConstantsArrayName() const;
 
   /**
    * @brief This returns the group that the filter belonds to. You can select
    * a different group if you want. The string returned here will be displayed
    * in the GUI for the filter
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
   AbstractFilter::Pointer newFilterInstance(bool copyFilterParameters) const override;
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief This returns the group that the filter belonds to. You can select
    * a different group if you want. The string returned here will be displayed
    * in the GUI for the filter
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief This returns a string that is displayed in the GUI. It should be readable
    * and understandable by humans.
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief This method will instantiate all the end user settable options/parameters
@@ -164,29 +288,62 @@ public:
    */
   void execute() override;
 
-  /**
-   * @brief This function runs some sanity checks on the DataContainer and inputs
-   * in an attempt to ensure the filter can process the inputs.
-   */
-  void preflight() override;
 
   /* These are non-exposed to the user through the GUI. Manual Pipelines are OK to set them */
-  SIMPL_INSTANCE_PROPERTY(uint32_t, RefFrameZDir)
-  SIMPL_INSTANCE_PROPERTY(Ebsd::OEM, Manufacturer)
+  /**
+   * @brief Setter property for RefFrameZDir
+   */
+  void setRefFrameZDir(uint32_t value);
+  /**
+   * @brief Getter property for RefFrameZDir
+   * @return Value of RefFrameZDir
+   */
+  uint32_t getRefFrameZDir() const;
 
-  SIMPL_PIMPL_PROPERTY_DECL(QString, InputFile_Cache)
-  SIMPL_PIMPL_PROPERTY_DECL(QDateTime, TimeStamp_Cache)
-  SIMPL_PIMPL_PROPERTY_DECL(Mic_Private_Data, Data)
+  /**
+   * @brief Setter property for Manufacturer
+   */
+  void setManufacturer(const Ebsd::OEM& value);
+  /**
+   * @brief Getter property for Manufacturer
+   * @return Value of Manufacturer
+   */
+  Ebsd::OEM getManufacturer() const;
+
+  /**
+   * @brief Setter property for InputFile_Cache
+   */
+  void setInputFile_Cache(const QString& value);
+  /**
+   * @brief Getter property for InputFile_Cache
+   * @return Value of InputFile_Cache
+   */
+  QString getInputFile_Cache() const;
+
+  /**
+   * @brief Setter property for TimeStamp_Cache
+   */
+  void setTimeStamp_Cache(const QDateTime& value);
+  /**
+   * @brief Getter property for TimeStamp_Cache
+   * @return Value of TimeStamp_Cache
+   */
+  QDateTime getTimeStamp_Cache() const;
+
+  /**
+   * @brief Setter property for Data
+   */
+  void setData(const Mic_Private_Data& value);
+  /**
+   * @brief Getter property for Data
+   * @return Value of Data
+   */
+  Mic_Private_Data getData() const;
+
   Q_PROPERTY(Mic_Private_Data Data READ getData WRITE setData)
 
 public slots:
   void flushCache();
-
-signals:
-  void updateFilterParameters(AbstractFilter* filter);
-  void parametersChanged();
-  void preflightAboutToExecute();
-  void preflightExecuted();
 
 protected:
   ReadMicData();
@@ -194,7 +351,7 @@ protected:
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -223,12 +380,30 @@ protected:
   void populateMicData(MicReader* reader, DataContainer::Pointer m, std::vector<size_t> dims, MIC_READ_FLAG = MIC_FULL_FILE);
 
 private:
-  QScopedPointer<ReadMicDataPrivate> const d_ptr;
+  std::weak_ptr<DataArray<int32_t>> m_CellPhasesPtr;
+  int32_t* m_CellPhases = nullptr;
+  std::weak_ptr<DataArray<float>> m_CellEulerAnglesPtr;
+  float* m_CellEulerAngles = nullptr;
+  std::weak_ptr<DataArray<uint32_t>> m_CrystalStructuresPtr;
+  uint32_t* m_CrystalStructures = nullptr;
+  std::weak_ptr<DataArray<float>> m_LatticeConstantsPtr;
+  float* m_LatticeConstants = nullptr;
 
-  DEFINE_DATAARRAY_VARIABLE(int32_t, CellPhases)
-  DEFINE_DATAARRAY_VARIABLE(float, CellEulerAngles)
-  DEFINE_DATAARRAY_VARIABLE(uint32_t, CrystalStructures)
-  DEFINE_DATAARRAY_VARIABLE(float, LatticeConstants)
+  DataArrayPath m_DataContainerName = {};
+  QString m_CellEnsembleAttributeMatrixName = {};
+  QString m_CellAttributeMatrixName = {};
+  bool m_FileWasRead = {};
+  QString m_PhaseNameArrayName = {};
+  QString m_MaterialNameArrayName = {};
+  QString m_InputFile = {};
+  QString m_CellEulerAnglesArrayName = {};
+  QString m_CellPhasesArrayName = {};
+  QString m_CrystalStructuresArrayName = {};
+  QString m_LatticeConstantsArrayName = {};
+  uint32_t m_RefFrameZDir = {};
+  Ebsd::OEM m_Manufacturer = {};
+
+  QScopedPointer<ReadMicDataPrivate> const d_ptr;
 
 public:
   ReadMicData(const ReadMicData&) = delete;            // Copy Constructor Not Implemented

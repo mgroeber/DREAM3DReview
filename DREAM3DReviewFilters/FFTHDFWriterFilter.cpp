@@ -2,11 +2,16 @@
  * Your License or Copyright can go here
  */
 
+#include <memory>
+
 #include "FFTHDFWriterFilter.h"
 
 #include <QtCore/QDir>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersWriter.h"
 #include "SIMPLib/FilterParameters/BooleanFilterParameter.h"
@@ -18,6 +23,8 @@
 #include "SIMPLib/Math/SIMPLibMath.h"
 #include "SIMPLib/SIMPLibVersion.h"
 #include "SIMPLib/Utilities/FileSystemPathHelper.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "H5Support/H5ScopedSentinel.h"
 #include "H5Support/QH5Lite.h"
@@ -132,7 +139,7 @@ void FFTHDFWriterFilter::dataCheck()
   clearWarningCode();
   QString ss;
 
-  getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom, AbstractFilter>(this, getFeatureIdsArrayPath().getDataContainerName());
+  getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom>(this, getFeatureIdsArrayPath().getDataContainerName());
 
   QFileInfo fi(getOutputFile());
   if(fi.suffix().compare("") == 0)
@@ -144,7 +151,7 @@ void FFTHDFWriterFilter::dataCheck()
   QVector<DataArrayPath> dataArrayPaths;
 
   std::vector<size_t> cDims(1, 1);
-  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getFeatureIdsArrayPath(),
+  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getFeatureIdsArrayPath(),
                                                                                                         cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeatureIdsPtr.lock())                                                                         /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -155,7 +162,7 @@ void FFTHDFWriterFilter::dataCheck()
     dataArrayPaths.push_back(getFeatureIdsArrayPath());
   }
 
-  m_CellPhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getCellPhasesArrayPath(),
+  m_CellPhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getCellPhasesArrayPath(),
                                                                                                         cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CellPhasesPtr.lock())                                                                         /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -167,7 +174,7 @@ void FFTHDFWriterFilter::dataCheck()
   }
 
   cDims[0] = 3;
-  m_CellEulerAnglesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getCellEulerAnglesArrayPath(),
+  m_CellEulerAnglesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getCellEulerAnglesArrayPath(),
                                                                                                            cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CellEulerAnglesPtr.lock())                                                                       /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -178,21 +185,7 @@ void FFTHDFWriterFilter::dataCheck()
     dataArrayPaths.push_back(getCellEulerAnglesArrayPath());
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrayPaths);
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void FFTHDFWriterFilter::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrayPaths);
 }
 
 // -----------------------------------------------------------------------------
@@ -346,7 +339,7 @@ AbstractFilter::Pointer FFTHDFWriterFilter::newFilterInstance(bool copyFilterPar
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FFTHDFWriterFilter::getCompiledLibraryName() const
+QString FFTHDFWriterFilter::getCompiledLibraryName() const
 {
   return MASSIFUtilitiesConstants::MASSIFUtilitiesBaseName;
 }
@@ -354,7 +347,7 @@ const QString FFTHDFWriterFilter::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FFTHDFWriterFilter::getBrandingString() const
+QString FFTHDFWriterFilter::getBrandingString() const
 {
   return "MASSIFUtilities Plugin";
 }
@@ -362,7 +355,7 @@ const QString FFTHDFWriterFilter::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FFTHDFWriterFilter::getFilterVersion() const
+QString FFTHDFWriterFilter::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -373,7 +366,7 @@ const QString FFTHDFWriterFilter::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FFTHDFWriterFilter::getGroupName() const
+QString FFTHDFWriterFilter::getGroupName() const
 {
   return SIMPL::FilterGroups::IOFilters;
 }
@@ -381,7 +374,7 @@ const QString FFTHDFWriterFilter::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid FFTHDFWriterFilter::getUuid()
+QUuid FFTHDFWriterFilter::getUuid() const
 {
   return QUuid("{b6b1ba7c-14aa-5c6f-9436-8c46face6053}");
 }
@@ -389,7 +382,7 @@ const QUuid FFTHDFWriterFilter::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FFTHDFWriterFilter::getSubGroupName() const
+QString FFTHDFWriterFilter::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::OutputFilters;
 }
@@ -397,7 +390,108 @@ const QString FFTHDFWriterFilter::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FFTHDFWriterFilter::getHumanLabel() const
+QString FFTHDFWriterFilter::getHumanLabel() const
 {
   return "Export MASSIF Data (HDF5)";
+}
+
+// -----------------------------------------------------------------------------
+FFTHDFWriterFilter::Pointer FFTHDFWriterFilter::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<FFTHDFWriterFilter> FFTHDFWriterFilter::New()
+{
+  struct make_shared_enabler : public FFTHDFWriterFilter
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString FFTHDFWriterFilter::getNameOfClass() const
+{
+  return QString("FFTHDFWriterFilter");
+}
+
+// -----------------------------------------------------------------------------
+QString FFTHDFWriterFilter::ClassName()
+{
+  return QString("FFTHDFWriterFilter");
+}
+
+// -----------------------------------------------------------------------------
+void FFTHDFWriterFilter::setOutputFile(const QString& value)
+{
+  m_OutputFile = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FFTHDFWriterFilter::getOutputFile() const
+{
+  return m_OutputFile;
+}
+
+// -----------------------------------------------------------------------------
+void FFTHDFWriterFilter::setWritePipeline(bool value)
+{
+  m_WritePipeline = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FFTHDFWriterFilter::getWritePipeline() const
+{
+  return m_WritePipeline;
+}
+
+// -----------------------------------------------------------------------------
+void FFTHDFWriterFilter::setAppendToExisting(bool value)
+{
+  m_AppendToExisting = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FFTHDFWriterFilter::getAppendToExisting() const
+{
+  return m_AppendToExisting;
+}
+
+// -----------------------------------------------------------------------------
+void FFTHDFWriterFilter::setFeatureIdsArrayPath(const DataArrayPath& value)
+{
+  m_FeatureIdsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FFTHDFWriterFilter::getFeatureIdsArrayPath() const
+{
+  return m_FeatureIdsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FFTHDFWriterFilter::setCellPhasesArrayPath(const DataArrayPath& value)
+{
+  m_CellPhasesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FFTHDFWriterFilter::getCellPhasesArrayPath() const
+{
+  return m_CellPhasesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FFTHDFWriterFilter::setCellEulerAnglesArrayPath(const DataArrayPath& value)
+{
+  m_CellEulerAnglesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FFTHDFWriterFilter::getCellEulerAnglesArrayPath() const
+{
+  return m_CellEulerAnglesArrayPath;
 }

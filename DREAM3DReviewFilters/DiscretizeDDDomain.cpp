@@ -34,9 +34,14 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "DiscretizeDDDomain.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataContainerCreationFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataContainerSelectionFilterParameter.h"
@@ -48,6 +53,8 @@
 #include "SIMPLib/Geometry/ImageGeom.h"
 #include "SIMPLib/Math/GeometryMath.h"
 #include "SIMPLib/Math/SIMPLibMath.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
 
@@ -163,7 +170,7 @@ void DiscretizeDDDomain::dataCheck()
     return;
   }
 
-  EdgeGeom::Pointer edges = m->getPrereqGeometry<EdgeGeom, AbstractFilter>(this);
+  EdgeGeom::Pointer edges = m->getPrereqGeometry<EdgeGeom>(this);
   if(getErrorCode() < 0)
   {
     return;
@@ -181,7 +188,7 @@ void DiscretizeDDDomain::dataCheck()
   }
 
   // Create a new DataContainer
-  DataContainer::Pointer m2 = getDataContainerArray()->createNonPrereqDataContainer<AbstractFilter>(this, getOutputDataContainerName(), DataContainerID);
+  DataContainer::Pointer m2 = getDataContainerArray()->createNonPrereqDataContainer(this, getOutputDataContainerName(), DataContainerID);
   if(getErrorCode() < 0)
   {
     return;
@@ -202,25 +209,13 @@ void DiscretizeDDDomain::dataCheck()
   // Get the name and create the array in the new data attrMat
   std::vector<size_t> dims(1, 1);
   tempPath.update(getOutputDataContainerName().getDataContainerName(), getOutputAttributeMatrixName(), getOutputArrayName());
-  m_OutputArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0, dims, "", DataArrayID31);
+  m_OutputArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, 0, dims, "", DataArrayID31);
   if(nullptr != m_OutputArrayPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_OutputArray = m_OutputArrayPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void DiscretizeDDDomain::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -437,7 +432,7 @@ AbstractFilter::Pointer DiscretizeDDDomain::newFilterInstance(bool copyFilterPar
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString DiscretizeDDDomain::getCompiledLibraryName() const
+QString DiscretizeDDDomain::getCompiledLibraryName() const
 {
   return DDDAnalysisToolboxConstants::DDDAnalysisToolboxBaseName;
 }
@@ -445,7 +440,7 @@ const QString DiscretizeDDDomain::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString DiscretizeDDDomain::getBrandingString() const
+QString DiscretizeDDDomain::getBrandingString() const
 {
   return "DDDAnalysisToolbox";
 }
@@ -453,7 +448,7 @@ const QString DiscretizeDDDomain::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString DiscretizeDDDomain::getFilterVersion() const
+QString DiscretizeDDDomain::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -464,7 +459,7 @@ const QString DiscretizeDDDomain::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString DiscretizeDDDomain::getGroupName() const
+QString DiscretizeDDDomain::getGroupName() const
 {
   return SIMPL::FilterGroups::Unsupported;
 }
@@ -472,7 +467,7 @@ const QString DiscretizeDDDomain::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid DiscretizeDDDomain::getUuid()
+QUuid DiscretizeDDDomain::getUuid() const
 {
   return QUuid("{ebdfe707-0c9c-5552-89f6-6ee4a1e0891b}");
 }
@@ -480,7 +475,7 @@ const QUuid DiscretizeDDDomain::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString DiscretizeDDDomain::getSubGroupName() const
+QString DiscretizeDDDomain::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::MiscFilters;
 }
@@ -488,7 +483,96 @@ const QString DiscretizeDDDomain::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString DiscretizeDDDomain::getHumanLabel() const
+QString DiscretizeDDDomain::getHumanLabel() const
 {
   return "Discretize DDD Domain";
+}
+
+// -----------------------------------------------------------------------------
+DiscretizeDDDomain::Pointer DiscretizeDDDomain::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<DiscretizeDDDomain> DiscretizeDDDomain::New()
+{
+  struct make_shared_enabler : public DiscretizeDDDomain
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString DiscretizeDDDomain::getNameOfClass() const
+{
+  return QString("DiscretizeDDDomain");
+}
+
+// -----------------------------------------------------------------------------
+QString DiscretizeDDDomain::ClassName()
+{
+  return QString("DiscretizeDDDomain");
+}
+
+// -----------------------------------------------------------------------------
+void DiscretizeDDDomain::setEdgeDataContainerName(const DataArrayPath& value)
+{
+  m_EdgeDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath DiscretizeDDDomain::getEdgeDataContainerName() const
+{
+  return m_EdgeDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void DiscretizeDDDomain::setCellSize(const FloatVec3Type& value)
+{
+  m_CellSize = value;
+}
+
+// -----------------------------------------------------------------------------
+FloatVec3Type DiscretizeDDDomain::getCellSize() const
+{
+  return m_CellSize;
+}
+
+// -----------------------------------------------------------------------------
+void DiscretizeDDDomain::setOutputDataContainerName(const DataArrayPath& value)
+{
+  m_OutputDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath DiscretizeDDDomain::getOutputDataContainerName() const
+{
+  return m_OutputDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void DiscretizeDDDomain::setOutputAttributeMatrixName(const QString& value)
+{
+  m_OutputAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString DiscretizeDDDomain::getOutputAttributeMatrixName() const
+{
+  return m_OutputAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void DiscretizeDDDomain::setOutputArrayName(const QString& value)
+{
+  m_OutputArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString DiscretizeDDDomain::getOutputArrayName() const
+{
+  return m_OutputArrayName;
 }

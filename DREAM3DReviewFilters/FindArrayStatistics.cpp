@@ -33,6 +33,8 @@
 *
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "FindArrayStatistics.h"
 
 #include <cmath>
@@ -48,7 +50,10 @@
 #include <tbb/task_scheduler_init.h>
 #endif
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/DataArrays/NeighborList.hpp"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
@@ -61,6 +66,7 @@
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
 #include "SIMPLib/Math/SIMPLibMath.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -192,7 +198,7 @@ void FindArrayStatistics::dataCheck()
 
   QVector<DataArrayPath> dataArrayPaths;
 
-  m_InputArrayPtr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getSelectedArrayPath());
+  m_InputArrayPtr = getDataContainerArray()->getPrereqIDataArrayFromPath(this, getSelectedArrayPath());
 
   if(getErrorCode() < 0)
   {
@@ -209,7 +215,7 @@ void FindArrayStatistics::dataCheck()
 
   if(!getComputeByIndex())
   {
-    AttributeMatrix::Pointer destAttrMat = getDataContainerArray()->getPrereqAttributeMatrixFromPath<AbstractFilter>(this, getDestinationAttributeMatrix(), -301);
+    AttributeMatrix::Pointer destAttrMat = getDataContainerArray()->getPrereqAttributeMatrixFromPath(this, getDestinationAttributeMatrix(), -301);
     if(getErrorCode() < 0)
     {
       return;
@@ -243,7 +249,7 @@ void FindArrayStatistics::dataCheck()
 
   if(getComputeByIndex())
   {
-    m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getFeatureIdsArrayPath(), cDims);
+    m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getFeatureIdsArrayPath(), cDims);
     if(m_FeatureIdsPtr.lock())
     {
       m_FeatureIds = m_FeatureIdsPtr.lock()->getPointer(0);
@@ -259,7 +265,7 @@ void FindArrayStatistics::dataCheck()
   if(m_FindLength)
   {
     DataArrayPath path(getDestinationAttributeMatrix().getDataContainerName(), getDestinationAttributeMatrix().getAttributeMatrixName(), getLengthArrayName());
-    m_LengthPtr = getDataContainerArray()->createNonPrereqArrayFromPath<MeshIndexArrayType, AbstractFilter, MeshIndexType>(this, path, 0, cDims, "", DataArrayID31);
+    m_LengthPtr = getDataContainerArray()->createNonPrereqArrayFromPath<MeshIndexArrayType>(this, path, 0, cDims, "", DataArrayID31);
     if(m_LengthPtr.lock())
     {
       m_Length = m_LengthPtr.lock()->getPointer(0);
@@ -268,7 +274,7 @@ void FindArrayStatistics::dataCheck()
 
   if(getUseMask())
   {
-    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), cDims);
+    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getMaskArrayPath(), cDims);
     if(m_MaskPtr.lock())
     {
       m_Mask = m_MaskPtr.lock()->getPointer(0);
@@ -287,7 +293,7 @@ void FindArrayStatistics::dataCheck()
       setErrorCondition(-11003, ss);
     }
     DataArrayPath path(getSelectedArrayPath().getDataContainerName(), getSelectedArrayPath().getAttributeMatrixName(), getStandardizedArrayName());
-    m_StandardizedPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, path, 0, cDims, "", DataArrayID32);
+    m_StandardizedPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, path, 0, cDims, "", DataArrayID32);
     if(m_StandardizedPtr.lock())
     {
       m_Standardized = m_StandardizedPtr.lock()->getPointer(0);
@@ -298,22 +304,9 @@ void FindArrayStatistics::dataCheck()
     }
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrayPaths);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrayPaths);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void FindArrayStatistics::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -409,7 +402,7 @@ template <template <typename, typename...> class C, typename T, typename... Ts> 
   std::vector<double> difference(source.size());
   float sum = std::accumulate(std::begin(source), std::end(source), 0.0f);
   float mean = static_cast<double>(sum / source.size());
-  std::transform(std::begin(source), std::end(source), std::begin(difference), std::bind2nd(std::minus<float>(), mean));
+  std::transform(std::begin(source), std::end(source), std::begin(difference), [mean](float a) { return a - mean; });
   float squaredSum = std::inner_product(std::begin(difference), std::end(difference), std::begin(difference), 0.0f);
   return std::sqrt(squaredSum / source.size());
 }
@@ -893,7 +886,7 @@ AbstractFilter::Pointer FindArrayStatistics::newFilterInstance(bool copyFilterPa
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindArrayStatistics::getCompiledLibraryName() const
+QString FindArrayStatistics::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -901,7 +894,7 @@ const QString FindArrayStatistics::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindArrayStatistics::getBrandingString() const
+QString FindArrayStatistics::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -909,7 +902,7 @@ const QString FindArrayStatistics::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindArrayStatistics::getFilterVersion() const
+QString FindArrayStatistics::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -920,7 +913,7 @@ const QString FindArrayStatistics::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindArrayStatistics::getGroupName() const
+QString FindArrayStatistics::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterGroups::DREAM3DReviewFilters;
 }
@@ -928,7 +921,7 @@ const QString FindArrayStatistics::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid FindArrayStatistics::getUuid()
+QUuid FindArrayStatistics::getUuid() const
 {
   return QUuid("{bf35f515-294b-55ed-8c69-211b7e69cb56}");
 }
@@ -936,7 +929,7 @@ const QUuid FindArrayStatistics::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindArrayStatistics::getSubGroupName() const
+QString FindArrayStatistics::getSubGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::StatisticsFilters;
 }
@@ -944,7 +937,300 @@ const QString FindArrayStatistics::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindArrayStatistics::getHumanLabel() const
+QString FindArrayStatistics::getHumanLabel() const
 {
   return "Find Attribute Array Statistics";
+}
+
+// -----------------------------------------------------------------------------
+FindArrayStatistics::Pointer FindArrayStatistics::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<FindArrayStatistics> FindArrayStatistics::New()
+{
+  struct make_shared_enabler : public FindArrayStatistics
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::getNameOfClass() const
+{
+  return QString("FindArrayStatistics");
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::ClassName()
+{
+  return QString("FindArrayStatistics");
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setFindLength(bool value)
+{
+  m_FindLength = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getFindLength() const
+{
+  return m_FindLength;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setFindMin(bool value)
+{
+  m_FindMin = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getFindMin() const
+{
+  return m_FindMin;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setFindMax(bool value)
+{
+  m_FindMax = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getFindMax() const
+{
+  return m_FindMax;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setFindMean(bool value)
+{
+  m_FindMean = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getFindMean() const
+{
+  return m_FindMean;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setFindMedian(bool value)
+{
+  m_FindMedian = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getFindMedian() const
+{
+  return m_FindMedian;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setFindStdDeviation(bool value)
+{
+  m_FindStdDeviation = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getFindStdDeviation() const
+{
+  return m_FindStdDeviation;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setFindSummation(bool value)
+{
+  m_FindSummation = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getFindSummation() const
+{
+  return m_FindSummation;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setUseMask(bool value)
+{
+  m_UseMask = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getUseMask() const
+{
+  return m_UseMask;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setStandardizeData(bool value)
+{
+  m_StandardizeData = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getStandardizeData() const
+{
+  return m_StandardizeData;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setComputeByIndex(bool value)
+{
+  m_ComputeByIndex = value;
+}
+
+// -----------------------------------------------------------------------------
+bool FindArrayStatistics::getComputeByIndex() const
+{
+  return m_ComputeByIndex;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setDestinationAttributeMatrix(const DataArrayPath& value)
+{
+  m_DestinationAttributeMatrix = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindArrayStatistics::getDestinationAttributeMatrix() const
+{
+  return m_DestinationAttributeMatrix;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setMaskArrayPath(const DataArrayPath& value)
+{
+  m_MaskArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindArrayStatistics::getMaskArrayPath() const
+{
+  return m_MaskArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setLengthArrayName(const QString& value)
+{
+  m_LengthArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::getLengthArrayName() const
+{
+  return m_LengthArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setMinimumArrayName(const QString& value)
+{
+  m_MinimumArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::getMinimumArrayName() const
+{
+  return m_MinimumArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setMaximumArrayName(const QString& value)
+{
+  m_MaximumArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::getMaximumArrayName() const
+{
+  return m_MaximumArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setMeanArrayName(const QString& value)
+{
+  m_MeanArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::getMeanArrayName() const
+{
+  return m_MeanArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setMedianArrayName(const QString& value)
+{
+  m_MedianArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::getMedianArrayName() const
+{
+  return m_MedianArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setStdDeviationArrayName(const QString& value)
+{
+  m_StdDeviationArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::getStdDeviationArrayName() const
+{
+  return m_StdDeviationArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setSummationArrayName(const QString& value)
+{
+  m_SummationArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::getSummationArrayName() const
+{
+  return m_SummationArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setStandardizedArrayName(const QString& value)
+{
+  m_StandardizedArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindArrayStatistics::getStandardizedArrayName() const
+{
+  return m_StandardizedArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setSelectedArrayPath(const DataArrayPath& value)
+{
+  m_SelectedArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindArrayStatistics::getSelectedArrayPath() const
+{
+  return m_SelectedArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindArrayStatistics::setFeatureIdsArrayPath(const DataArrayPath& value)
+{
+  m_FeatureIdsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindArrayStatistics::getFeatureIdsArrayPath() const
+{
+  return m_FeatureIdsArrayPath;
 }

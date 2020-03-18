@@ -35,9 +35,11 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -47,7 +49,19 @@
 class DREAM3DReview_EXPORT SteinerCompact : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(SteinerCompact SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(SteinerCompact)
+  PYB11_FILTER_NEW_MACRO(SteinerCompact)
+  PYB11_FILTER_PARAMETER(bool, VtkOutput)
+  PYB11_FILTER_PARAMETER(QString, VtkFileName)
+  PYB11_FILTER_PARAMETER(bool, TxtOutput)
+  PYB11_FILTER_PARAMETER(QString, TxtFileName)
+  PYB11_FILTER_PARAMETER(DataArrayPath, FeatureIdsArrayPath)
+  PYB11_FILTER_PARAMETER(DataArrayPath, CellPhasesArrayPath)
+  PYB11_FILTER_PARAMETER(int, Plane)
+  PYB11_FILTER_PARAMETER(int, Sites)
   PYB11_PROPERTY(bool VtkOutput READ getVtkOutput WRITE setVtkOutput)
   PYB11_PROPERTY(QString VtkFileName READ getVtkFileName WRITE setVtkFileName)
   PYB11_PROPERTY(bool TxtOutput READ getTxtOutput WRITE setTxtOutput)
@@ -56,60 +70,163 @@ class DREAM3DReview_EXPORT SteinerCompact : public AbstractFilter
   PYB11_PROPERTY(DataArrayPath CellPhasesArrayPath READ getCellPhasesArrayPath WRITE setCellPhasesArrayPath)
   PYB11_PROPERTY(int Plane READ getPlane WRITE setPlane)
   PYB11_PROPERTY(int Sites READ getSites WRITE setSites)
+#endif
 
 public:
-  SIMPL_SHARED_POINTERS(SteinerCompact)
-  SIMPL_FILTER_NEW_MACRO(SteinerCompact)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(SteinerCompact, AbstractFilter)
+  using Self = SteinerCompact;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<SteinerCompact> New();
+
+  /**
+   * @brief Returns the name of the class for SteinerCompact
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for SteinerCompact
+   */
+  static QString ClassName();
 
   ~SteinerCompact() override;
 
-  SIMPL_INSTANCE_STRING_PROPERTY(DataContainerName)
+  /**
+   * @brief Setter property for DataContainerName
+   */
+  void setDataContainerName(const QString& value);
+  /**
+   * @brief Getter property for DataContainerName
+   * @return Value of DataContainerName
+   */
+  QString getDataContainerName() const;
 
-  SIMPL_INSTANCE_STRING_PROPERTY(CellAttributeMatrixName)
+  /**
+   * @brief Setter property for CellAttributeMatrixName
+   */
+  void setCellAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for CellAttributeMatrixName
+   * @return Value of CellAttributeMatrixName
+   */
+  QString getCellAttributeMatrixName() const;
 
-  SIMPL_FILTER_PARAMETER(bool, VtkOutput)
+  /**
+   * @brief Setter property for VtkOutput
+   */
+  void setVtkOutput(bool value);
+  /**
+   * @brief Getter property for VtkOutput
+   * @return Value of VtkOutput
+   */
+  bool getVtkOutput() const;
+
   Q_PROPERTY(bool VtkOutput READ getVtkOutput WRITE setVtkOutput)
 
-  SIMPL_FILTER_PARAMETER(QString, VtkFileName)
+  /**
+   * @brief Setter property for VtkFileName
+   */
+  void setVtkFileName(const QString& value);
+  /**
+   * @brief Getter property for VtkFileName
+   * @return Value of VtkFileName
+   */
+  QString getVtkFileName() const;
+
   Q_PROPERTY(QString VtkFileName READ getVtkFileName WRITE setVtkFileName)
 
-  SIMPL_FILTER_PARAMETER(bool, TxtOutput)
+  /**
+   * @brief Setter property for TxtOutput
+   */
+  void setTxtOutput(bool value);
+  /**
+   * @brief Getter property for TxtOutput
+   * @return Value of TxtOutput
+   */
+  bool getTxtOutput() const;
+
   Q_PROPERTY(bool TxtOutput READ getTxtOutput WRITE setTxtOutput)
 
-  SIMPL_FILTER_PARAMETER(QString, TxtFileName)
+  /**
+   * @brief Setter property for TxtFileName
+   */
+  void setTxtFileName(const QString& value);
+  /**
+   * @brief Getter property for TxtFileName
+   * @return Value of TxtFileName
+   */
+  QString getTxtFileName() const;
+
   Q_PROPERTY(QString TxtFileName READ getTxtFileName WRITE setTxtFileName)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, FeatureIdsArrayPath)
+  /**
+   * @brief Setter property for FeatureIdsArrayPath
+   */
+  void setFeatureIdsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for FeatureIdsArrayPath
+   * @return Value of FeatureIdsArrayPath
+   */
+  DataArrayPath getFeatureIdsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath FeatureIdsArrayPath READ getFeatureIdsArrayPath WRITE setFeatureIdsArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, CellPhasesArrayPath)
+  /**
+   * @brief Setter property for CellPhasesArrayPath
+   */
+  void setCellPhasesArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for CellPhasesArrayPath
+   * @return Value of CellPhasesArrayPath
+   */
+  DataArrayPath getCellPhasesArrayPath() const;
+
   Q_PROPERTY(DataArrayPath CellPhasesArrayPath READ getCellPhasesArrayPath WRITE setCellPhasesArrayPath)
 
-  SIMPL_FILTER_PARAMETER(int, Plane)
+  /**
+   * @brief Setter property for Plane
+   */
+  void setPlane(int value);
+  /**
+   * @brief Getter property for Plane
+   * @return Value of Plane
+   */
+  int getPlane() const;
+
   Q_PROPERTY(int Plane READ getPlane WRITE setPlane)
 
-  SIMPL_FILTER_PARAMETER(int, Sites)
+  /**
+   * @brief Setter property for Sites
+   */
+  void setSites(int value);
+  /**
+   * @brief Getter property for Sites
+   * @return Value of Sites
+   */
+  int getSites() const;
+
   Q_PROPERTY(int Sites READ getSites WRITE setSites)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
    */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -119,23 +236,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -152,40 +269,12 @@ public:
    */
   void execute() override;
 
-  /**
-   * @brief preflight Reimplemented from @see AbstractFilter class
-   */
-  void preflight() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
-
 protected:
   SteinerCompact();
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -229,8 +318,21 @@ protected:
   virtual void output_txt(std::vector<std::vector<float>>& vertices_x, std::vector<std::vector<float>>& vertices_y, std::vector<std::vector<float>>& ROI);
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(int32_t, FeatureIds)
-  DEFINE_DATAARRAY_VARIABLE(int32_t, CellPhases)
+  std::weak_ptr<DataArray<int32_t>> m_FeatureIdsPtr;
+  int32_t* m_FeatureIds = nullptr;
+  std::weak_ptr<DataArray<int32_t>> m_CellPhasesPtr;
+  int32_t* m_CellPhases = nullptr;
+
+  QString m_DataContainerName = {};
+  QString m_CellAttributeMatrixName = {};
+  bool m_VtkOutput = {};
+  QString m_VtkFileName = {};
+  bool m_TxtOutput = {};
+  QString m_TxtFileName = {};
+  DataArrayPath m_FeatureIdsArrayPath = {};
+  DataArrayPath m_CellPhasesArrayPath = {};
+  int m_Plane = {};
+  int m_Sites = {};
 
 public:
   SteinerCompact(const SteinerCompact&) = delete;            // Copy Constructor Not Implemented

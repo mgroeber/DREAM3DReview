@@ -36,16 +36,18 @@
 
 #pragma once
 
+#include <memory>
+
 #include <QtCore/QString>
 #include <set>
 
+#include "SIMPLib/SIMPLib.h"
 #include "SIMPLib/Common/Constants.h"
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/DataArrays/IDataArray.h"
 #include "SIMPLib/DataContainers/DataContainer.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/Geometry/MeshStructs.h"
-#include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -60,18 +62,51 @@
 class DREAM3DReview_EXPORT IdentifyDislocationSegments : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(IdentifyDislocationSegments SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(IdentifyDislocationSegments)
+  PYB11_FILTER_NEW_MACRO(IdentifyDislocationSegments)
+  PYB11_FILTER_PARAMETER(DataArrayPath, BurgersVectorsArrayPath)
+  PYB11_FILTER_PARAMETER(DataArrayPath, SlipPlaneNormalsArrayPath)
+  PYB11_FILTER_PARAMETER(QString, DislocationIdsArrayName)
+  PYB11_FILTER_PARAMETER(QString, ActiveArrayName)
   PYB11_PROPERTY(DataArrayPath BurgersVectorsArrayPath READ getBurgersVectorsArrayPath WRITE setBurgersVectorsArrayPath)
   PYB11_PROPERTY(DataArrayPath SlipPlaneNormalsArrayPath READ getSlipPlaneNormalsArrayPath WRITE setSlipPlaneNormalsArrayPath)
   PYB11_PROPERTY(QString DislocationIdsArrayName READ getDislocationIdsArrayName WRITE setDislocationIdsArrayName)
   PYB11_PROPERTY(QString ActiveArrayName READ getActiveArrayName WRITE setActiveArrayName)
+#endif
+
 public:
-  SIMPL_SHARED_POINTERS(IdentifyDislocationSegments)
-  SIMPL_FILTER_NEW_MACRO(IdentifyDislocationSegments)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(IdentifyDislocationSegments, AbstractFilter)
+  using Self = IdentifyDislocationSegments;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<IdentifyDislocationSegments> New();
+
+  /**
+   * @brief Returns the name of the class for IdentifyDislocationSegments
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for IdentifyDislocationSegments
+   */
+  static QString ClassName();
 
   ~IdentifyDislocationSegments() override;
-  SIMPL_INSTANCE_STRING_PROPERTY(EdgeFeatureAttributeMatrixName)
+  /**
+   * @brief Setter property for EdgeFeatureAttributeMatrixName
+   */
+  void setEdgeFeatureAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for EdgeFeatureAttributeMatrixName
+   * @return Value of EdgeFeatureAttributeMatrixName
+   */
+  QString getEdgeFeatureAttributeMatrixName() const;
+
   Q_PROPERTY(QString EdgeFeatureAttributeMatrixName READ getEdgeFeatureAttributeMatrixName WRITE setEdgeFeatureAttributeMatrixName)
 
   /**
@@ -79,36 +114,72 @@ public:
    * a different group if you want. The string returned here will be displayed
    * in the GUI for the filter
    */
-  SIMPL_FILTER_PARAMETER(DataArrayPath, BurgersVectorsArrayPath)
+  /**
+   * @brief Setter property for BurgersVectorsArrayPath
+   */
+  void setBurgersVectorsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for BurgersVectorsArrayPath
+   * @return Value of BurgersVectorsArrayPath
+   */
+  DataArrayPath getBurgersVectorsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath BurgersVectorsArrayPath READ getBurgersVectorsArrayPath WRITE setBurgersVectorsArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, SlipPlaneNormalsArrayPath)
+  /**
+   * @brief Setter property for SlipPlaneNormalsArrayPath
+   */
+  void setSlipPlaneNormalsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for SlipPlaneNormalsArrayPath
+   * @return Value of SlipPlaneNormalsArrayPath
+   */
+  DataArrayPath getSlipPlaneNormalsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath SlipPlaneNormalsArrayPath READ getSlipPlaneNormalsArrayPath WRITE setSlipPlaneNormalsArrayPath)
 
-  SIMPL_FILTER_PARAMETER(QString, DislocationIdsArrayName)
+  /**
+   * @brief Setter property for DislocationIdsArrayName
+   */
+  void setDislocationIdsArrayName(const QString& value);
+  /**
+   * @brief Getter property for DislocationIdsArrayName
+   * @return Value of DislocationIdsArrayName
+   */
+  QString getDislocationIdsArrayName() const;
+
   Q_PROPERTY(QString DislocationIdsArrayName READ getDislocationIdsArrayName WRITE setDislocationIdsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, ActiveArrayName)
+  /**
+   * @brief Setter property for ActiveArrayName
+   */
+  void setActiveArrayName(const QString& value);
+  /**
+   * @brief Getter property for ActiveArrayName
+   * @return Value of ActiveArrayName
+   */
+  QString getActiveArrayName() const;
+
   Q_PROPERTY(QString ActiveArrayName READ getActiveArrayName WRITE setActiveArrayName)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
    */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -118,23 +189,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief This method will instantiate all the end user settable options/parameters
@@ -153,17 +224,6 @@ public:
    */
   void execute() override;
 
-  /**
-   * @brief This function runs some sanity checks on the DataContainer and inputs
-   * in an attempt to ensure the filter can process the inputs.
-   */
-  void preflight() override;
-
-signals:
-  void updateFilterParameters(AbstractFilter* filter);
-  void parametersChanged();
-  void preflightAboutToExecute();
-  void preflightExecuted();
 
 protected:
   IdentifyDislocationSegments();
@@ -171,7 +231,7 @@ protected:
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -181,10 +241,20 @@ protected:
   void updateEdgeFeatureInstancePointers();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(float, BurgersVectors)
-  DEFINE_DATAARRAY_VARIABLE(float, SlipPlaneNormals)
-  DEFINE_DATAARRAY_VARIABLE(int32_t, DislocationIds)
-  DEFINE_DATAARRAY_VARIABLE(bool, Active)
+  std::weak_ptr<DataArray<float>> m_BurgersVectorsPtr;
+  float* m_BurgersVectors = nullptr;
+  std::weak_ptr<DataArray<float>> m_SlipPlaneNormalsPtr;
+  float* m_SlipPlaneNormals = nullptr;
+  std::weak_ptr<DataArray<int32_t>> m_DislocationIdsPtr;
+  int32_t* m_DislocationIds = nullptr;
+  std::weak_ptr<DataArray<bool>> m_ActivePtr;
+  bool* m_Active = nullptr;
+
+  QString m_EdgeFeatureAttributeMatrixName = {};
+  DataArrayPath m_BurgersVectorsArrayPath = {};
+  DataArrayPath m_SlipPlaneNormalsArrayPath = {};
+  QString m_DislocationIdsArrayName = {};
+  QString m_ActiveArrayName = {};
 
 public:
   IdentifyDislocationSegments(const IdentifyDislocationSegments&) = delete;            // Copy Constructor Not Implemented

@@ -1,9 +1,14 @@
 #ifndef _tdmsproperty_h
 #define _tdmsproperty_h
 
+#include <memory>
+
 #include "TDMSDataType.hpp"
 
 #include "SIMPLib/DataArrays/DataArray.hpp"
+
+class IDataArray;
+using IDataArrayShPtrType = std::shared_ptr<IDataArray>;
 
 class TDMSMetaData;
 
@@ -21,7 +26,7 @@ public:
     return m_Type;
   }
 
-  IDataArray::Pointer value()
+  IDataArrayShPtrType value()
   {
     return m_Value;
   }
@@ -29,11 +34,11 @@ public:
 private:
   friend class TDMSMetaData;
 
-  TDMSProperty(TDMSDataType::Pointer type, IDataArray::Pointer value);
-  static Pointer New(TDMSDataType::Pointer type, IDataArray::Pointer value);
+  TDMSProperty(TDMSDataType::Pointer type, IDataArrayShPtrType value);
+  static Pointer New(TDMSDataType::Pointer type, IDataArrayShPtrType value);
 
   TDMSDataType::Pointer m_Type;
-  IDataArray::Pointer m_Value;
+  IDataArrayShPtrType m_Value;
 };
 
 #endif

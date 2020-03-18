@@ -34,9 +34,14 @@
  *                   FA8650-07-D-5800 and FA8650-10-D-5226
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "TiDwellFatigueCrystallographicAnalysis.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/AttributeMatrixSelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
@@ -57,10 +62,12 @@
 #include "SIMPLib/Math/SIMPLibRandom.h"
 #include "SIMPLib/Plugin/ISIMPLibPlugin.h"
 #include "SIMPLib/Plugin/SIMPLibPluginLoader.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
+#include "OrientationLib/Core/Orientation.hpp"
+#include "OrientationLib/Core/OrientationTransformation.hpp"
 #include "OrientationLib/LaueOps/LaueOps.h"
-#include "OrientationLib/OrientationMath/OrientationArray.hpp"
-#include "OrientationLib/OrientationMath/OrientationTransforms.hpp"
 
 #include "Plugins/Statistics/StatisticsFilters/FindNeighbors.h"
 
@@ -323,7 +330,7 @@ void TiDwellFatigueCrystallographicAnalysis::dataCheck()
     return;
   }
 
-  ImageGeom::Pointer image = m->getPrereqGeometry<ImageGeom, AbstractFilter>(this);
+  ImageGeom::Pointer image = m->getPrereqGeometry<ImageGeom>(this);
   if(getErrorCode() < 0 || nullptr == image.get())
   {
     return;
@@ -331,7 +338,7 @@ void TiDwellFatigueCrystallographicAnalysis::dataCheck()
 
   // Feature Data
   std::vector<size_t> dims(1, 1);
-  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getFeatureIdsArrayPath(),
+  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getFeatureIdsArrayPath(),
                                                                                                         dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeatureIdsPtr.lock())                                                                        /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -339,56 +346,56 @@ void TiDwellFatigueCrystallographicAnalysis::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getCellFeatureAttributeMatrixPath().getDataContainerName(), getCellFeatureAttributeMatrixPath().getAttributeMatrixName(), getSelectedFeaturesArrayName());
-  m_SelectedFeaturesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>, AbstractFilter, bool>(this, tempPath, false, dims, "", DataArrayID31);
+  m_SelectedFeaturesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>>(this, tempPath, false, dims, "", DataArrayID31);
   if(nullptr != m_SelectedFeaturesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_SelectedFeatures = m_SelectedFeaturesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getCellFeatureAttributeMatrixPath().getDataContainerName(), getCellFeatureAttributeMatrixPath().getAttributeMatrixName(), getInitiatorsArrayName());
-  m_InitiatorsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>, AbstractFilter, bool>(this, tempPath, false, dims, "", DataArrayID32);
+  m_InitiatorsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>>(this, tempPath, false, dims, "", DataArrayID32);
   if(nullptr != m_InitiatorsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_Initiators = m_InitiatorsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getCellFeatureAttributeMatrixPath().getDataContainerName(), getCellFeatureAttributeMatrixPath().getAttributeMatrixName(), getHardFeaturesArrayName());
-  m_HardFeaturesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>, AbstractFilter, bool>(this, tempPath, false, dims, "", DataArrayID33);
+  m_HardFeaturesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>>(this, tempPath, false, dims, "", DataArrayID33);
   if(nullptr != m_HardFeaturesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_HardFeatures = m_HardFeaturesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getCellFeatureAttributeMatrixPath().getDataContainerName(), getCellFeatureAttributeMatrixPath().getAttributeMatrixName(), getSoftFeaturesArrayName());
-  m_SoftFeaturesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>, AbstractFilter, bool>(this, tempPath, false, dims, "", DataArrayID34);
+  m_SoftFeaturesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>>(this, tempPath, false, dims, "", DataArrayID34);
   if(nullptr != m_SoftFeaturesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_SoftFeatures = m_SoftFeaturesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getCellFeatureAttributeMatrixPath().getDataContainerName(), getCellFeatureAttributeMatrixPath().getAttributeMatrixName(), getHardSoftGroupsArrayName());
-  m_HardSoftGroupsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>, AbstractFilter, bool>(this, tempPath, false, dims, "", DataArrayID35);
+  m_HardSoftGroupsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>>(this, tempPath, false, dims, "", DataArrayID35);
   if(nullptr != m_HardSoftGroupsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_HardSoftGroups = m_HardSoftGroupsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getFeatureIdsArrayPath().getDataContainerName(), getFeatureIdsArrayPath().getAttributeMatrixName(), getCellParentIdsArrayName());
-  m_CellParentIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, -1, dims, "", DataArrayID36);
+  m_CellParentIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, -1, dims, "", DataArrayID36);
   if(nullptr != m_CellParentIdsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_CellParentIds = m_CellParentIdsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getCellFeatureAttributeMatrixPath().getDataContainerName(), getCellFeatureAttributeMatrixPath().getAttributeMatrixName(), getFeatureParentIdsArrayName());
-  m_FeatureParentIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, -1, dims, "", DataArrayID37);
+  m_FeatureParentIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, -1, dims, "", DataArrayID37);
   if(nullptr != m_FeatureParentIdsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_FeatureParentIds = m_FeatureParentIdsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   dims[0] = 3;
-  m_FeatureEulerAnglesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getFeatureEulerAnglesArrayPath(),
+  m_FeatureEulerAnglesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getFeatureEulerAnglesArrayPath(),
                                                                                                               dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeatureEulerAnglesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -396,17 +403,17 @@ void TiDwellFatigueCrystallographicAnalysis::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   dims[0] = 1;
-  m_FeaturePhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getFeaturePhasesArrayPath(),
+  m_FeaturePhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getFeaturePhasesArrayPath(),
                                                                                                            dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeaturePhasesPtr.lock())                                                                        /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_FeaturePhases = m_FeaturePhasesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  m_NeighborList = getDataContainerArray()->getPrereqArrayFromPath<NeighborList<int>, AbstractFilter>(this, getNeighborListArrayPath(), dims);
+  m_NeighborList = getDataContainerArray()->getPrereqArrayFromPath<NeighborList<int>>(this, getNeighborListArrayPath(), dims);
 
   dims[0] = 3;
-  m_CentroidsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getCentroidsArrayPath(),
+  m_CentroidsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getCentroidsArrayPath(),
                                                                                                      dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CentroidsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -418,7 +425,7 @@ void TiDwellFatigueCrystallographicAnalysis::dataCheck()
   // Ensemble Data
   dims[0] = 1;
 
-  m_CrystalStructuresPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<unsigned int>, AbstractFilter>(this, getCrystalStructuresArrayPath(),
+  m_CrystalStructuresPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<unsigned int>>(this, getCrystalStructuresArrayPath(),
                                                                                                                     dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CrystalStructuresPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -426,18 +433,6 @@ void TiDwellFatigueCrystallographicAnalysis::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void TiDwellFatigueCrystallographicAnalysis::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -652,7 +647,7 @@ void TiDwellFatigueCrystallographicAnalysis::execute()
 
   std::vector<size_t> cDims(1, 1);
   tempPath.update(getFeatureEulerAnglesArrayPath().getDataContainerName(), getFeatureEulerAnglesArrayPath().getAttributeMatrixName(), "ParentNeighborList");
-  m_ParentNeighborList = getDataContainerArray()->getPrereqArrayFromPath<NeighborList<int>, AbstractFilter>(this, tempPath, cDims);
+  m_ParentNeighborList = getDataContainerArray()->getPrereqArrayFromPath<NeighborList<int>>(this, tempPath, cDims);
 
   for(size_t i = 1; i < totalFeatures; ++i)
   {
@@ -723,9 +718,7 @@ bool TiDwellFatigueCrystallographicAnalysis::determine_hardfeatures(int index)
     hardfeaturePlaneNormal[j][2] = hardfeaturePlane[j][3] * m_OneOverC;
   }
 
-  FOrientArrayType om(9, 0.0);
-  FOrientTransformsType::eu2om(FOrientArrayType(&(m_FeatureEulerAngles[3 * index + 0]), 3), om);
-  om.toGMatrix(g);
+  OrientationTransformation::eu2om<OrientationF, OrientationF>(OrientationF(m_FeatureEulerAngles + 3 * index, 3)).toGMatrix(g);
   if(m_FeaturePhases[index] == m_MTRPhase)
   {
     for(int j = 0; j < 12; ++j)
@@ -754,9 +747,7 @@ void TiDwellFatigueCrystallographicAnalysis::determine_initiators(int index)
 
   if(m_FeaturePhases[index] == m_AlphaGlobPhase)
   {
-    FOrientArrayType om(9, 0.0);
-    FOrientTransformsType::eu2om(FOrientArrayType(&(m_FeatureEulerAngles[3 * index + 0]), 3), om);
-    om.toGMatrix(g);
+    OrientationTransformation::eu2om<OrientationF, OrientationF>(OrientationF(m_FeatureEulerAngles + 3 * index, 3)).toGMatrix(g);
 
     w = find_angle(g, caxis[0], caxis[1], caxis[2]);
     if(w >= m_InitiatorLowerThreshold && w <= m_InitiatorUpperThreshold)
@@ -779,9 +770,7 @@ void TiDwellFatigueCrystallographicAnalysis::determine_softfeatures(int index)
 
   if(m_FeaturePhases[index] == m_MTRPhase)
   {
-    FOrientArrayType om(9, 0.0);
-    FOrientTransformsType::eu2om(FOrientArrayType(&(m_FeatureEulerAngles[3 * index + 0]), 3), om);
-    om.toGMatrix(g);
+    OrientationTransformation::eu2om<OrientationF, OrientationF>(OrientationF(m_FeatureEulerAngles + 3 * index, 3)).toGMatrix(g);
 
     w = find_angle(g, caxis[0], caxis[1], caxis[2]);
     if(w >= m_SoftFeatureLowerThreshold && w <= m_SoftFeatureUpperThreshold)
@@ -899,7 +888,7 @@ float TiDwellFatigueCrystallographicAnalysis::find_angle(float g[3][3], float pl
   MatrixMath::Normalize3x1(v);
   if(v[2] < 0)
   {
-    MatrixMath::Multiply3x1withConstant(v, -1);
+    MatrixMath::Multiply3x1withConstant(v, -1.0f);
   }
   w = GeometryMath::CosThetaBetweenVectors(v, sampleLoading);
   w = acos(w);
@@ -923,7 +912,7 @@ AbstractFilter::Pointer TiDwellFatigueCrystallographicAnalysis::newFilterInstanc
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TiDwellFatigueCrystallographicAnalysis::getCompiledLibraryName() const
+QString TiDwellFatigueCrystallographicAnalysis::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -931,7 +920,7 @@ const QString TiDwellFatigueCrystallographicAnalysis::getCompiledLibraryName() c
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TiDwellFatigueCrystallographicAnalysis::getBrandingString() const
+QString TiDwellFatigueCrystallographicAnalysis::getBrandingString() const
 {
   return TransformationPhaseConstants::TransformationPhasePluginDisplayName;
 }
@@ -939,7 +928,7 @@ const QString TiDwellFatigueCrystallographicAnalysis::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TiDwellFatigueCrystallographicAnalysis::getFilterVersion() const
+QString TiDwellFatigueCrystallographicAnalysis::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -950,7 +939,7 @@ const QString TiDwellFatigueCrystallographicAnalysis::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TiDwellFatigueCrystallographicAnalysis::getGroupName() const
+QString TiDwellFatigueCrystallographicAnalysis::getGroupName() const
 {
   return SIMPL::FilterGroups::Unsupported;
 }
@@ -958,7 +947,7 @@ const QString TiDwellFatigueCrystallographicAnalysis::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid TiDwellFatigueCrystallographicAnalysis::getUuid()
+QUuid TiDwellFatigueCrystallographicAnalysis::getUuid() const
 {
   return QUuid("{81e94b15-efb6-5bae-9ab1-c74099136174}");
 }
@@ -966,7 +955,7 @@ const QUuid TiDwellFatigueCrystallographicAnalysis::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TiDwellFatigueCrystallographicAnalysis::getSubGroupName() const
+QString TiDwellFatigueCrystallographicAnalysis::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::CrystallographyFilters;
 }
@@ -974,7 +963,432 @@ const QString TiDwellFatigueCrystallographicAnalysis::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TiDwellFatigueCrystallographicAnalysis::getHumanLabel() const
+QString TiDwellFatigueCrystallographicAnalysis::getHumanLabel() const
 {
   return "Ti Dwell Fatigue Crystallographic Analysis";
+}
+
+// -----------------------------------------------------------------------------
+TiDwellFatigueCrystallographicAnalysis::Pointer TiDwellFatigueCrystallographicAnalysis::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<TiDwellFatigueCrystallographicAnalysis> TiDwellFatigueCrystallographicAnalysis::New()
+{
+  struct make_shared_enabler : public TiDwellFatigueCrystallographicAnalysis
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getNameOfClass() const
+{
+  return QString("TiDwellFatigueCrystallographicAnalysis");
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::ClassName()
+{
+  return QString("TiDwellFatigueCrystallographicAnalysis");
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setDataContainerName(const DataArrayPath& value)
+{
+  m_DataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TiDwellFatigueCrystallographicAnalysis::getDataContainerName() const
+{
+  return m_DataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setAlphaGlobPhasePresent(bool value)
+{
+  m_AlphaGlobPhasePresent = value;
+}
+
+// -----------------------------------------------------------------------------
+bool TiDwellFatigueCrystallographicAnalysis::getAlphaGlobPhasePresent() const
+{
+  return m_AlphaGlobPhasePresent;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setAlphaGlobPhase(int value)
+{
+  m_AlphaGlobPhase = value;
+}
+
+// -----------------------------------------------------------------------------
+int TiDwellFatigueCrystallographicAnalysis::getAlphaGlobPhase() const
+{
+  return m_AlphaGlobPhase;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setMTRPhase(int value)
+{
+  m_MTRPhase = value;
+}
+
+// -----------------------------------------------------------------------------
+int TiDwellFatigueCrystallographicAnalysis::getMTRPhase() const
+{
+  return m_MTRPhase;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setLatticeParameterA(float value)
+{
+  m_LatticeParameterA = value;
+}
+
+// -----------------------------------------------------------------------------
+float TiDwellFatigueCrystallographicAnalysis::getLatticeParameterA() const
+{
+  return m_LatticeParameterA;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setLatticeParameterC(float value)
+{
+  m_LatticeParameterC = value;
+}
+
+// -----------------------------------------------------------------------------
+float TiDwellFatigueCrystallographicAnalysis::getLatticeParameterC() const
+{
+  return m_LatticeParameterC;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setStressAxis(const FloatVec3Type& value)
+{
+  m_StressAxis = value;
+}
+
+// -----------------------------------------------------------------------------
+FloatVec3Type TiDwellFatigueCrystallographicAnalysis::getStressAxis() const
+{
+  return m_StressAxis;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setSubsurfaceDistance(int value)
+{
+  m_SubsurfaceDistance = value;
+}
+
+// -----------------------------------------------------------------------------
+int TiDwellFatigueCrystallographicAnalysis::getSubsurfaceDistance() const
+{
+  return m_SubsurfaceDistance;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setConsiderationFraction(float value)
+{
+  m_ConsiderationFraction = value;
+}
+
+// -----------------------------------------------------------------------------
+float TiDwellFatigueCrystallographicAnalysis::getConsiderationFraction() const
+{
+  return m_ConsiderationFraction;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setDoNotAssumeInitiatorPresence(bool value)
+{
+  m_DoNotAssumeInitiatorPresence = value;
+}
+
+// -----------------------------------------------------------------------------
+bool TiDwellFatigueCrystallographicAnalysis::getDoNotAssumeInitiatorPresence() const
+{
+  return m_DoNotAssumeInitiatorPresence;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setInitiatorLowerThreshold(float value)
+{
+  m_InitiatorLowerThreshold = value;
+}
+
+// -----------------------------------------------------------------------------
+float TiDwellFatigueCrystallographicAnalysis::getInitiatorLowerThreshold() const
+{
+  return m_InitiatorLowerThreshold;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setInitiatorUpperThreshold(float value)
+{
+  m_InitiatorUpperThreshold = value;
+}
+
+// -----------------------------------------------------------------------------
+float TiDwellFatigueCrystallographicAnalysis::getInitiatorUpperThreshold() const
+{
+  return m_InitiatorUpperThreshold;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setHardFeatureLowerThreshold(float value)
+{
+  m_HardFeatureLowerThreshold = value;
+}
+
+// -----------------------------------------------------------------------------
+float TiDwellFatigueCrystallographicAnalysis::getHardFeatureLowerThreshold() const
+{
+  return m_HardFeatureLowerThreshold;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setHardFeatureUpperThreshold(float value)
+{
+  m_HardFeatureUpperThreshold = value;
+}
+
+// -----------------------------------------------------------------------------
+float TiDwellFatigueCrystallographicAnalysis::getHardFeatureUpperThreshold() const
+{
+  return m_HardFeatureUpperThreshold;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setSoftFeatureLowerThreshold(float value)
+{
+  m_SoftFeatureLowerThreshold = value;
+}
+
+// -----------------------------------------------------------------------------
+float TiDwellFatigueCrystallographicAnalysis::getSoftFeatureLowerThreshold() const
+{
+  return m_SoftFeatureLowerThreshold;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setSoftFeatureUpperThreshold(float value)
+{
+  m_SoftFeatureUpperThreshold = value;
+}
+
+// -----------------------------------------------------------------------------
+float TiDwellFatigueCrystallographicAnalysis::getSoftFeatureUpperThreshold() const
+{
+  return m_SoftFeatureUpperThreshold;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setNewCellFeatureAttributeMatrixName(const QString& value)
+{
+  m_NewCellFeatureAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getNewCellFeatureAttributeMatrixName() const
+{
+  return m_NewCellFeatureAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setSelectedFeaturesArrayName(const QString& value)
+{
+  m_SelectedFeaturesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getSelectedFeaturesArrayName() const
+{
+  return m_SelectedFeaturesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setInitiatorsArrayName(const QString& value)
+{
+  m_InitiatorsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getInitiatorsArrayName() const
+{
+  return m_InitiatorsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setHardFeaturesArrayName(const QString& value)
+{
+  m_HardFeaturesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getHardFeaturesArrayName() const
+{
+  return m_HardFeaturesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setSoftFeaturesArrayName(const QString& value)
+{
+  m_SoftFeaturesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getSoftFeaturesArrayName() const
+{
+  return m_SoftFeaturesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setHardSoftGroupsArrayName(const QString& value)
+{
+  m_HardSoftGroupsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getHardSoftGroupsArrayName() const
+{
+  return m_HardSoftGroupsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setCellFeatureAttributeMatrixName(const QString& value)
+{
+  m_CellFeatureAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getCellFeatureAttributeMatrixName() const
+{
+  return m_CellFeatureAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setCellFeatureAttributeMatrixPath(const DataArrayPath& value)
+{
+  m_CellFeatureAttributeMatrixPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TiDwellFatigueCrystallographicAnalysis::getCellFeatureAttributeMatrixPath() const
+{
+  return m_CellFeatureAttributeMatrixPath;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setFeatureIdsArrayPath(const DataArrayPath& value)
+{
+  m_FeatureIdsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TiDwellFatigueCrystallographicAnalysis::getFeatureIdsArrayPath() const
+{
+  return m_FeatureIdsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setCellParentIdsArrayName(const QString& value)
+{
+  m_CellParentIdsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getCellParentIdsArrayName() const
+{
+  return m_CellParentIdsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setFeatureParentIdsArrayName(const QString& value)
+{
+  m_FeatureParentIdsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getFeatureParentIdsArrayName() const
+{
+  return m_FeatureParentIdsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setActiveArrayName(const QString& value)
+{
+  m_ActiveArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TiDwellFatigueCrystallographicAnalysis::getActiveArrayName() const
+{
+  return m_ActiveArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setFeatureEulerAnglesArrayPath(const DataArrayPath& value)
+{
+  m_FeatureEulerAnglesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TiDwellFatigueCrystallographicAnalysis::getFeatureEulerAnglesArrayPath() const
+{
+  return m_FeatureEulerAnglesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setFeaturePhasesArrayPath(const DataArrayPath& value)
+{
+  m_FeaturePhasesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TiDwellFatigueCrystallographicAnalysis::getFeaturePhasesArrayPath() const
+{
+  return m_FeaturePhasesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setNeighborListArrayPath(const DataArrayPath& value)
+{
+  m_NeighborListArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TiDwellFatigueCrystallographicAnalysis::getNeighborListArrayPath() const
+{
+  return m_NeighborListArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setCentroidsArrayPath(const DataArrayPath& value)
+{
+  m_CentroidsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TiDwellFatigueCrystallographicAnalysis::getCentroidsArrayPath() const
+{
+  return m_CentroidsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void TiDwellFatigueCrystallographicAnalysis::setCrystalStructuresArrayPath(const DataArrayPath& value)
+{
+  m_CrystalStructuresArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TiDwellFatigueCrystallographicAnalysis::getCrystalStructuresArrayPath() const
+{
+  return m_CrystalStructuresArrayPath;
 }

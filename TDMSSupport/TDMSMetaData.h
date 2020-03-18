@@ -1,6 +1,8 @@
 #ifndef _tdmsmetadata_h
 #define _tdmsmetadata_h
 
+#include <memory>
+
 #include <unordered_map>
 
 #include "TDMSDataType.hpp"

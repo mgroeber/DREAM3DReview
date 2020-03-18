@@ -35,9 +35,11 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -47,7 +49,19 @@
 class DREAM3DReview_EXPORT PrincipalComponentAnalysis : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(PrincipalComponentAnalysis SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(PrincipalComponentAnalysis)
+  PYB11_FILTER_NEW_MACRO(PrincipalComponentAnalysis)
+  PYB11_FILTER_PARAMETER(QVector<DataArrayPath>, SelectedDataArrayPaths)
+  PYB11_FILTER_PARAMETER(QString, PCAttributeMatrixName)
+  PYB11_FILTER_PARAMETER(QString, PCEigenvaluesName)
+  PYB11_FILTER_PARAMETER(QString, PCEigenvectorsName)
+  PYB11_FILTER_PARAMETER(int, MatrixApproach)
+  PYB11_FILTER_PARAMETER(bool, ProjectDataSpace)
+  PYB11_FILTER_PARAMETER(int, NumberOfDimensionsForProjection)
+  PYB11_FILTER_PARAMETER(DataArrayPath, ProjectedDataSpaceArrayPath)
   PYB11_PROPERTY(QVector<DataArrayPath> SelectedDataArrayPaths READ getSelectedDataArrayPaths WRITE setSelectedDataArrayPaths)
   PYB11_PROPERTY(QString PCAttributeMatrixName READ getPCAttributeMatrixName WRITE setPCAttributeMatrixName)
   PYB11_PROPERTY(QString PCEigenvaluesName READ getPCEigenvaluesName WRITE setPCEigenvaluesName)
@@ -56,56 +70,143 @@ class DREAM3DReview_EXPORT PrincipalComponentAnalysis : public AbstractFilter
   PYB11_PROPERTY(bool ProjectDataSpace READ getProjectDataSpace WRITE setProjectDataSpace)
   PYB11_PROPERTY(int NumberOfDimensionsForProjection READ getNumberOfDimensionsForProjection WRITE setNumberOfDimensionsForProjection)
   PYB11_PROPERTY(DataArrayPath ProjectedDataSpaceArrayPath READ getProjectedDataSpaceArrayPath WRITE setProjectedDataSpaceArrayPath)
+#endif
 
 public:
-  SIMPL_SHARED_POINTERS(PrincipalComponentAnalysis)
-  SIMPL_FILTER_NEW_MACRO(PrincipalComponentAnalysis)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(PrincipalComponentAnalysis, AbstractFilter)
+  using Self = PrincipalComponentAnalysis;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<PrincipalComponentAnalysis> New();
+
+  /**
+   * @brief Returns the name of the class for PrincipalComponentAnalysis
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for PrincipalComponentAnalysis
+   */
+  static QString ClassName();
 
   ~PrincipalComponentAnalysis() override;
 
-  SIMPL_FILTER_PARAMETER(QVector<DataArrayPath>, SelectedDataArrayPaths)
+  /**
+   * @brief Setter property for SelectedDataArrayPaths
+   */
+  void setSelectedDataArrayPaths(const QVector<DataArrayPath>& value);
+  /**
+   * @brief Getter property for SelectedDataArrayPaths
+   * @return Value of SelectedDataArrayPaths
+   */
+  QVector<DataArrayPath> getSelectedDataArrayPaths() const;
+
   Q_PROPERTY(QVector<DataArrayPath> SelectedDataArrayPaths READ getSelectedDataArrayPaths WRITE setSelectedDataArrayPaths)
 
-  SIMPL_FILTER_PARAMETER(QString, PCAttributeMatrixName)
+  /**
+   * @brief Setter property for PCAttributeMatrixName
+   */
+  void setPCAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for PCAttributeMatrixName
+   * @return Value of PCAttributeMatrixName
+   */
+  QString getPCAttributeMatrixName() const;
+
   Q_PROPERTY(QString PCAttributeMatrixName READ getPCAttributeMatrixName WRITE setPCAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, PCEigenvaluesName)
+  /**
+   * @brief Setter property for PCEigenvaluesName
+   */
+  void setPCEigenvaluesName(const QString& value);
+  /**
+   * @brief Getter property for PCEigenvaluesName
+   * @return Value of PCEigenvaluesName
+   */
+  QString getPCEigenvaluesName() const;
+
   Q_PROPERTY(QString PCEigenvaluesName READ getPCEigenvaluesName WRITE setPCEigenvaluesName)
 
-  SIMPL_FILTER_PARAMETER(QString, PCEigenvectorsName)
+  /**
+   * @brief Setter property for PCEigenvectorsName
+   */
+  void setPCEigenvectorsName(const QString& value);
+  /**
+   * @brief Getter property for PCEigenvectorsName
+   * @return Value of PCEigenvectorsName
+   */
+  QString getPCEigenvectorsName() const;
+
   Q_PROPERTY(QString PCEigenvectorsName READ getPCEigenvectorsName WRITE setPCEigenvectorsName)
 
-  SIMPL_FILTER_PARAMETER(int, MatrixApproach)
+  /**
+   * @brief Setter property for MatrixApproach
+   */
+  void setMatrixApproach(int value);
+  /**
+   * @brief Getter property for MatrixApproach
+   * @return Value of MatrixApproach
+   */
+  int getMatrixApproach() const;
+
   Q_PROPERTY(int MatrixApproach READ getMatrixApproach WRITE setMatrixApproach)
 
-  SIMPL_FILTER_PARAMETER(bool, ProjectDataSpace)
+  /**
+   * @brief Setter property for ProjectDataSpace
+   */
+  void setProjectDataSpace(bool value);
+  /**
+   * @brief Getter property for ProjectDataSpace
+   * @return Value of ProjectDataSpace
+   */
+  bool getProjectDataSpace() const;
+
   Q_PROPERTY(bool ProjectDataSpace READ getProjectDataSpace WRITE setProjectDataSpace)
 
-  SIMPL_FILTER_PARAMETER(int, NumberOfDimensionsForProjection)
+  /**
+   * @brief Setter property for NumberOfDimensionsForProjection
+   */
+  void setNumberOfDimensionsForProjection(int value);
+  /**
+   * @brief Getter property for NumberOfDimensionsForProjection
+   * @return Value of NumberOfDimensionsForProjection
+   */
+  int getNumberOfDimensionsForProjection() const;
+
   Q_PROPERTY(int NumberOfDimensionsForProjection READ getNumberOfDimensionsForProjection WRITE setNumberOfDimensionsForProjection)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, ProjectedDataSpaceArrayPath)
+  /**
+   * @brief Setter property for ProjectedDataSpaceArrayPath
+   */
+  void setProjectedDataSpaceArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for ProjectedDataSpaceArrayPath
+   * @return Value of ProjectedDataSpaceArrayPath
+   */
+  DataArrayPath getProjectedDataSpaceArrayPath() const;
+
   Q_PROPERTY(DataArrayPath ProjectedDataSpaceArrayPath READ getProjectedDataSpaceArrayPath WRITE setProjectedDataSpaceArrayPath)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -115,23 +216,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -148,41 +249,13 @@ public:
    */
   void execute() override;
 
-  /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-signals:
-  /**
-    * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
-
 protected:
   PrincipalComponentAnalysis();
 
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -190,9 +263,21 @@ protected:
   void initialize();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(double, PCEigenvalues)
-  DEFINE_DATAARRAY_VARIABLE(double, PCEigenvectors)
-  DEFINE_DATAARRAY_VARIABLE(double, ProjectedDataSpace)
+  std::weak_ptr<DataArray<double>> m_PCEigenvaluesPtr;
+  double* m_PCEigenvalues = nullptr;
+  std::weak_ptr<DataArray<double>> m_PCEigenvectorsPtr;
+  double* m_PCEigenvectors = nullptr;
+  std::weak_ptr<DataArray<double>> m_ProjectedDataSpacePtr;
+  double* m_ProjectedDataSpace = nullptr;
+
+  QVector<DataArrayPath> m_SelectedDataArrayPaths = {};
+  QString m_PCAttributeMatrixName = {};
+  QString m_PCEigenvaluesName = {};
+  QString m_PCEigenvectorsName = {};
+  int m_MatrixApproach = {};
+  bool m_ProjectDataSpace = {};
+  int m_NumberOfDimensionsForProjection = {};
+  DataArrayPath m_ProjectedDataSpaceArrayPath = {};
 
   std::vector<IDataArray::WeakPointer> m_SelectedWeakPtrVector;
 

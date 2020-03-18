@@ -33,6 +33,8 @@
  *                           FA8650-07-D-5800
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "ReadMicData.h"
 
 #include <limits>
@@ -52,6 +54,8 @@
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
 #include "SIMPLib/Geometry/ImageGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 
@@ -101,7 +105,6 @@ ReadMicData::ReadMicData()
 : m_DataContainerName(SIMPL::Defaults::ImageDataContainerName)
 , m_CellEnsembleAttributeMatrixName(SIMPL::Defaults::CellEnsembleAttributeMatrixName)
 , m_CellAttributeMatrixName(SIMPL::Defaults::CellAttributeMatrixName)
-, m_FileWasRead(false)
 , m_PhaseNameArrayName("")
 , m_MaterialNameArrayName(SIMPL::EnsembleData::PhaseName)
 , m_InputFile("")
@@ -123,9 +126,47 @@ ReadMicData::~ReadMicData() = default;
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-SIMPL_PIMPL_PROPERTY_DEF(ReadMicData, Mic_Private_Data, Data)
-SIMPL_PIMPL_PROPERTY_DEF(ReadMicData, QString, InputFile_Cache)
-SIMPL_PIMPL_PROPERTY_DEF(ReadMicData, QDateTime, TimeStamp_Cache)
+// -----------------------------------------------------------------------------
+void ReadMicData::setData(const Mic_Private_Data& value)
+{
+  Q_D(ReadMicData);
+  d->m_Data = value;
+}
+
+// -----------------------------------------------------------------------------
+Mic_Private_Data ReadMicData::getData() const
+{
+  Q_D(const ReadMicData);
+  return d->m_Data;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setInputFile_Cache(const QString& value)
+{
+  Q_D(ReadMicData);
+  d->m_InputFile_Cache = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getInputFile_Cache() const
+{
+  Q_D(const ReadMicData);
+  return d->m_InputFile_Cache;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setTimeStamp_Cache(const QDateTime& value)
+{
+  Q_D(ReadMicData);
+  d->m_TimeStamp_Cache = value;
+}
+
+// -----------------------------------------------------------------------------
+QDateTime ReadMicData::getTimeStamp_Cache() const
+{
+  Q_D(const ReadMicData);
+  return d->m_TimeStamp_Cache;
+}
 
 // -----------------------------------------------------------------------------
 //
@@ -272,7 +313,7 @@ void ReadMicData::dataCheck()
   clearErrorCode();
   clearWarningCode();
 
-  DataContainer::Pointer m = getDataContainerArray()->createNonPrereqDataContainer<AbstractFilter>(this, getDataContainerName(), DataContainerID);
+  DataContainer::Pointer m = getDataContainerArray()->createNonPrereqDataContainer(this, getDataContainerName(), DataContainerID);
   if(getErrorCode() < 0)
   {
     return;
@@ -331,11 +372,11 @@ void ReadMicData::dataCheck()
       {
         if(reader->getPointerType(names[i]) == Ebsd::Int32)
         {
-          cellAttrMat->createAndAddAttributeArray<DataArray<int32_t>, AbstractFilter, int32_t>(this, names[i], 0, dims);
+          cellAttrMat->createAndAddAttributeArray<DataArray<int32_t>>(this, names[i], 0, dims);
         }
         else if(reader->getPointerType(names[i]) == Ebsd::Float)
         {
-          cellAttrMat->createAndAddAttributeArray<DataArray<float>, AbstractFilter, float>(this, names[i], 0, dims);
+          cellAttrMat->createAndAddAttributeArray<DataArray<float>>(this, names[i], 0, dims);
         }
       }
 
@@ -350,7 +391,7 @@ void ReadMicData::dataCheck()
 
     std::vector<size_t> dim(1, 3);
     tempPath.update(getDataContainerName().getDataContainerName(), getCellAttributeMatrixName(), getCellEulerAnglesArrayName());
-    m_CellEulerAnglesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(
+    m_CellEulerAnglesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(
         this, tempPath, 0, dim);               /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_CellEulerAnglesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
@@ -358,7 +399,7 @@ void ReadMicData::dataCheck()
     } /* Now assign the raw pointer to data from the DataArray<T> object */
     dim[0] = 1;
     tempPath.update(getDataContainerName().getDataContainerName(), getCellAttributeMatrixName(), getCellPhasesArrayName());
-    m_CellPhasesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(
+    m_CellPhasesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(
         this, tempPath, 0, dim);          /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_CellPhasesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
@@ -368,14 +409,14 @@ void ReadMicData::dataCheck()
     // typedef DataArray<unsigned int> XTalStructArrayType;
     tempPath.update(getDataContainerName().getDataContainerName(), getCellEnsembleAttributeMatrixName(), getCrystalStructuresArrayName());
     m_CrystalStructuresPtr =
-        getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<uint32_t>, AbstractFilter, uint32_t>(this, tempPath, Ebsd::CrystalStructure::UnknownCrystalStructure, dim, "", DataArrayID33);
+        getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<uint32_t>>(this, tempPath, Ebsd::CrystalStructure::UnknownCrystalStructure, dim, "", DataArrayID33);
     if(nullptr != m_CrystalStructuresPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
       m_CrystalStructures = m_CrystalStructuresPtr.lock()->getPointer(0);
     } /* Now assign the raw pointer to data from the DataArray<T> object */
     dim[0] = 6;
     tempPath.update(getDataContainerName().getDataContainerName(), getCellEnsembleAttributeMatrixName(), getLatticeConstantsArrayName());
-    m_LatticeConstantsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(
+    m_LatticeConstantsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(
         this, tempPath, 0.0, dim);              /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_LatticeConstantsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
@@ -387,18 +428,6 @@ void ReadMicData::dataCheck()
   }
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void ReadMicData::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -558,7 +587,7 @@ AbstractFilter::Pointer ReadMicData::newFilterInstance(bool copyFilterParameters
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ReadMicData::getCompiledLibraryName() const
+QString ReadMicData::getCompiledLibraryName() const
 {
   return HEDMAnalysisConstants::HEDMAnalysisBaseName;
 }
@@ -566,7 +595,7 @@ const QString ReadMicData::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ReadMicData::getGroupName() const
+QString ReadMicData::getGroupName() const
 {
   return SIMPL::FilterGroups::Unsupported;
 }
@@ -574,7 +603,7 @@ const QString ReadMicData::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid ReadMicData::getUuid()
+QUuid ReadMicData::getUuid() const
 {
   return QUuid("{5a2b714e-bae9-5213-8171-d1e190609e2d}");
 }
@@ -582,7 +611,7 @@ const QUuid ReadMicData::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ReadMicData::getSubGroupName() const
+QString ReadMicData::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::InputFilters;
 }
@@ -590,7 +619,7 @@ const QString ReadMicData::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ReadMicData::getHumanLabel() const
+QString ReadMicData::getHumanLabel() const
 {
   return "Import HEDM Data (.mic)";
 }
@@ -669,4 +698,189 @@ int ReadMicData::loadMaterialInfo(MicReader* reader)
     m_LatticeConstants = m_LatticeConstantsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   return 0;
+}
+
+// -----------------------------------------------------------------------------
+ReadMicData::Pointer ReadMicData::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<ReadMicData> ReadMicData::New()
+{
+  struct make_shared_enabler : public ReadMicData
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getNameOfClass() const
+{
+  return QString("ReadMicData");
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::ClassName()
+{
+  return QString("ReadMicData");
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setDataContainerName(const DataArrayPath& value)
+{
+  m_DataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath ReadMicData::getDataContainerName() const
+{
+  return m_DataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setCellEnsembleAttributeMatrixName(const QString& value)
+{
+  m_CellEnsembleAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getCellEnsembleAttributeMatrixName() const
+{
+  return m_CellEnsembleAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setCellAttributeMatrixName(const QString& value)
+{
+  m_CellAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getCellAttributeMatrixName() const
+{
+  return m_CellAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setFileWasRead(bool value)
+{
+  m_FileWasRead = value;
+}
+
+// -----------------------------------------------------------------------------
+bool ReadMicData::getFileWasRead() const
+{
+  return m_FileWasRead;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setPhaseNameArrayName(const QString& value)
+{
+  m_PhaseNameArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getPhaseNameArrayName() const
+{
+  return m_PhaseNameArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setMaterialNameArrayName(const QString& value)
+{
+  m_MaterialNameArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getMaterialNameArrayName() const
+{
+  return m_MaterialNameArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setInputFile(const QString& value)
+{
+  m_InputFile = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getInputFile() const
+{
+  return m_InputFile;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setCellEulerAnglesArrayName(const QString& value)
+{
+  m_CellEulerAnglesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getCellEulerAnglesArrayName() const
+{
+  return m_CellEulerAnglesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setCellPhasesArrayName(const QString& value)
+{
+  m_CellPhasesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getCellPhasesArrayName() const
+{
+  return m_CellPhasesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setCrystalStructuresArrayName(const QString& value)
+{
+  m_CrystalStructuresArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getCrystalStructuresArrayName() const
+{
+  return m_CrystalStructuresArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setLatticeConstantsArrayName(const QString& value)
+{
+  m_LatticeConstantsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ReadMicData::getLatticeConstantsArrayName() const
+{
+  return m_LatticeConstantsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setRefFrameZDir(uint32_t value)
+{
+  m_RefFrameZDir = value;
+}
+
+// -----------------------------------------------------------------------------
+uint32_t ReadMicData::getRefFrameZDir() const
+{
+  return m_RefFrameZDir;
+}
+
+// -----------------------------------------------------------------------------
+void ReadMicData::setManufacturer(const Ebsd::OEM& value)
+{
+  m_Manufacturer = value;
+}
+
+// -----------------------------------------------------------------------------
+Ebsd::OEM ReadMicData::getManufacturer() const
+{
+  return m_Manufacturer;
 }

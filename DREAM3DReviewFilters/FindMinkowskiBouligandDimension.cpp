@@ -11,16 +11,23 @@
 * Subsequent changes to the codes by others may elect to add a copyright and license
 * for those changes.
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "FindMinkowskiBouligandDimension.h"
 
 #include <cmath>
 #include <cstring>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedPathCreationFilterParameter.h"
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
 #include "SIMPLib/Geometry/ImageGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -32,8 +39,6 @@ FindMinkowskiBouligandDimension::FindMinkowskiBouligandDimension()
 : m_MaskArrayPath(SIMPL::Defaults::ImageDataContainerName, SIMPL::Defaults::CellAttributeMatrixName, SIMPL::CellData::Mask)
 , m_AttributeMatrixName("FractalData")
 , m_MinkowskiBouligandDimensionArrayName("MinkowskiBouligandDimension")
-, m_Mask(nullptr)
-, m_MinkowskiBouligandDimension(nullptr)
 {
   initialize();
 }
@@ -74,7 +79,7 @@ void FindMinkowskiBouligandDimension::dataCheck()
   clearErrorCode();
   clearWarningCode();
 
-  ImageGeom::Pointer image = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom, AbstractFilter>(this, getMaskArrayPath().getDataContainerName());
+  ImageGeom::Pointer image = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom>(this, getMaskArrayPath().getDataContainerName());
 
   if(getErrorCode() < 0)
   {
@@ -90,13 +95,13 @@ void FindMinkowskiBouligandDimension::dataCheck()
 
   std::vector<size_t> cDims(1, 1);
 
-  m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), cDims);
+  m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getMaskArrayPath(), cDims);
   if(nullptr != m_MaskPtr.lock().get())
   {
     m_Mask = m_MaskPtr.lock()->getPointer(0);
   }
 
-  DataContainer::Pointer dc = getDataContainerArray()->getPrereqDataContainer<AbstractFilter>(this, getMaskArrayPath().getDataContainerName());
+  DataContainer::Pointer dc = getDataContainerArray()->getPrereqDataContainer(this, getMaskArrayPath().getDataContainerName());
 
   if(getErrorCode() < 0)
   {
@@ -107,26 +112,13 @@ void FindMinkowskiBouligandDimension::dataCheck()
 
   DataArrayPath path(getMaskArrayPath().getDataContainerName(), getAttributeMatrixName(), getMinkowskiBouligandDimensionArrayName());
 
-  m_MinkowskiBouligandDimensionPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double>, AbstractFilter, double>(this, path, 0, cDims);
+  m_MinkowskiBouligandDimensionPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double>>(this, path, 0, cDims);
   if(nullptr != m_MinkowskiBouligandDimensionPtr.lock().get())
   {
     m_MinkowskiBouligandDimension = m_MinkowskiBouligandDimensionPtr.lock()->getPointer(0);
   }
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void FindMinkowskiBouligandDimension::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -367,7 +359,7 @@ AbstractFilter::Pointer FindMinkowskiBouligandDimension::newFilterInstance(bool 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindMinkowskiBouligandDimension::getCompiledLibraryName() const
+QString FindMinkowskiBouligandDimension::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -375,7 +367,7 @@ const QString FindMinkowskiBouligandDimension::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindMinkowskiBouligandDimension::getBrandingString() const
+QString FindMinkowskiBouligandDimension::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -383,7 +375,7 @@ const QString FindMinkowskiBouligandDimension::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindMinkowskiBouligandDimension::getFilterVersion() const
+QString FindMinkowskiBouligandDimension::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -394,7 +386,7 @@ const QString FindMinkowskiBouligandDimension::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindMinkowskiBouligandDimension::getGroupName() const
+QString FindMinkowskiBouligandDimension::getGroupName() const
 {
   return SIMPL::FilterGroups::StatisticsFilters;
 }
@@ -402,7 +394,7 @@ const QString FindMinkowskiBouligandDimension::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindMinkowskiBouligandDimension::getSubGroupName() const
+QString FindMinkowskiBouligandDimension::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::GeometryFilters;
 }
@@ -410,7 +402,7 @@ const QString FindMinkowskiBouligandDimension::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindMinkowskiBouligandDimension::getHumanLabel() const
+QString FindMinkowskiBouligandDimension::getHumanLabel() const
 {
   return "Find Minkowski-Bouligand Dimension";
 }
@@ -418,7 +410,72 @@ const QString FindMinkowskiBouligandDimension::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid FindMinkowskiBouligandDimension::getUuid()
+QUuid FindMinkowskiBouligandDimension::getUuid() const
 {
   return QUuid("{6cc3148c-0bad-53b4-9568-ee1971cadb00}");
+}
+
+// -----------------------------------------------------------------------------
+FindMinkowskiBouligandDimension::Pointer FindMinkowskiBouligandDimension::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<FindMinkowskiBouligandDimension> FindMinkowskiBouligandDimension::New()
+{
+  struct make_shared_enabler : public FindMinkowskiBouligandDimension
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString FindMinkowskiBouligandDimension::getNameOfClass() const
+{
+  return QString("FindMinkowskiBouligandDimension");
+}
+
+// -----------------------------------------------------------------------------
+QString FindMinkowskiBouligandDimension::ClassName()
+{
+  return QString("FindMinkowskiBouligandDimension");
+}
+
+// -----------------------------------------------------------------------------
+void FindMinkowskiBouligandDimension::setMaskArrayPath(const DataArrayPath& value)
+{
+  m_MaskArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindMinkowskiBouligandDimension::getMaskArrayPath() const
+{
+  return m_MaskArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindMinkowskiBouligandDimension::setAttributeMatrixName(const QString& value)
+{
+  m_AttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindMinkowskiBouligandDimension::getAttributeMatrixName() const
+{
+  return m_AttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void FindMinkowskiBouligandDimension::setMinkowskiBouligandDimensionArrayName(const QString& value)
+{
+  m_MinkowskiBouligandDimensionArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString FindMinkowskiBouligandDimension::getMinkowskiBouligandDimensionArrayName() const
+{
+  return m_MinkowskiBouligandDimensionArrayName;
 }

@@ -7,7 +7,6 @@
 #include <QtCore/QFile>
 #include <QtCore/QString>
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/Math/SIMPLibMath.h"
 #include "SIMPLib/SIMPLib.h"
@@ -20,8 +19,34 @@
 class DistanceTemplate
 {
 public:
-  SIMPL_SHARED_POINTERS(DistanceTemplate)
-  SIMPL_TYPE_MACRO(DistanceTemplate)
+  using Self = DistanceTemplate;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer()
+  {
+    return Pointer(static_cast<Self*>(nullptr));
+  }
+
+  /**
+   * @brief Returns the name of the class for DistanceTemplate
+   */
+  /**
+   * @brief Returns the name of the class for DistanceTemplate
+   */
+  QString getNameOfClass() const
+  {
+    return QString("DistanceTemplate");
+  }
+
+  /**
+   * @brief Returns the name of the class for DistanceTemplate
+   */
+  QString ClassName()
+  {
+    return QString("DistanceTemplate");
+  }
 
   DistanceTemplate(){}
   virtual ~DistanceTemplate(){}

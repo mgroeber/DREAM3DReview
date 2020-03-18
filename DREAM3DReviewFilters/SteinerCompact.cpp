@@ -33,6 +33,8 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "SteinerCompact.h"
 
 #include <fstream>
@@ -41,7 +43,10 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/ScopedFileMonitor.hpp"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
@@ -56,6 +61,8 @@
 
 #include "SIMPLib/Geometry/ImageGeom.h"
 #include "SIMPLib/Math/SIMPLibRandom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -185,7 +192,7 @@ void SteinerCompact::dataCheck()
     FileSystemPathHelper::CheckOutputFile(this, "Text Output File", getTxtFileName(), true);
   }
 
-  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getFeatureIdsArrayPath(),
+  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getFeatureIdsArrayPath(),
                                                                                                         cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeatureIdsPtr.lock())                                                                         /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -196,7 +203,7 @@ void SteinerCompact::dataCheck()
     dataArrayPaths.push_back(getFeatureIdsArrayPath());
   }
 
-  m_CellPhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getCellPhasesArrayPath(),
+  m_CellPhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getCellPhasesArrayPath(),
                                                                                                         cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CellPhasesPtr.lock())                                                                         /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -207,22 +214,9 @@ void SteinerCompact::dataCheck()
     dataArrayPaths.push_back(getCellPhasesArrayPath());
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrayPaths);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrayPaths);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void SteinerCompact::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -1137,7 +1131,7 @@ AbstractFilter::Pointer SteinerCompact::newFilterInstance(bool copyFilterParamet
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SteinerCompact::getCompiledLibraryName() const
+QString SteinerCompact::getCompiledLibraryName() const
 {
   return AnisotropyConstants::AnisotropyBaseName;
 }
@@ -1145,7 +1139,7 @@ const QString SteinerCompact::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SteinerCompact::getBrandingString() const
+QString SteinerCompact::getBrandingString() const
 {
   return "Anisotropy";
 }
@@ -1153,7 +1147,7 @@ const QString SteinerCompact::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SteinerCompact::getFilterVersion() const
+QString SteinerCompact::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -1164,7 +1158,7 @@ const QString SteinerCompact::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SteinerCompact::getGroupName() const
+QString SteinerCompact::getGroupName() const
 {
   return SIMPL::FilterGroups::ReconstructionFilters;
 }
@@ -1172,7 +1166,7 @@ const QString SteinerCompact::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid SteinerCompact::getUuid()
+QUuid SteinerCompact::getUuid() const
 {
   return QUuid("{07b1048e-d6d4-56d0-8cc5-132ac79bdf60}");
 }
@@ -1180,7 +1174,7 @@ const QUuid SteinerCompact::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SteinerCompact::getSubGroupName() const
+QString SteinerCompact::getSubGroupName() const
 {
   return AnisotropyConstants::FilterSubGroups::AnisotropicAlignment;
 }
@@ -1188,7 +1182,156 @@ const QString SteinerCompact::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SteinerCompact::getHumanLabel() const
+QString SteinerCompact::getHumanLabel() const
 {
   return "Steiner Compact";
+}
+
+// -----------------------------------------------------------------------------
+SteinerCompact::Pointer SteinerCompact::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<SteinerCompact> SteinerCompact::New()
+{
+  struct make_shared_enabler : public SteinerCompact
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString SteinerCompact::getNameOfClass() const
+{
+  return QString("SteinerCompact");
+}
+
+// -----------------------------------------------------------------------------
+QString SteinerCompact::ClassName()
+{
+  return QString("SteinerCompact");
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setDataContainerName(const QString& value)
+{
+  m_DataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SteinerCompact::getDataContainerName() const
+{
+  return m_DataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setCellAttributeMatrixName(const QString& value)
+{
+  m_CellAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SteinerCompact::getCellAttributeMatrixName() const
+{
+  return m_CellAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setVtkOutput(bool value)
+{
+  m_VtkOutput = value;
+}
+
+// -----------------------------------------------------------------------------
+bool SteinerCompact::getVtkOutput() const
+{
+  return m_VtkOutput;
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setVtkFileName(const QString& value)
+{
+  m_VtkFileName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SteinerCompact::getVtkFileName() const
+{
+  return m_VtkFileName;
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setTxtOutput(bool value)
+{
+  m_TxtOutput = value;
+}
+
+// -----------------------------------------------------------------------------
+bool SteinerCompact::getTxtOutput() const
+{
+  return m_TxtOutput;
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setTxtFileName(const QString& value)
+{
+  m_TxtFileName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SteinerCompact::getTxtFileName() const
+{
+  return m_TxtFileName;
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setFeatureIdsArrayPath(const DataArrayPath& value)
+{
+  m_FeatureIdsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath SteinerCompact::getFeatureIdsArrayPath() const
+{
+  return m_FeatureIdsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setCellPhasesArrayPath(const DataArrayPath& value)
+{
+  m_CellPhasesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath SteinerCompact::getCellPhasesArrayPath() const
+{
+  return m_CellPhasesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setPlane(int value)
+{
+  m_Plane = value;
+}
+
+// -----------------------------------------------------------------------------
+int SteinerCompact::getPlane() const
+{
+  return m_Plane;
+}
+
+// -----------------------------------------------------------------------------
+void SteinerCompact::setSites(int value)
+{
+  m_Sites = value;
+}
+
+// -----------------------------------------------------------------------------
+int SteinerCompact::getSites() const
+{
+  return m_Sites;
 }

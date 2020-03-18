@@ -14,7 +14,8 @@
 #ifndef _importclifile_h_
 #define _importclifile_h_
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
+#include <memory>
+
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
 
@@ -26,48 +27,116 @@ class ImportCLIFile : public AbstractFilter
   Q_OBJECT
 
 public:
-  SIMPL_SHARED_POINTERS(ImportCLIFile)
-  SIMPL_FILTER_NEW_MACRO(ImportCLIFile)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(ImportCLIFile, AbstractFilter)
+  using Self = ImportCLIFile;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<ImportCLIFile> New();
+
+  /**
+   * @brief Returns the name of the class for ImportCLIFile
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for ImportCLIFile
+   */
+  static QString ClassName();
 
   ~ImportCLIFile() override;
 
-  SIMPL_FILTER_PARAMETER(QString, CLIFile)
+  /**
+   * @brief Setter property for CLIFile
+   */
+  void setCLIFile(const QString& value);
+  /**
+   * @brief Getter property for CLIFile
+   * @return Value of CLIFile
+   */
+  QString getCLIFile() const;
+
   Q_PROPERTY(QString CLIFile READ getCLIFile WRITE setCLIFile)
 
-  SIMPL_FILTER_PARAMETER(QString, EdgeDataContainerName)
+  /**
+   * @brief Setter property for EdgeDataContainerName
+   */
+  void setEdgeDataContainerName(const QString& value);
+  /**
+   * @brief Getter property for EdgeDataContainerName
+   * @return Value of EdgeDataContainerName
+   */
+  QString getEdgeDataContainerName() const;
+
   Q_PROPERTY(QString EdgeDataContainerName READ getEdgeDataContainerName WRITE setEdgeDataContainerName)
 
-  SIMPL_FILTER_PARAMETER(QString, VertexAttributeMatrixName)
+  /**
+   * @brief Setter property for VertexAttributeMatrixName
+   */
+  void setVertexAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for VertexAttributeMatrixName
+   * @return Value of VertexAttributeMatrixName
+   */
+  QString getVertexAttributeMatrixName() const;
+
   Q_PROPERTY(QString VertexAttributeMatrixName READ getVertexAttributeMatrixName WRITE setVertexAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, EdgeAttributeMatrixName)
+  /**
+   * @brief Setter property for EdgeAttributeMatrixName
+   */
+  void setEdgeAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for EdgeAttributeMatrixName
+   * @return Value of EdgeAttributeMatrixName
+   */
+  QString getEdgeAttributeMatrixName() const;
+
   Q_PROPERTY(QString EdgeAttributeMatrixName READ getEdgeAttributeMatrixName WRITE setEdgeAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, LayerIdsArrayName)
+  /**
+   * @brief Setter property for LayerIdsArrayName
+   */
+  void setLayerIdsArrayName(const QString& value);
+  /**
+   * @brief Getter property for LayerIdsArrayName
+   * @return Value of LayerIdsArrayName
+   */
+  QString getLayerIdsArrayName() const;
+
   Q_PROPERTY(QString LayerIdsArrayName READ getLayerIdsArrayName WRITE setLayerIdsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, FeatureIdsArrayName)
+  /**
+   * @brief Setter property for FeatureIdsArrayName
+   */
+  void setFeatureIdsArrayName(const QString& value);
+  /**
+   * @brief Getter property for FeatureIdsArrayName
+   * @return Value of FeatureIdsArrayName
+   */
+  QString getFeatureIdsArrayName() const;
+
   Q_PROPERTY(QString FeatureIdsArrayName READ getFeatureIdsArrayName WRITE setFeatureIdsArrayName)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -77,17 +146,17 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -100,38 +169,10 @@ public:
   void execute() override;
 
   /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-  /**
   * @brief getUuid Return the unique identifier for this filter.
   * @return A QUuid object.
   */
-  const QUuid getUuid() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
+  QUuid getUuid() const override;
 
 protected:
   ImportCLIFile();
@@ -139,7 +180,7 @@ protected:
   /**
   * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
   */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
   * @brief Initializes all the private instance variables.
@@ -147,6 +188,13 @@ protected:
   void initialize();
 
 private:
+  QString m_CLIFile = {};
+  QString m_EdgeDataContainerName = {};
+  QString m_VertexAttributeMatrixName = {};
+  QString m_EdgeAttributeMatrixName = {};
+  QString m_LayerIdsArrayName = {};
+  QString m_FeatureIdsArrayName = {};
+
   ImportCLIFile(const ImportCLIFile&) = delete;  // Copy Constructor Not Implemented
   ImportCLIFile(ImportCLIFile&&) = delete;       // Move Constructor Not Implemented
   void operator=(const ImportCLIFile&) = delete; // Operator '=' Not Implemented

@@ -14,7 +14,8 @@
 #ifndef _aligngeometries_h_
 #define _aligngeometries_h_
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
+#include <memory>
+
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
 
@@ -26,39 +27,80 @@ class AlignGeometries : public AbstractFilter
   Q_OBJECT
 
 public:
-  SIMPL_SHARED_POINTERS(AlignGeometries)
-  SIMPL_FILTER_NEW_MACRO(AlignGeometries)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(AlignGeometries, AbstractFilter)
+  using Self = AlignGeometries;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<AlignGeometries> New();
+
+  /**
+   * @brief Returns the name of the class for AlignGeometries
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for AlignGeometries
+   */
+  static QString ClassName();
 
   ~AlignGeometries() override;
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, MovingGeometry)
+  /**
+   * @brief Setter property for MovingGeometry
+   */
+  void setMovingGeometry(const DataArrayPath& value);
+  /**
+   * @brief Getter property for MovingGeometry
+   * @return Value of MovingGeometry
+   */
+  DataArrayPath getMovingGeometry() const;
+
   Q_PROPERTY(DataArrayPath MovingGeometry READ getMovingGeometry WRITE setMovingGeometry)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, TargetGeometry)
+  /**
+   * @brief Setter property for TargetGeometry
+   */
+  void setTargetGeometry(const DataArrayPath& value);
+  /**
+   * @brief Getter property for TargetGeometry
+   * @return Value of TargetGeometry
+   */
+  DataArrayPath getTargetGeometry() const;
+
   Q_PROPERTY(DataArrayPath TargetGeometry READ getTargetGeometry WRITE setTargetGeometry)
 
-  SIMPL_FILTER_PARAMETER(int, AlignmentType)
+  /**
+   * @brief Setter property for AlignmentType
+   */
+  void setAlignmentType(int value);
+  /**
+   * @brief Getter property for AlignmentType
+   * @return Value of AlignmentType
+   */
+  int getAlignmentType() const;
+
   Q_PROPERTY(int AlignmentType READ getAlignmentType WRITE setAlignmentType)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -68,17 +110,17 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -91,38 +133,10 @@ public:
   void execute() override;
 
   /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-  /**
   * @brief getUuid Return the unique identifier for this filter.
   * @return A QUuid object.
   */
-  const QUuid getUuid() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
+  QUuid getUuid() const override;
 
 protected:
   AlignGeometries();
@@ -130,7 +144,7 @@ protected:
   /**
   * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
   */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
   * @brief Initializes all the private instance variables.
@@ -138,6 +152,10 @@ protected:
   void initialize();
 
 private:
+  DataArrayPath m_MovingGeometry = {};
+  DataArrayPath m_TargetGeometry = {};
+  int m_AlignmentType = {};
+
   AlignGeometries(const AlignGeometries&); // Copy Constructor Not Implemented
   AlignGeometries(AlignGeometries&&);      // Move Constructor Not Implemented
   void operator=(const AlignGeometries&);  // Operator '=' Not Implemented

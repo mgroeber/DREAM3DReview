@@ -34,12 +34,17 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "IdentifyDislocationSegments.h"
 
 #include <chrono>
 #include <random>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
+
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedPathCreationFilterParameter.h"
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
@@ -48,6 +53,8 @@
 #include "SIMPLib/Math/GeometryMath.h"
 #include "SIMPLib/Math/SIMPLibMath.h"
 #include "SIMPLib/Math/SIMPLibRandom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
 
@@ -162,7 +169,7 @@ void IdentifyDislocationSegments::dataCheck()
     return;
   }
 
-  EdgeGeom::Pointer edges = m->getPrereqGeometry<EdgeGeom, AbstractFilter>(this);
+  EdgeGeom::Pointer edges = m->getPrereqGeometry<EdgeGeom>(this);
   if(getErrorCode() < 0)
   {
     return;
@@ -181,13 +188,13 @@ void IdentifyDislocationSegments::dataCheck()
 
   // Get the name and create the array in the new data attrMat
   std::vector<size_t> dims(1, 3);
-  m_BurgersVectorsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getBurgersVectorsArrayPath(),
+  m_BurgersVectorsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getBurgersVectorsArrayPath(),
                                                                                                           dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_BurgersVectorsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_BurgersVectors = m_BurgersVectorsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
-  m_SlipPlaneNormalsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getSlipPlaneNormalsArrayPath(),
+  m_SlipPlaneNormalsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getSlipPlaneNormalsArrayPath(),
                                                                                                             dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_SlipPlaneNormalsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -195,31 +202,19 @@ void IdentifyDislocationSegments::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   dims[0] = 1;
   tempPath.update(getBurgersVectorsArrayPath().getDataContainerName(), getBurgersVectorsArrayPath().getAttributeMatrixName(), getDislocationIdsArrayName());
-  m_DislocationIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0, dims, "", DataArrayID31);
+  m_DislocationIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, 0, dims, "", DataArrayID31);
   if(nullptr != m_DislocationIdsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_DislocationIds = m_DislocationIdsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   tempPath.update(getBurgersVectorsArrayPath().getDataContainerName(), getEdgeFeatureAttributeMatrixName(), getActiveArrayName());
-  m_ActivePtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>, AbstractFilter, bool>(this, tempPath, true, dims, "", DataArrayID32);
+  m_ActivePtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>>(this, tempPath, true, dims, "", DataArrayID32);
   if(nullptr != m_ActivePtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_Active = m_ActivePtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void IdentifyDislocationSegments::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -376,7 +371,7 @@ AbstractFilter::Pointer IdentifyDislocationSegments::newFilterInstance(bool copy
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString IdentifyDislocationSegments::getCompiledLibraryName() const
+QString IdentifyDislocationSegments::getCompiledLibraryName() const
 {
   return DDDAnalysisToolboxConstants::DDDAnalysisToolboxBaseName;
 }
@@ -384,7 +379,7 @@ const QString IdentifyDislocationSegments::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString IdentifyDislocationSegments::getBrandingString() const
+QString IdentifyDislocationSegments::getBrandingString() const
 {
   return "DDDAnalysisToolbox";
 }
@@ -392,7 +387,7 @@ const QString IdentifyDislocationSegments::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString IdentifyDislocationSegments::getFilterVersion() const
+QString IdentifyDislocationSegments::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -403,7 +398,7 @@ const QString IdentifyDislocationSegments::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString IdentifyDislocationSegments::getGroupName() const
+QString IdentifyDislocationSegments::getGroupName() const
 {
   return SIMPL::FilterGroups::Unsupported;
 }
@@ -411,7 +406,7 @@ const QString IdentifyDislocationSegments::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid IdentifyDislocationSegments::getUuid()
+QUuid IdentifyDislocationSegments::getUuid() const
 {
   return QUuid("{073798a1-1fb4-5e3c-81f6-e426f60e347a}");
 }
@@ -419,7 +414,7 @@ const QUuid IdentifyDislocationSegments::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString IdentifyDislocationSegments::getSubGroupName() const
+QString IdentifyDislocationSegments::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::FeatureIdentificationFilters;
 }
@@ -427,7 +422,96 @@ const QString IdentifyDislocationSegments::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString IdentifyDislocationSegments::getHumanLabel() const
+QString IdentifyDislocationSegments::getHumanLabel() const
 {
   return "Identify Dislocation Segments";
+}
+
+// -----------------------------------------------------------------------------
+IdentifyDislocationSegments::Pointer IdentifyDislocationSegments::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<IdentifyDislocationSegments> IdentifyDislocationSegments::New()
+{
+  struct make_shared_enabler : public IdentifyDislocationSegments
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString IdentifyDislocationSegments::getNameOfClass() const
+{
+  return QString("IdentifyDislocationSegments");
+}
+
+// -----------------------------------------------------------------------------
+QString IdentifyDislocationSegments::ClassName()
+{
+  return QString("IdentifyDislocationSegments");
+}
+
+// -----------------------------------------------------------------------------
+void IdentifyDislocationSegments::setEdgeFeatureAttributeMatrixName(const QString& value)
+{
+  m_EdgeFeatureAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString IdentifyDislocationSegments::getEdgeFeatureAttributeMatrixName() const
+{
+  return m_EdgeFeatureAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void IdentifyDislocationSegments::setBurgersVectorsArrayPath(const DataArrayPath& value)
+{
+  m_BurgersVectorsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath IdentifyDislocationSegments::getBurgersVectorsArrayPath() const
+{
+  return m_BurgersVectorsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void IdentifyDislocationSegments::setSlipPlaneNormalsArrayPath(const DataArrayPath& value)
+{
+  m_SlipPlaneNormalsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath IdentifyDislocationSegments::getSlipPlaneNormalsArrayPath() const
+{
+  return m_SlipPlaneNormalsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void IdentifyDislocationSegments::setDislocationIdsArrayName(const QString& value)
+{
+  m_DislocationIdsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString IdentifyDislocationSegments::getDislocationIdsArrayName() const
+{
+  return m_DislocationIdsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void IdentifyDislocationSegments::setActiveArrayName(const QString& value)
+{
+  m_ActiveArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString IdentifyDislocationSegments::getActiveArrayName() const
+{
+  return m_ActiveArrayName;
 }

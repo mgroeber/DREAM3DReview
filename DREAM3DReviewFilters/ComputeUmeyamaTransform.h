@@ -35,9 +35,11 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -47,53 +49,122 @@
 class DREAM3DReview_EXPORT ComputeUmeyamaTransform : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(ComputeUmeyamaTransform SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(ComputeUmeyamaTransform)
+  PYB11_FILTER_NEW_MACRO(ComputeUmeyamaTransform)
+  PYB11_FILTER_PARAMETER(DataArrayPath, SourcePointSet)
+  PYB11_FILTER_PARAMETER(DataArrayPath, DestPointSet)
+  PYB11_FILTER_PARAMETER(bool, UseScaling)
+  PYB11_FILTER_PARAMETER(QString, TransformationAttributeMatrixName)
+  PYB11_FILTER_PARAMETER(QString, TransformationMatrixName)
   PYB11_PROPERTY(DataArrayPath SourcePointSet READ getSourcePointSet WRITE setSourcePointSet)
   PYB11_PROPERTY(DataArrayPath DestPointSet READ getDestPointSet WRITE setDestPointSet)
   PYB11_PROPERTY(bool UseScaling READ getUseScaling WRITE setUseScaling)
   PYB11_PROPERTY(QString TransformationAttributeMatrixName READ getTransformationAttributeMatrixName WRITE setTransformationAttributeMatrixName)
   PYB11_PROPERTY(QString TransformationMatrixName READ getTransformationMatrixName WRITE setTransformationMatrixName)
+#endif
 
 public:
-  SIMPL_SHARED_POINTERS(ComputeUmeyamaTransform)
-  SIMPL_FILTER_NEW_MACRO(ComputeUmeyamaTransform)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(ComputeUmeyamaTransform, AbstractFilter)
+  using Self = ComputeUmeyamaTransform;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<ComputeUmeyamaTransform> New();
+
+  /**
+   * @brief Returns the name of the class for ComputeUmeyamaTransform
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for ComputeUmeyamaTransform
+   */
+  static QString ClassName();
 
   ~ComputeUmeyamaTransform() override;
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, SourcePointSet)
+  /**
+   * @brief Setter property for SourcePointSet
+   */
+  void setSourcePointSet(const DataArrayPath& value);
+  /**
+   * @brief Getter property for SourcePointSet
+   * @return Value of SourcePointSet
+   */
+  DataArrayPath getSourcePointSet() const;
+
   Q_PROPERTY(DataArrayPath SourcePointSet READ getSourcePointSet WRITE setSourcePointSet)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, DestPointSet)
+  /**
+   * @brief Setter property for DestPointSet
+   */
+  void setDestPointSet(const DataArrayPath& value);
+  /**
+   * @brief Getter property for DestPointSet
+   * @return Value of DestPointSet
+   */
+  DataArrayPath getDestPointSet() const;
+
   Q_PROPERTY(DataArrayPath DestPointSet READ getDestPointSet WRITE setDestPointSet)
 
-  SIMPL_FILTER_PARAMETER(bool, UseScaling)
+  /**
+   * @brief Setter property for UseScaling
+   */
+  void setUseScaling(bool value);
+  /**
+   * @brief Getter property for UseScaling
+   * @return Value of UseScaling
+   */
+  bool getUseScaling() const;
+
   Q_PROPERTY(bool UseScaling READ getUseScaling WRITE setUseScaling)
 
-  SIMPL_FILTER_PARAMETER(QString, TransformationAttributeMatrixName)
+  /**
+   * @brief Setter property for TransformationAttributeMatrixName
+   */
+  void setTransformationAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for TransformationAttributeMatrixName
+   * @return Value of TransformationAttributeMatrixName
+   */
+  QString getTransformationAttributeMatrixName() const;
+
   Q_PROPERTY(QString TransformationAttributeMatrixName READ getTransformationAttributeMatrixName WRITE setTransformationAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, TransformationMatrixName)
+  /**
+   * @brief Setter property for TransformationMatrixName
+   */
+  void setTransformationMatrixName(const QString& value);
+  /**
+   * @brief Getter property for TransformationMatrixName
+   * @return Value of TransformationMatrixName
+   */
+  QString getTransformationMatrixName() const;
+
   Q_PROPERTY(QString TransformationMatrixName READ getTransformationMatrixName WRITE setTransformationMatrixName)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -103,23 +174,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -136,41 +207,13 @@ public:
    */
   void execute() override;
 
-  /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
-
 protected:
   ComputeUmeyamaTransform();
 
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -178,7 +221,14 @@ protected:
   void initialize();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(float, TransformationMatrix)
+  std::weak_ptr<DataArray<float>> m_TransformationMatrixPtr;
+  float* m_TransformationMatrix = nullptr;
+
+  DataArrayPath m_SourcePointSet = {};
+  DataArrayPath m_DestPointSet = {};
+  bool m_UseScaling = {};
+  QString m_TransformationAttributeMatrixName = {};
+  QString m_TransformationMatrixName = {};
 
 public:
   ComputeUmeyamaTransform(const ComputeUmeyamaTransform&) = delete; // Copy Constructor Not Implemented

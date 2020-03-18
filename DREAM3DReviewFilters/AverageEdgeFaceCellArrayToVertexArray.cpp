@@ -33,9 +33,14 @@
 *
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "AverageEdgeFaceCellArrayToVertexArray.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArrayCreationFilterParameter.h"
@@ -45,6 +50,8 @@
 #include "SIMPLib/Geometry/GeometryHelpers.h"
 #include "SIMPLib/Geometry/IGeometry2D.h"
 #include "SIMPLib/Geometry/IGeometry3D.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -161,7 +168,7 @@ void AverageEdgeFaceCellArrayToVertexArray::dataCheck()
   clearErrorCode();
   clearWarningCode();
 
-  IGeometry::Pointer igeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry, AbstractFilter>(this, getSelectedArrayPath().getDataContainerName());
+  IGeometry::Pointer igeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry>(this, getSelectedArrayPath().getDataContainerName());
 
   if(getErrorCode() < 0)
   {
@@ -182,8 +189,8 @@ void AverageEdgeFaceCellArrayToVertexArray::dataCheck()
     setErrorCondition(-11000, ss);
   }
 
-  AttributeMatrix::Pointer cellAttrMat = getDataContainerArray()->getPrereqAttributeMatrixFromPath<AbstractFilter>(this, getSelectedArrayPath(), -301);
-  AttributeMatrix::Pointer vertAttrMat = getDataContainerArray()->getPrereqAttributeMatrixFromPath<AbstractFilter>(this, getAverageVertexArrayPath(), -301);
+  AttributeMatrix::Pointer cellAttrMat = getDataContainerArray()->getPrereqAttributeMatrixFromPath(this, getSelectedArrayPath(), -301);
+  AttributeMatrix::Pointer vertAttrMat = getDataContainerArray()->getPrereqAttributeMatrixFromPath(this, getAverageVertexArrayPath(), -301);
 
   if(getErrorCode() < 0)
   {
@@ -224,7 +231,7 @@ void AverageEdgeFaceCellArrayToVertexArray::dataCheck()
     setErrorCondition(-11001, ss);
   }
 
-  m_InCellArrayPtr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getSelectedArrayPath());
+  m_InCellArrayPtr = getDataContainerArray()->getPrereqIDataArrayFromPath(this, getSelectedArrayPath());
 
   if(getErrorCode() < 0)
   {
@@ -253,7 +260,7 @@ void AverageEdgeFaceCellArrayToVertexArray::dataCheck()
   std::vector<size_t> cDims = m_InCellArrayPtr.lock()->getComponentDimensions();
   size_t numElemTuples = m_InCellArrayPtr.lock()->getNumberOfTuples();
 
-  m_AverageVertexArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(
+  m_AverageVertexArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(
       this, getAverageVertexArrayPath(), 0, cDims);   /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_AverageVertexArrayPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -284,18 +291,6 @@ void AverageEdgeFaceCellArrayToVertexArray::dataCheck()
   }
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void AverageEdgeFaceCellArrayToVertexArray::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -332,7 +327,7 @@ AbstractFilter::Pointer AverageEdgeFaceCellArrayToVertexArray::newFilterInstance
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AverageEdgeFaceCellArrayToVertexArray::getCompiledLibraryName() const
+QString AverageEdgeFaceCellArrayToVertexArray::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -340,7 +335,7 @@ const QString AverageEdgeFaceCellArrayToVertexArray::getCompiledLibraryName() co
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AverageEdgeFaceCellArrayToVertexArray::getBrandingString() const
+QString AverageEdgeFaceCellArrayToVertexArray::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -348,7 +343,7 @@ const QString AverageEdgeFaceCellArrayToVertexArray::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AverageEdgeFaceCellArrayToVertexArray::getFilterVersion() const
+QString AverageEdgeFaceCellArrayToVertexArray::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -359,7 +354,7 @@ const QString AverageEdgeFaceCellArrayToVertexArray::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AverageEdgeFaceCellArrayToVertexArray::getGroupName() const
+QString AverageEdgeFaceCellArrayToVertexArray::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterGroups::DREAM3DReviewFilters;
 }
@@ -367,7 +362,7 @@ const QString AverageEdgeFaceCellArrayToVertexArray::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid AverageEdgeFaceCellArrayToVertexArray::getUuid()
+QUuid AverageEdgeFaceCellArrayToVertexArray::getUuid() const
 {
   return QUuid("{9df4c18a-f51b-5698-8067-530d37f57c61}");
 }
@@ -375,7 +370,7 @@ const QUuid AverageEdgeFaceCellArrayToVertexArray::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AverageEdgeFaceCellArrayToVertexArray::getSubGroupName() const
+QString AverageEdgeFaceCellArrayToVertexArray::getSubGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::StatisticsFilters;
 }
@@ -383,7 +378,60 @@ const QString AverageEdgeFaceCellArrayToVertexArray::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AverageEdgeFaceCellArrayToVertexArray::getHumanLabel() const
+QString AverageEdgeFaceCellArrayToVertexArray::getHumanLabel() const
 {
   return "Average Edge/Face/Cell Array to Vertex Array";
+}
+
+// -----------------------------------------------------------------------------
+AverageEdgeFaceCellArrayToVertexArray::Pointer AverageEdgeFaceCellArrayToVertexArray::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<AverageEdgeFaceCellArrayToVertexArray> AverageEdgeFaceCellArrayToVertexArray::New()
+{
+  struct make_shared_enabler : public AverageEdgeFaceCellArrayToVertexArray
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString AverageEdgeFaceCellArrayToVertexArray::getNameOfClass() const
+{
+  return QString("AverageEdgeFaceCellArrayToVertexArray");
+}
+
+// -----------------------------------------------------------------------------
+QString AverageEdgeFaceCellArrayToVertexArray::ClassName()
+{
+  return QString("AverageEdgeFaceCellArrayToVertexArray");
+}
+
+// -----------------------------------------------------------------------------
+void AverageEdgeFaceCellArrayToVertexArray::setSelectedArrayPath(const DataArrayPath& value)
+{
+  m_SelectedArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AverageEdgeFaceCellArrayToVertexArray::getSelectedArrayPath() const
+{
+  return m_SelectedArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void AverageEdgeFaceCellArrayToVertexArray::setAverageVertexArrayPath(const DataArrayPath& value)
+{
+  m_AverageVertexArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AverageEdgeFaceCellArrayToVertexArray::getAverageVertexArrayPath() const
+{
+  return m_AverageVertexArrayPath;
 }

@@ -14,7 +14,8 @@
 #ifndef _interpolatemeshtoregulargrid_h_
 #define _interpolatemeshtoregulargrid_h_
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
+#include <memory>
+
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
 
@@ -26,54 +27,140 @@ class InterpolateMeshToRegularGrid : public AbstractFilter
   Q_OBJECT
 
 public:
-  SIMPL_SHARED_POINTERS(InterpolateMeshToRegularGrid)
-  SIMPL_FILTER_NEW_MACRO(InterpolateMeshToRegularGrid)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(InterpolateMeshToRegularGrid, AbstractFilter)
+  using Self = InterpolateMeshToRegularGrid;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<InterpolateMeshToRegularGrid> New();
+
+  /**
+   * @brief Returns the name of the class for InterpolateMeshToRegularGrid
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for InterpolateMeshToRegularGrid
+   */
+  static QString ClassName();
 
   ~InterpolateMeshToRegularGrid() override;
 
-  SIMPL_FILTER_PARAMETER(QString, SelectedDataContainerName)
+  /**
+   * @brief Setter property for SelectedDataContainerName
+   */
+  void setSelectedDataContainerName(const QString& value);
+  /**
+   * @brief Getter property for SelectedDataContainerName
+   * @return Value of SelectedDataContainerName
+   */
+  QString getSelectedDataContainerName() const;
+
   Q_PROPERTY(QString SelectedDataContainerName READ getSelectedDataContainerName WRITE setSelectedDataContainerName)
 
-  SIMPL_FILTER_PARAMETER(QString, InterpolatedDataContainerName)
+  /**
+   * @brief Setter property for InterpolatedDataContainerName
+   */
+  void setInterpolatedDataContainerName(const QString& value);
+  /**
+   * @brief Getter property for InterpolatedDataContainerName
+   * @return Value of InterpolatedDataContainerName
+   */
+  QString getInterpolatedDataContainerName() const;
+
   Q_PROPERTY(QString InterpolatedDataContainerName READ getInterpolatedDataContainerName WRITE setInterpolatedDataContainerName)
 
-  SIMPL_FILTER_PARAMETER(QString, InterpolatedAttributeMatrixName)
+  /**
+   * @brief Setter property for InterpolatedAttributeMatrixName
+   */
+  void setInterpolatedAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for InterpolatedAttributeMatrixName
+   * @return Value of InterpolatedAttributeMatrixName
+   */
+  QString getInterpolatedAttributeMatrixName() const;
+
   Q_PROPERTY(QString InterpolatedAttributeMatrixName READ getInterpolatedAttributeMatrixName WRITE setInterpolatedAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(int, ScaleOrSpecifyNumCells)
+  /**
+   * @brief Setter property for ScaleOrSpecifyNumCells
+   */
+  void setScaleOrSpecifyNumCells(int value);
+  /**
+   * @brief Getter property for ScaleOrSpecifyNumCells
+   * @return Value of ScaleOrSpecifyNumCells
+   */
+  int getScaleOrSpecifyNumCells() const;
+
   Q_PROPERTY(int ScaleOrSpecifyNumCells READ getScaleOrSpecifyNumCells WRITE setScaleOrSpecifyNumCells)
 
-  SIMPL_FILTER_PARAMETER(int, SetXDimension)
+  /**
+   * @brief Setter property for SetXDimension
+   */
+  void setSetXDimension(int value);
+  /**
+   * @brief Getter property for SetXDimension
+   * @return Value of SetXDimension
+   */
+  int getSetXDimension() const;
+
   Q_PROPERTY(int SetXDimension READ getSetXDimension WRITE setSetXDimension)
 
-  SIMPL_FILTER_PARAMETER(int, SetYDimension)
+  /**
+   * @brief Setter property for SetYDimension
+   */
+  void setSetYDimension(int value);
+  /**
+   * @brief Getter property for SetYDimension
+   * @return Value of SetYDimension
+   */
+  int getSetYDimension() const;
+
   Q_PROPERTY(int SetYDimension READ getSetYDimension WRITE setSetYDimension)
 
-  SIMPL_FILTER_PARAMETER(int, ScaleFactorNumCells)
+  /**
+   * @brief Setter property for ScaleFactorNumCells
+   */
+  void setScaleFactorNumCells(int value);
+  /**
+   * @brief Getter property for ScaleFactorNumCells
+   * @return Value of ScaleFactorNumCells
+   */
+  int getScaleFactorNumCells() const;
+
   Q_PROPERTY(int ScaleFactorNumCells READ getScaleFactorNumCells WRITE setScaleFactorNumCells)
 
-  SIMPL_FILTER_PARAMETER(int, OutsideMeshIdentifier)
+  /**
+   * @brief Setter property for OutsideMeshIdentifier
+   */
+  void setOutsideMeshIdentifier(int value);
+  /**
+   * @brief Getter property for OutsideMeshIdentifier
+   * @return Value of OutsideMeshIdentifier
+   */
+  int getOutsideMeshIdentifier() const;
+
   Q_PROPERTY(int OutsideMeshIdentifier READ getOutsideMeshIdentifier WRITE setOutsideMeshIdentifier)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -83,17 +170,17 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -111,15 +198,10 @@ public:
   void execute() override;
 
   /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-  /**
   * @brief getUuid Return the unique identifier for this filter.
   * @return A QUuid object.
   */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
 signals:
   /**
@@ -171,6 +253,15 @@ protected:
   void initialize();
 
 private:
+  QString m_SelectedDataContainerName = {};
+  QString m_InterpolatedDataContainerName = {};
+  QString m_InterpolatedAttributeMatrixName = {};
+  int m_ScaleOrSpecifyNumCells = {};
+  int m_SetXDimension = {};
+  int m_SetYDimension = {};
+  int m_ScaleFactorNumCells = {};
+  int m_OutsideMeshIdentifier = {};
+
   QList<QString> m_AttrMatList;
   QMap<QString, QList<QString>> m_AttrArrayMap;
   std::vector<float> m_MeshMinExtents;

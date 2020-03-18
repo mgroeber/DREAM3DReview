@@ -35,9 +35,11 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 
@@ -50,7 +52,21 @@
 class DREAM3DReview_EXPORT AdaptiveAlignment : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(AdaptiveAlignment SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(AdaptiveAlignment)
+  PYB11_FILTER_NEW_MACRO(AdaptiveAlignment)
+  PYB11_FILTER_PARAMETER(int, GlobalCorrection)
+  PYB11_FILTER_PARAMETER(QString, InputPath)
+  PYB11_FILTER_PARAMETER(float, ShiftX)
+  PYB11_FILTER_PARAMETER(float, ShiftY)
+  PYB11_FILTER_PARAMETER(DataArrayPath, ImageDataArrayPath)
+  PYB11_FILTER_PARAMETER(QString, NewCellArrayName)
+  PYB11_FILTER_PARAMETER(float, MinRadius)
+  PYB11_FILTER_PARAMETER(float, MaxRadius)
+  PYB11_FILTER_PARAMETER(int, NumberCircles)
+  PYB11_FILTER_PARAMETER(QVector<DataArrayPath>, IgnoredDataArrayPaths)
   PYB11_PROPERTY(int GlobalCorrection READ getGlobalCorrection WRITE setGlobalCorrection)
   PYB11_PROPERTY(QString InputPath READ getInputPath WRITE setInputPath)
   PYB11_PROPERTY(float ShiftX READ getShiftX WRITE setShiftX)
@@ -60,73 +76,213 @@ class DREAM3DReview_EXPORT AdaptiveAlignment : public AbstractFilter
   PYB11_PROPERTY(float MinRadius READ getMinRadius WRITE setMinRadius)
   PYB11_PROPERTY(float MaxRadius READ getMaxRadius WRITE setMaxRadius)
   PYB11_PROPERTY(int NumberCircles READ getNumberCircles WRITE setNumberCircles)
+#endif
+
 public:
-  SIMPL_SHARED_POINTERS(AdaptiveAlignment)
-  SIMPL_FILTER_NEW_MACRO(AdaptiveAlignment)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(AdaptiveAlignment, AbstractFilter)
+  using Self = AdaptiveAlignment;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<AdaptiveAlignment> New();
+
+  /**
+   * @brief Returns the name of the class for AdaptiveAlignment
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for AdaptiveAlignment
+   */
+  static QString ClassName();
 
   ~AdaptiveAlignment() override;
 
-  SIMPL_INSTANCE_STRING_PROPERTY(DataContainerName)
+  /**
+   * @brief Setter property for DataContainerName
+   */
+  void setDataContainerName(const QString& value);
+  /**
+   * @brief Getter property for DataContainerName
+   * @return Value of DataContainerName
+   */
+  QString getDataContainerName() const;
 
-  SIMPL_INSTANCE_STRING_PROPERTY(CellAttributeMatrixName)
+  /**
+   * @brief Setter property for CellAttributeMatrixName
+   */
+  void setCellAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for CellAttributeMatrixName
+   * @return Value of CellAttributeMatrixName
+   */
+  QString getCellAttributeMatrixName() const;
 
-  SIMPL_INSTANCE_PROPERTY(bool, WriteAlignmentShifts)
+  /**
+   * @brief Setter property for WriteAlignmentShifts
+   */
+  void setWriteAlignmentShifts(bool value);
+  /**
+   * @brief Getter property for WriteAlignmentShifts
+   * @return Value of WriteAlignmentShifts
+   */
+  bool getWriteAlignmentShifts() const;
+
   Q_PROPERTY(bool WriteAlignmentShifts READ getWriteAlignmentShifts WRITE setWriteAlignmentShifts)
 
-  SIMPL_INSTANCE_STRING_PROPERTY(AlignmentShiftFileName)
+  /**
+   * @brief Setter property for AlignmentShiftFileName
+   */
+  void setAlignmentShiftFileName(const QString& value);
+  /**
+   * @brief Getter property for AlignmentShiftFileName
+   * @return Value of AlignmentShiftFileName
+   */
+  QString getAlignmentShiftFileName() const;
+
   Q_PROPERTY(QString AlignmentShiftFileName READ getAlignmentShiftFileName WRITE setAlignmentShiftFileName)
 
   /////////////// new:
 
-  SIMPL_FILTER_PARAMETER(int, GlobalCorrection)
+  /**
+   * @brief Setter property for GlobalCorrection
+   */
+  void setGlobalCorrection(int value);
+  /**
+   * @brief Getter property for GlobalCorrection
+   * @return Value of GlobalCorrection
+   */
+  int getGlobalCorrection() const;
+
   Q_PROPERTY(int GlobalCorrection READ getGlobalCorrection WRITE setGlobalCorrection)
 
-  SIMPL_FILTER_PARAMETER(QString, InputPath)
+  /**
+   * @brief Setter property for InputPath
+   */
+  void setInputPath(const QString& value);
+  /**
+   * @brief Getter property for InputPath
+   * @return Value of InputPath
+   */
+  QString getInputPath() const;
+
   Q_PROPERTY(QString InputPath READ getInputPath WRITE setInputPath)
 
-  SIMPL_FILTER_PARAMETER(float, ShiftX)
+  /**
+   * @brief Setter property for ShiftX
+   */
+  void setShiftX(float value);
+  /**
+   * @brief Getter property for ShiftX
+   * @return Value of ShiftX
+   */
+  float getShiftX() const;
+
   Q_PROPERTY(float ShiftX READ getShiftX WRITE setShiftX)
 
-  SIMPL_FILTER_PARAMETER(float, ShiftY)
+  /**
+   * @brief Setter property for ShiftY
+   */
+  void setShiftY(float value);
+  /**
+   * @brief Getter property for ShiftY
+   * @return Value of ShiftY
+   */
+  float getShiftY() const;
+
   Q_PROPERTY(float ShiftY READ getShiftY WRITE setShiftY)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, ImageDataArrayPath)
+  /**
+   * @brief Setter property for ImageDataArrayPath
+   */
+  void setImageDataArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for ImageDataArrayPath
+   * @return Value of ImageDataArrayPath
+   */
+  DataArrayPath getImageDataArrayPath() const;
+
   Q_PROPERTY(DataArrayPath ImageDataArrayPath READ getImageDataArrayPath WRITE setImageDataArrayPath)
 
-  SIMPL_FILTER_PARAMETER(QString, NewCellArrayName)
+  /**
+   * @brief Setter property for NewCellArrayName
+   */
+  void setNewCellArrayName(const QString& value);
+  /**
+   * @brief Getter property for NewCellArrayName
+   * @return Value of NewCellArrayName
+   */
+  QString getNewCellArrayName() const;
+
   Q_PROPERTY(QString NewCellArrayName READ getNewCellArrayName WRITE setNewCellArrayName)
 
-  SIMPL_FILTER_PARAMETER(float, MinRadius)
+  /**
+   * @brief Setter property for MinRadius
+   */
+  void setMinRadius(float value);
+  /**
+   * @brief Getter property for MinRadius
+   * @return Value of MinRadius
+   */
+  float getMinRadius() const;
+
   Q_PROPERTY(float MinRadius READ getMinRadius WRITE setMinRadius)
 
-  SIMPL_FILTER_PARAMETER(float, MaxRadius)
+  /**
+   * @brief Setter property for MaxRadius
+   */
+  void setMaxRadius(float value);
+  /**
+   * @brief Getter property for MaxRadius
+   * @return Value of MaxRadius
+   */
+  float getMaxRadius() const;
+
   Q_PROPERTY(float MaxRadius READ getMaxRadius WRITE setMaxRadius)
 
-  SIMPL_FILTER_PARAMETER(int, NumberCircles)
+  /**
+   * @brief Setter property for NumberCircles
+   */
+  void setNumberCircles(int value);
+  /**
+   * @brief Getter property for NumberCircles
+   * @return Value of NumberCircles
+   */
+  int getNumberCircles() const;
+
   Q_PROPERTY(int NumberCircles READ getNumberCircles WRITE setNumberCircles)
 
-  SIMPL_FILTER_PARAMETER(QVector<DataArrayPath>, IgnoredDataArrayPaths)
+  /**
+   * @brief Setter property for IgnoredDataArrayPaths
+   */
+  void setIgnoredDataArrayPaths(const QVector<DataArrayPath>& value);
+  /**
+   * @brief Getter property for IgnoredDataArrayPaths
+   * @return Value of IgnoredDataArrayPaths
+   */
+  QVector<DataArrayPath> getIgnoredDataArrayPaths() const;
+
   Q_PROPERTY(QVector<DataArrayPath> IgnoredDataArrayPaths READ getIgnoredDataArrayPaths WRITE setIgnoredDataArrayPaths)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
    */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -136,23 +292,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -169,41 +325,13 @@ public:
    */
   void execute() override;
 
-  /**
-   * @brief preflight Reimplemented from @see AbstractFilter class
-   */
-  void preflight() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
-
 protected:
   AdaptiveAlignment();
 
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -253,8 +381,26 @@ protected:
   virtual void find_shifts(std::vector<int64_t>& xshifts, std::vector<int64_t>& yshifts, std::vector<float>& xneedshifts, std::vector<float>& yneedshifts);
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(AnisotropyConstants::DefaultPixelType, ImageData)
-  DEFINE_DATAARRAY_VARIABLE(AnisotropyConstants::DefaultPixelType, FlatImageData)
+  std::weak_ptr<DataArray<AnisotropyConstants::DefaultPixelType>> m_ImageDataPtr;
+  AnisotropyConstants::DefaultPixelType* m_ImageData = nullptr;
+  std::weak_ptr<DataArray<AnisotropyConstants::DefaultPixelType>> m_FlatImageDataPtr;
+  AnisotropyConstants::DefaultPixelType* m_FlatImageData = nullptr;
+
+  QString m_DataContainerName = {};
+  QString m_CellAttributeMatrixName = {};
+  bool m_WriteAlignmentShifts = {};
+  QString m_AlignmentShiftFileName = {};
+  int m_GlobalCorrection = {};
+  QString m_InputPath = {};
+  float m_ShiftX = {};
+  float m_ShiftY = {};
+  DataArrayPath m_ImageDataArrayPath = {};
+  QString m_NewCellArrayName = {};
+  float m_MinRadius = {};
+  float m_MaxRadius = {};
+  int m_NumberCircles = {};
+  QVector<DataArrayPath> m_IgnoredDataArrayPaths = {};
+
   DataArray<AnisotropyConstants::DefaultPixelType>::WeakPointer m_NewCellArrayPtr;
 
   std::vector<std::vector<uint64_t>> m_RectangleCorners;

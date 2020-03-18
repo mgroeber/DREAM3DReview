@@ -14,9 +14,11 @@
 #ifndef _findsurfaceroughness_h_
 #define _findsurfaceroughness_h_
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
+#include <memory>
+
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 /**
  * @brief The FindSurfaceRoughness class. See [Filter documentation](@ref FindSurfaceRoughness) for details.
@@ -26,39 +28,80 @@ class FindSurfaceRoughness : public AbstractFilter
   Q_OBJECT
 
 public:
-  SIMPL_SHARED_POINTERS(FindSurfaceRoughness)
-  SIMPL_FILTER_NEW_MACRO(FindSurfaceRoughness)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(FindSurfaceRoughness, AbstractFilter)
+  using Self = FindSurfaceRoughness;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<FindSurfaceRoughness> New();
+
+  /**
+   * @brief Returns the name of the class for FindSurfaceRoughness
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for FindSurfaceRoughness
+   */
+  static QString ClassName();
 
   ~FindSurfaceRoughness() override;
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, BoundaryCellsArrayPath)
+  /**
+   * @brief Setter property for BoundaryCellsArrayPath
+   */
+  void setBoundaryCellsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for BoundaryCellsArrayPath
+   * @return Value of BoundaryCellsArrayPath
+   */
+  DataArrayPath getBoundaryCellsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath BoundaryCellsArrayPath READ getBoundaryCellsArrayPath WRITE setBoundaryCellsArrayPath)
 
-  SIMPL_FILTER_PARAMETER(QString, AttributeMatrixName)
+  /**
+   * @brief Setter property for AttributeMatrixName
+   */
+  void setAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for AttributeMatrixName
+   * @return Value of AttributeMatrixName
+   */
+  QString getAttributeMatrixName() const;
+
   Q_PROPERTY(QString AttributeMatrixName READ getAttributeMatrixName WRITE setAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, RoughnessParamsArrayName)
+  /**
+   * @brief Setter property for RoughnessParamsArrayName
+   */
+  void setRoughnessParamsArrayName(const QString& value);
+  /**
+   * @brief Getter property for RoughnessParamsArrayName
+   * @return Value of RoughnessParamsArrayName
+   */
+  QString getRoughnessParamsArrayName() const;
+
   Q_PROPERTY(QString RoughnessParamsArrayName READ getRoughnessParamsArrayName WRITE setRoughnessParamsArrayName)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -68,17 +111,17 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -91,38 +134,10 @@ public:
   void execute() override;
 
   /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-  /**
   * @brief getUuid Return the unique identifier for this filter.
   * @return A QUuid object.
   */
-  const QUuid getUuid() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
+  QUuid getUuid() const override;
 
 protected:
   FindSurfaceRoughness();
@@ -130,7 +145,7 @@ protected:
   /**
   * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
   */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
   * @brief Initializes all the private instance variables.
@@ -138,12 +153,20 @@ protected:
   void initialize();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(int8_t, BoundaryCells)
-  DEFINE_DATAARRAY_VARIABLE(double, RoughnessParams)
+  std::weak_ptr<DataArray<int8_t>> m_BoundaryCellsPtr;
+  int8_t* m_BoundaryCells = nullptr;
+  std::weak_ptr<DataArray<double>> m_RoughnessParamsPtr;
+  double* m_RoughnessParams = nullptr;
 
-  FindSurfaceRoughness(const FindSurfaceRoughness&) = delete; // Copy Constructor Not Implemented
-  FindSurfaceRoughness(FindSurfaceRoughness&&) = delete;      // Move Constructor Not Implemented
-  void operator=(const FindSurfaceRoughness&) = delete;                  // Operator '=' Not Implemented
+  DataArrayPath m_BoundaryCellsArrayPath = {};
+  QString m_AttributeMatrixName = {};
+  QString m_RoughnessParamsArrayName = {};
+
+public:
+  FindSurfaceRoughness(const FindSurfaceRoughness&) = delete;            // Copy Constructor Not Implemented
+  FindSurfaceRoughness(FindSurfaceRoughness&&) = delete;                 // Move Constructor Not Implemented
+  FindSurfaceRoughness& operator=(const FindSurfaceRoughness&) = delete; // Copy Assignment Not Implemented
+  FindSurfaceRoughness& operator=(FindSurfaceRoughness&&) = delete;      // Move Assignment Not Implemented
 };
 
 #endif /* _FindSurfaceRoughness_H_ */

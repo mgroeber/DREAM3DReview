@@ -1,5 +1,11 @@
 #ifndef _tdmsobject_h
+
+class IDataArray;
+using IDataArrayShPtrType = std::shared_ptr<IDataArray>;
+
 #define _tdmsobject_h
+
+#include <memory>
 
 #include "TDMSDataType.hpp"
 #include "TDMSMetaData.h"
@@ -40,7 +46,7 @@ public:
     return m_DataType;
   }
 
-  IDataArray::Pointer data()
+  IDataArrayShPtrType data()
   {
     return m_Data;
   }
@@ -88,7 +94,7 @@ private:
   size_t m_CurrentDataPosition;
   bool m_HasData;
   bool m_HasInitializedMetaData;
-  IDataArray::Pointer m_Data;
+  IDataArrayShPtrType m_Data;
   Type m_ObjectType;
 };
 

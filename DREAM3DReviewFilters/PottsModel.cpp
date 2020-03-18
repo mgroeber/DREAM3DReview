@@ -33,6 +33,8 @@
 *
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "PottsModel.h"
 
 #include <cassert>
@@ -41,6 +43,8 @@
 #include <random>
 #include <utility>
 #include <utility>
+
+#include <QtCore/QTextStream>
 
 #include "SIMPLib/Common/Constants.h"
 
@@ -53,6 +57,7 @@
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
 
 #include "SIMPLib/Geometry/ImageGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -421,7 +426,7 @@ void PottsModel::dataCheck()
     setErrorCondition(-5555, ss);
   }
 
-  getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom, AbstractFilter>(this, getFeatureIdsArrayPath().getDataContainerName());
+  getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom>(this, getFeatureIdsArrayPath().getDataContainerName());
 
   if(getErrorCode() < 0)
   {
@@ -431,7 +436,7 @@ void PottsModel::dataCheck()
   std::vector<size_t> cDims(1, 1);
   QVector<DataArrayPath> paths;
 
-  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getFeatureIdsArrayPath(), cDims);
+  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getFeatureIdsArrayPath(), cDims);
   if(m_FeatureIdsPtr.lock())
   {
     m_FeatureIds = m_FeatureIdsPtr.lock()->getPointer(0);
@@ -443,9 +448,9 @@ void PottsModel::dataCheck()
 
   if(getUseMask())
   {
-    getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom, AbstractFilter>(this, getMaskArrayPath().getDataContainerName());
+    getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom>(this, getMaskArrayPath().getDataContainerName());
 
-    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), cDims);
+    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getMaskArrayPath(), cDims);
     if(m_MaskPtr.lock())
     {
       m_Mask = m_MaskPtr.lock()->getPointer(0);
@@ -456,22 +461,9 @@ void PottsModel::dataCheck()
     }
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, paths);
+  getDataContainerArray()->validateNumberOfTuples(this, paths);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void PottsModel::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -583,7 +575,7 @@ AbstractFilter::Pointer PottsModel::newFilterInstance(bool copyFilterParameters)
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PottsModel::getCompiledLibraryName() const
+QString PottsModel::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -591,7 +583,7 @@ const QString PottsModel::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PottsModel::getBrandingString() const
+QString PottsModel::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -599,7 +591,7 @@ const QString PottsModel::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PottsModel::getFilterVersion() const
+QString PottsModel::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -610,7 +602,7 @@ const QString PottsModel::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PottsModel::getGroupName() const
+QString PottsModel::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterGroups::DREAM3DReviewFilters;
 }
@@ -618,7 +610,7 @@ const QString PottsModel::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid PottsModel::getUuid()
+QUuid PottsModel::getUuid() const
 {
   return QUuid("{e15ec84b-1e02-53a6-a830-59e0813775a1}");
 }
@@ -626,7 +618,7 @@ const QUuid PottsModel::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PottsModel::getSubGroupName() const
+QString PottsModel::getSubGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::Coarsening;
 }
@@ -634,7 +626,108 @@ const QString PottsModel::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString PottsModel::getHumanLabel() const
+QString PottsModel::getHumanLabel() const
 {
   return "Potts Model";
+}
+
+// -----------------------------------------------------------------------------
+PottsModel::Pointer PottsModel::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<PottsModel> PottsModel::New()
+{
+  struct make_shared_enabler : public PottsModel
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString PottsModel::getNameOfClass() const
+{
+  return QString("PottsModel");
+}
+
+// -----------------------------------------------------------------------------
+QString PottsModel::ClassName()
+{
+  return QString("PottsModel");
+}
+
+// -----------------------------------------------------------------------------
+void PottsModel::setIterations(int value)
+{
+  m_Iterations = value;
+}
+
+// -----------------------------------------------------------------------------
+int PottsModel::getIterations() const
+{
+  return m_Iterations;
+}
+
+// -----------------------------------------------------------------------------
+void PottsModel::setTemperature(double value)
+{
+  m_Temperature = value;
+}
+
+// -----------------------------------------------------------------------------
+double PottsModel::getTemperature() const
+{
+  return m_Temperature;
+}
+
+// -----------------------------------------------------------------------------
+void PottsModel::setPeriodicBoundaries(bool value)
+{
+  m_PeriodicBoundaries = value;
+}
+
+// -----------------------------------------------------------------------------
+bool PottsModel::getPeriodicBoundaries() const
+{
+  return m_PeriodicBoundaries;
+}
+
+// -----------------------------------------------------------------------------
+void PottsModel::setUseMask(bool value)
+{
+  m_UseMask = value;
+}
+
+// -----------------------------------------------------------------------------
+bool PottsModel::getUseMask() const
+{
+  return m_UseMask;
+}
+
+// -----------------------------------------------------------------------------
+void PottsModel::setFeatureIdsArrayPath(const DataArrayPath& value)
+{
+  m_FeatureIdsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath PottsModel::getFeatureIdsArrayPath() const
+{
+  return m_FeatureIdsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void PottsModel::setMaskArrayPath(const DataArrayPath& value)
+{
+  m_MaskArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath PottsModel::getMaskArrayPath() const
+{
+  return m_MaskArrayPath;
 }

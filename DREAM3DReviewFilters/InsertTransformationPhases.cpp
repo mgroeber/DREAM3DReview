@@ -38,10 +38,14 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "InsertTransformationPhases.h"
 
+#include <QtCore/QTextStream>
 
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/AttributeMatrixSelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/ChoiceFilterParameter.h"
@@ -58,10 +62,12 @@
 #include "SIMPLib/Math/MatrixMath.h"
 #include "SIMPLib/Math/SIMPLibMath.h"
 #include "SIMPLib/Math/SIMPLibRandom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
+#include "OrientationLib/Core/Orientation.hpp"
 #include "OrientationLib/LaueOps/LaueOps.h"
-#include "OrientationLib/OrientationMath/OrientationArray.hpp"
-#include "OrientationLib/OrientationMath/OrientationTransforms.hpp"
+
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -378,7 +384,7 @@ void InsertTransformationPhases::dataCheck()
     return;
   }
 
-  ImageGeom::Pointer image = m->getPrereqGeometry<ImageGeom, AbstractFilter>(this);
+  ImageGeom::Pointer image = m->getPrereqGeometry<ImageGeom>(this);
   if(getErrorCode() < 0 || nullptr == image.get())
   {
     return;
@@ -386,7 +392,7 @@ void InsertTransformationPhases::dataCheck()
 
   std::vector<size_t> dims(1, 1);
   // Cell Data
-  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getFeatureIdsArrayPath(),
+  m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getFeatureIdsArrayPath(),
                                                                                                         dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeatureIdsPtr.lock())                                                                        /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -394,7 +400,7 @@ void InsertTransformationPhases::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   dims[0] = 3;
-  m_CellEulerAnglesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getCellEulerAnglesArrayPath(),
+  m_CellEulerAnglesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getCellEulerAnglesArrayPath(),
                                                                                                            dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CellEulerAnglesPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -403,7 +409,7 @@ void InsertTransformationPhases::dataCheck()
 
   dims[0] = 1;
   m_CellPhasesPtr =
-      getDataContainerArray()->getPrereqArrayFromPath<Int32ArrayType, AbstractFilter>(this, getCellPhasesArrayPath(), dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
+      getDataContainerArray()->getPrereqArrayFromPath<Int32ArrayType>(this, getCellPhasesArrayPath(), dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CellEulerAnglesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_CellPhases = m_CellPhasesPtr.lock()->getPointer(0);
@@ -412,14 +418,14 @@ void InsertTransformationPhases::dataCheck()
   // Feature Data
   dims[0] = 4;
   m_AvgQuatsPtr =
-      getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getAvgQuatsArrayPath(), dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
+      getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getAvgQuatsArrayPath(), dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_AvgQuatsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_AvgQuats = m_AvgQuatsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   dims[0] = 1;
-  m_EquivalentDiametersPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getEquivalentDiametersArrayPath(),
+  m_EquivalentDiametersPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getEquivalentDiametersArrayPath(),
                                                                                                                dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_EquivalentDiametersPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -427,14 +433,14 @@ void InsertTransformationPhases::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   dims[0] = 3;
-  m_CentroidsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getCentroidsArrayPath(),
+  m_CentroidsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getCentroidsArrayPath(),
                                                                                                      dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CentroidsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_Centroids = m_CentroidsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  m_FeatureEulerAnglesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getFeatureEulerAnglesArrayPath(),
+  m_FeatureEulerAnglesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getFeatureEulerAnglesArrayPath(),
                                                                                                               dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeatureEulerAnglesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -442,7 +448,7 @@ void InsertTransformationPhases::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   dims[0] = 1;
-  m_FeaturePhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getFeaturePhasesArrayPath(),
+  m_FeaturePhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getFeaturePhasesArrayPath(),
                                                                                                            dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeaturePhasesPtr.lock())                                                                        /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -452,68 +458,47 @@ void InsertTransformationPhases::dataCheck()
   // New Feature Data
 
   tempPath.update(getCellFeatureAttributeMatrixName().getDataContainerName(), getCellFeatureAttributeMatrixName().getAttributeMatrixName(), getFeatureParentIdsArrayName());
-  m_FeatureParentIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, -1, dims, "", DataArrayID31);
+  m_FeatureParentIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, -1, dims, "", DataArrayID31);
   if(nullptr != m_FeatureParentIdsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_FeatureParentIds = m_FeatureParentIdsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getCellFeatureAttributeMatrixName().getDataContainerName(), getCellFeatureAttributeMatrixName().getAttributeMatrixName(), getNumFeaturesPerParentArrayPath().getDataArrayName());
-  m_NumFeaturesPerParentPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0, dims, "", DataArrayID32);
+  m_NumFeaturesPerParentPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, 0, dims, "", DataArrayID32);
   if(nullptr != m_NumFeaturesPerParentPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_NumFeaturesPerParent = m_NumFeaturesPerParentPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   // Ensemble Data
-  m_CrystalStructuresPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<unsigned int>, AbstractFilter>(this, getCrystalStructuresArrayPath(),
+  m_CrystalStructuresPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<unsigned int>>(this, getCrystalStructuresArrayPath(),
                                                                                                                     dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CrystalStructuresPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_CrystalStructures = m_CrystalStructuresPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  m_PhaseTypesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<unsigned int>, AbstractFilter>(this, getPhaseTypesArrayPath(),
+  m_PhaseTypesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<unsigned int>>(this, getPhaseTypesArrayPath(),
                                                                                                              dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_PhaseTypesPtr.lock())                                                                             /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_PhaseTypes = m_PhaseTypesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  m_ShapeTypesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<ShapeType::EnumType>, AbstractFilter>(this, getShapeTypesArrayPath(),
+  m_ShapeTypesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<ShapeType::EnumType>>(this, getShapeTypesArrayPath(),
                                                                                                                     dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_ShapeTypesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_ShapeTypes = m_ShapeTypesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  m_NumFeaturesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getNumFeaturesArrayPath(),
+  m_NumFeaturesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getNumFeaturesArrayPath(),
                                                                                                          dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_NumFeaturesPtr.lock())                                                                        /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_NumFeatures = m_NumFeaturesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void InsertTransformationPhases::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-
-  AttributeMatrix::Pointer attrMat = getDataContainerArray()->getAttributeMatrix(getFeaturePhasesArrayPath());
-  if(attrMat == nullptr)
-  {
-    setInPreflight(false);
-    return;
-  }
-
-  setInPreflight(false);
 }
 
 // -----------------------------------------------------------------------------
@@ -638,8 +623,6 @@ void InsertTransformationPhases::insertTransformationPhases()
   {
     if(m_FeaturePhases[curFeature] == m_ParentPhase)
     {
-      QuatF* avgQuats = reinterpret_cast<QuatF*>(m_AvgQuats);
-
       // set the grain Id to the parent Id for if/when the features get uniquely renumbered
       m_FeatureParentIds[curFeature] = static_cast<int32_t>(curFeature);
 
@@ -703,10 +686,8 @@ void InsertTransformationPhases::insertTransformationPhases()
         }
       }
       // find where the habit plane points
-      QuaternionMathF::Copy(avgQuats[curFeature], q1);
-      FOrientArrayType om(9);
-      FOrientTransformsType::qu2om(FOrientArrayType(q1), om);
-      om.toGMatrix(g);
+      QuatF q1(m_AvgQuats + curFeature * 4);
+      OrientationTransformation::qu2om<QuatF, OrientationF>(q1).toGMatrix(g);
       MatrixMath::Transpose3x3(g, gT);
       MatrixMath::Multiply3x3with3x1(gT, crystalHabitPlane, sampleHabitPlane);
 
@@ -721,8 +702,7 @@ void InsertTransformationPhases::insertTransformationPhases()
       //    rotMat[2][2]=0;
 
       // generate transformation phase orientation with a user-defined rotation about the habit plane
-      FOrientTransformsType::ax2om(FOrientArrayType(crystalHabitPlane[0], crystalHabitPlane[1], crystalHabitPlane[2], sig3), om);
-      om.toGMatrix(rotMat);
+      OrientationTransformation::ax2om<OrientationF, OrientationF>(OrientationF(crystalHabitPlane[0], crystalHabitPlane[1], crystalHabitPlane[2], sig3)).toGMatrix(rotMat);
       MatrixMath::Multiply3x3with3x3(rotMat, g, newMat);
 
       // find the minimum angle
@@ -748,12 +728,9 @@ void InsertTransformationPhases::insertTransformationPhases()
       // assign our symmetry matrix to that which produced the minimum angle
       orientOps->getMatSymOp(minPos, symMat);
       MatrixMath::Multiply3x3with3x3(symMat, newMatCopy, newMat);
-      FOrientArrayType eOut(e, 3);
-      FOrientTransformsType::om2eu(FOrientArrayType(newMat), eOut);
+      OrientationF eOut = OrientationTransformation::om2eu<OrientationF, OrientationF>(OrientationF(symMat));
 
-      FOrientArrayType quat(4);
-      FOrientTransformsType::eu2qu(eOut, quat);
-      q2 = quat.toQuaternion();
+      QuatF q2 = OrientationTransformation::eu2qu<OrientationF, QuatF>(eOut);
 
       // define plate = user input fraction of eq dia centered at centroid
       // NOTE: we multiply by 0.5 because the transformation phase thickness will be established by
@@ -1066,7 +1043,7 @@ size_t InsertTransformationPhases::transferAttributes(size_t totalFeatures, Quat
   m_AvgQuats[4 * totalFeatures + 0] = q[0];
   m_AvgQuats[4 * totalFeatures + 1] = q[1];
   m_AvgQuats[4 * totalFeatures + 2] = q[2];
-  m_AvgQuats[4 * totalFeatures + 3] = q.w;
+  m_AvgQuats[4 * totalFeatures + 3] = q[3];
   m_Centroids[3 * totalFeatures + 0] = 1.0f;
   m_Centroids[3 * totalFeatures + 1] = 2.0f;
   m_Centroids[3 * totalFeatures + 2] = 3.0f;
@@ -1101,7 +1078,7 @@ AbstractFilter::Pointer InsertTransformationPhases::newFilterInstance(bool copyF
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString InsertTransformationPhases::getCompiledLibraryName() const
+QString InsertTransformationPhases::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -1109,7 +1086,7 @@ const QString InsertTransformationPhases::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString InsertTransformationPhases::getBrandingString() const
+QString InsertTransformationPhases::getBrandingString() const
 {
   return TransformationPhaseConstants::TransformationPhasePluginDisplayName;
 }
@@ -1117,7 +1094,7 @@ const QString InsertTransformationPhases::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString InsertTransformationPhases::getFilterVersion() const
+QString InsertTransformationPhases::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -1128,7 +1105,7 @@ const QString InsertTransformationPhases::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString InsertTransformationPhases::getGroupName() const
+QString InsertTransformationPhases::getGroupName() const
 {
   return SIMPL::FilterGroups::Unsupported;
 }
@@ -1136,7 +1113,7 @@ const QString InsertTransformationPhases::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid InsertTransformationPhases::getUuid()
+QUuid InsertTransformationPhases::getUuid() const
 {
   return QUuid("{fd6da27d-0f2c-5c35-802f-7d6ce1ad0ca1}");
 }
@@ -1144,7 +1121,7 @@ const QUuid InsertTransformationPhases::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString InsertTransformationPhases::getSubGroupName() const
+QString InsertTransformationPhases::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::PackingFilters;
 }
@@ -1152,7 +1129,348 @@ const QString InsertTransformationPhases::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString InsertTransformationPhases::getHumanLabel() const
+QString InsertTransformationPhases::getHumanLabel() const
 {
   return "Insert Transformation Phases";
+}
+
+// -----------------------------------------------------------------------------
+InsertTransformationPhases::Pointer InsertTransformationPhases::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<InsertTransformationPhases> InsertTransformationPhases::New()
+{
+  struct make_shared_enabler : public InsertTransformationPhases
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString InsertTransformationPhases::getNameOfClass() const
+{
+  return QString("InsertTransformationPhases");
+}
+
+// -----------------------------------------------------------------------------
+QString InsertTransformationPhases::ClassName()
+{
+  return QString("InsertTransformationPhases");
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setParentPhase(int value)
+{
+  m_ParentPhase = value;
+}
+
+// -----------------------------------------------------------------------------
+int InsertTransformationPhases::getParentPhase() const
+{
+  return m_ParentPhase;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setTransCrystalStruct(int value)
+{
+  m_TransCrystalStruct = value;
+}
+
+// -----------------------------------------------------------------------------
+int InsertTransformationPhases::getTransCrystalStruct() const
+{
+  return m_TransCrystalStruct;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setTransformationPhaseMisorientation(float value)
+{
+  m_TransformationPhaseMisorientation = value;
+}
+
+// -----------------------------------------------------------------------------
+float InsertTransformationPhases::getTransformationPhaseMisorientation() const
+{
+  return m_TransformationPhaseMisorientation;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setTransformationPhaseHabitPlane(const FloatVec3Type& value)
+{
+  m_TransformationPhaseHabitPlane = value;
+}
+
+// -----------------------------------------------------------------------------
+FloatVec3Type InsertTransformationPhases::getTransformationPhaseHabitPlane() const
+{
+  return m_TransformationPhaseHabitPlane;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setDefineHabitPlane(bool value)
+{
+  m_DefineHabitPlane = value;
+}
+
+// -----------------------------------------------------------------------------
+bool InsertTransformationPhases::getDefineHabitPlane() const
+{
+  return m_DefineHabitPlane;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setUseAllVariants(bool value)
+{
+  m_UseAllVariants = value;
+}
+
+// -----------------------------------------------------------------------------
+bool InsertTransformationPhases::getUseAllVariants() const
+{
+  return m_UseAllVariants;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setCoherentFrac(float value)
+{
+  m_CoherentFrac = value;
+}
+
+// -----------------------------------------------------------------------------
+float InsertTransformationPhases::getCoherentFrac() const
+{
+  return m_CoherentFrac;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setTransformationPhaseThickness(float value)
+{
+  m_TransformationPhaseThickness = value;
+}
+
+// -----------------------------------------------------------------------------
+float InsertTransformationPhases::getTransformationPhaseThickness() const
+{
+  return m_TransformationPhaseThickness;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setNumTransformationPhasesPerFeature(int value)
+{
+  m_NumTransformationPhasesPerFeature = value;
+}
+
+// -----------------------------------------------------------------------------
+int InsertTransformationPhases::getNumTransformationPhasesPerFeature() const
+{
+  return m_NumTransformationPhasesPerFeature;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setPeninsulaFrac(float value)
+{
+  m_PeninsulaFrac = value;
+}
+
+// -----------------------------------------------------------------------------
+float InsertTransformationPhases::getPeninsulaFrac() const
+{
+  return m_PeninsulaFrac;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setStatsGenCellEnsembleAttributeMatrixPath(const DataArrayPath& value)
+{
+  m_StatsGenCellEnsembleAttributeMatrixPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getStatsGenCellEnsembleAttributeMatrixPath() const
+{
+  return m_StatsGenCellEnsembleAttributeMatrixPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setCellFeatureAttributeMatrixName(const DataArrayPath& value)
+{
+  m_CellFeatureAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getCellFeatureAttributeMatrixName() const
+{
+  return m_CellFeatureAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setFeatureIdsArrayPath(const DataArrayPath& value)
+{
+  m_FeatureIdsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getFeatureIdsArrayPath() const
+{
+  return m_FeatureIdsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setCellEulerAnglesArrayPath(const DataArrayPath& value)
+{
+  m_CellEulerAnglesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getCellEulerAnglesArrayPath() const
+{
+  return m_CellEulerAnglesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setCellPhasesArrayPath(const DataArrayPath& value)
+{
+  m_CellPhasesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getCellPhasesArrayPath() const
+{
+  return m_CellPhasesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setAvgQuatsArrayPath(const DataArrayPath& value)
+{
+  m_AvgQuatsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getAvgQuatsArrayPath() const
+{
+  return m_AvgQuatsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setCentroidsArrayPath(const DataArrayPath& value)
+{
+  m_CentroidsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getCentroidsArrayPath() const
+{
+  return m_CentroidsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setEquivalentDiametersArrayPath(const DataArrayPath& value)
+{
+  m_EquivalentDiametersArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getEquivalentDiametersArrayPath() const
+{
+  return m_EquivalentDiametersArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setFeatureEulerAnglesArrayPath(const DataArrayPath& value)
+{
+  m_FeatureEulerAnglesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getFeatureEulerAnglesArrayPath() const
+{
+  return m_FeatureEulerAnglesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setFeaturePhasesArrayPath(const DataArrayPath& value)
+{
+  m_FeaturePhasesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getFeaturePhasesArrayPath() const
+{
+  return m_FeaturePhasesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setFeatureParentIdsArrayName(const QString& value)
+{
+  m_FeatureParentIdsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString InsertTransformationPhases::getFeatureParentIdsArrayName() const
+{
+  return m_FeatureParentIdsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setNumFeaturesPerParentArrayPath(const DataArrayPath& value)
+{
+  m_NumFeaturesPerParentArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getNumFeaturesPerParentArrayPath() const
+{
+  return m_NumFeaturesPerParentArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setCrystalStructuresArrayPath(const DataArrayPath& value)
+{
+  m_CrystalStructuresArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getCrystalStructuresArrayPath() const
+{
+  return m_CrystalStructuresArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setPhaseTypesArrayPath(const DataArrayPath& value)
+{
+  m_PhaseTypesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getPhaseTypesArrayPath() const
+{
+  return m_PhaseTypesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setShapeTypesArrayPath(const DataArrayPath& value)
+{
+  m_ShapeTypesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getShapeTypesArrayPath() const
+{
+  return m_ShapeTypesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void InsertTransformationPhases::setNumFeaturesArrayPath(const DataArrayPath& value)
+{
+  m_NumFeaturesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath InsertTransformationPhases::getNumFeaturesArrayPath() const
+{
+  return m_NumFeaturesArrayPath;
 }

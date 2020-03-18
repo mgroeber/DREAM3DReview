@@ -35,7 +35,6 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
 
@@ -45,11 +44,37 @@ template<typename T>
 class KDistanceTemplate
 {
 public:
-  SIMPL_SHARED_POINTERS(KDistanceTemplate)
-  SIMPL_TYPE_MACRO(KDistanceTemplate)
+  using Self = KDistanceTemplate;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer()
+  {
+    return Pointer(static_cast<Self*>(nullptr));
+  }
 
-  KDistanceTemplate(){}
-  virtual ~KDistanceTemplate(){}
+  /**
+   * @brief Returns the name of the class for KDistanceTemplate
+   */
+  /**
+   * @brief Returns the name of the class for KDistanceTemplate
+   */
+  QString getNameOfClass() const
+  {
+    return QString("KDistanceTemplate");
+  }
+
+  /**
+   * @brief Returns the name of the class for KDistanceTemplate
+   */
+  QString ClassName()
+  {
+    return QString("KDistanceTemplate");
+  }
+
+  KDistanceTemplate() = default;
+  virtual ~KDistanceTemplate() = default;
 
   // -----------------------------------------------------------------------------
   //

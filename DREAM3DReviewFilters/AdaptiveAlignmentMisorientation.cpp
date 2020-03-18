@@ -33,19 +33,26 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "AdaptiveAlignmentMisorientation.h"
 
 #include <fstream>
 
 #include <QtCore/QDateTime>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/FloatFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedBooleanFilterParameter.h"
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
 #include "SIMPLib/Geometry/ImageGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -151,7 +158,7 @@ void AdaptiveAlignmentMisorientation::dataCheck()
 
   std::vector<size_t> cDims(1, 4);
   m_QuatsPtr =
-      getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getQuatsArrayPath(), cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
+      getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getQuatsArrayPath(), cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_QuatsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_Quats = m_QuatsPtr.lock()->getPointer(0);
@@ -162,7 +169,7 @@ void AdaptiveAlignmentMisorientation::dataCheck()
   }
 
   cDims[0] = 1;
-  m_CellPhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getCellPhasesArrayPath(),
+  m_CellPhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getCellPhasesArrayPath(),
                                                                                                         cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CellPhasesPtr.lock())                                                                         /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -175,7 +182,7 @@ void AdaptiveAlignmentMisorientation::dataCheck()
 
   if(m_UseGoodVoxels)
   {
-    m_GoodVoxelsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getGoodVoxelsArrayPath(),
+    m_GoodVoxelsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getGoodVoxelsArrayPath(),
                                                                                                        cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_GoodVoxelsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
@@ -187,28 +194,16 @@ void AdaptiveAlignmentMisorientation::dataCheck()
     }
   }
 
-  m_CrystalStructuresPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<uint32_t>, AbstractFilter>(this, getCrystalStructuresArrayPath(),
+  m_CrystalStructuresPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<uint32_t>>(this, getCrystalStructuresArrayPath(),
                                                                                                                 cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CrystalStructuresPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_CrystalStructures = m_CrystalStructuresPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrayPaths);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrayPaths);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void AdaptiveAlignmentMisorientation::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -249,11 +244,11 @@ void AdaptiveAlignmentMisorientation::find_shifts(std::vector<int64_t>& xshifts,
   uint64_t slice = 0;
   float w = 0.0f;
   float n1 = 0.0f, n2 = 0.0f, n3 = 0.0f;
-  QuatF q1 = QuaternionMathF::New();
-  QuatF q2 = QuaternionMathF::New();
+  //  QuatF q1 = QuaternionMathF::New();
+  //  QuatF q2 = QuaternionMathF::New();
   uint64_t refposition = 0;
   uint64_t curposition = 0;
-  QuatF* quats = reinterpret_cast<QuatF*>(m_Quats);
+  // QuatF* quats = reinterpret_cast<QuatF*>(m_Quats);
 
   uint32_t phase1 = 0, phase2 = 0;
   uint64_t progInt = 0;
@@ -314,9 +309,9 @@ void AdaptiveAlignmentMisorientation::find_shifts(std::vector<int64_t>& xshifts,
                     w = std::numeric_limits<float>::max();
                     if(m_CellPhases[refposition] > 0 && m_CellPhases[curposition] > 0)
                     {
-                      QuaternionMathF::Copy(quats[refposition], q1);
+                      QuatF q1(m_Quats + refposition * 4);
                       phase1 = m_CrystalStructures[m_CellPhases[refposition]];
-                      QuaternionMathF::Copy(quats[curposition], q2);
+                      QuatF q2(m_Quats + curposition * 4);
                       phase2 = m_CrystalStructures[m_CellPhases[curposition]];
                       if(phase1 == phase2 && phase1 < static_cast<uint32_t>(m_OrientationOps.size()))
                       {
@@ -633,7 +628,7 @@ AbstractFilter::Pointer AdaptiveAlignmentMisorientation::newFilterInstance(bool 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMisorientation::getCompiledLibraryName() const
+QString AdaptiveAlignmentMisorientation::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -641,7 +636,7 @@ const QString AdaptiveAlignmentMisorientation::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMisorientation::getBrandingString() const
+QString AdaptiveAlignmentMisorientation::getBrandingString() const
 {
   return "Anisotropy";
 }
@@ -649,7 +644,7 @@ const QString AdaptiveAlignmentMisorientation::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMisorientation::getFilterVersion() const
+QString AdaptiveAlignmentMisorientation::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -659,7 +654,7 @@ const QString AdaptiveAlignmentMisorientation::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMisorientation::getGroupName() const
+QString AdaptiveAlignmentMisorientation::getGroupName() const
 {
   return SIMPL::FilterGroups::ReconstructionFilters;
 }
@@ -667,7 +662,7 @@ const QString AdaptiveAlignmentMisorientation::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid AdaptiveAlignmentMisorientation::getUuid()
+QUuid AdaptiveAlignmentMisorientation::getUuid() const
 {
   return QUuid("{8ef88380-ece9-5f8e-a12d-d149d0856752}");
 }
@@ -675,7 +670,7 @@ const QUuid AdaptiveAlignmentMisorientation::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMisorientation::getSubGroupName() const
+QString AdaptiveAlignmentMisorientation::getSubGroupName() const
 {
   return AnisotropyConstants::FilterSubGroups::AnisotropicAlignment;
   ;
@@ -684,7 +679,108 @@ const QString AdaptiveAlignmentMisorientation::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMisorientation::getHumanLabel() const
+QString AdaptiveAlignmentMisorientation::getHumanLabel() const
 {
   return "Adaptive Alignment (Misorientation)";
+}
+
+// -----------------------------------------------------------------------------
+AdaptiveAlignmentMisorientation::Pointer AdaptiveAlignmentMisorientation::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<AdaptiveAlignmentMisorientation> AdaptiveAlignmentMisorientation::New()
+{
+  struct make_shared_enabler : public AdaptiveAlignmentMisorientation
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignmentMisorientation::getNameOfClass() const
+{
+  return QString("AdaptiveAlignmentMisorientation");
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignmentMisorientation::ClassName()
+{
+  return QString("AdaptiveAlignmentMisorientation");
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMisorientation::setMisorientationTolerance(float value)
+{
+  m_MisorientationTolerance = value;
+}
+
+// -----------------------------------------------------------------------------
+float AdaptiveAlignmentMisorientation::getMisorientationTolerance() const
+{
+  return m_MisorientationTolerance;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMisorientation::setUseGoodVoxels(bool value)
+{
+  m_UseGoodVoxels = value;
+}
+
+// -----------------------------------------------------------------------------
+bool AdaptiveAlignmentMisorientation::getUseGoodVoxels() const
+{
+  return m_UseGoodVoxels;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMisorientation::setQuatsArrayPath(const DataArrayPath& value)
+{
+  m_QuatsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AdaptiveAlignmentMisorientation::getQuatsArrayPath() const
+{
+  return m_QuatsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMisorientation::setCellPhasesArrayPath(const DataArrayPath& value)
+{
+  m_CellPhasesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AdaptiveAlignmentMisorientation::getCellPhasesArrayPath() const
+{
+  return m_CellPhasesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMisorientation::setGoodVoxelsArrayPath(const DataArrayPath& value)
+{
+  m_GoodVoxelsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AdaptiveAlignmentMisorientation::getGoodVoxelsArrayPath() const
+{
+  return m_GoodVoxelsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMisorientation::setCrystalStructuresArrayPath(const DataArrayPath& value)
+{
+  m_CrystalStructuresArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AdaptiveAlignmentMisorientation::getCrystalStructuresArrayPath() const
+{
+  return m_CrystalStructuresArrayPath;
 }

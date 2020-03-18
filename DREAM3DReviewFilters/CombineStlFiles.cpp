@@ -11,11 +11,18 @@
 * Subsequent changes to the codes by others may elect to add a copyright and license
 * for those changes.
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "CombineStlFiles.h"
 
 #include <cstring>
 
+#include <QtCore/QDir>
+
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/InputPathFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedPathCreationFilterParameter.h"
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
@@ -23,6 +30,8 @@
 #include "SIMPLib/Filtering/FilterFactory.hpp"
 #include "SIMPLib/Filtering/FilterManager.h"
 #include "SIMPLib/Geometry/TriangleGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -35,7 +44,6 @@ CombineStlFiles::CombineStlFiles()
 , m_TriangleDataContainerName(SIMPL::Defaults::TriangleDataContainerName)
 , m_FaceAttributeMatrixName(SIMPL::Defaults::FaceAttributeMatrixName)
 , m_FaceNormalsArrayName(SIMPL::FaceData::SurfaceMeshFaceNormals)
-, m_FaceNormals(nullptr)
 , m_FileList(QFileInfoList())
 {
   initialize();
@@ -124,7 +132,7 @@ void CombineStlFiles::dataCheck()
     return;
   }
 
-  DataContainer::Pointer sm = getDataContainerArray()->createNonPrereqDataContainer<AbstractFilter>(this, getTriangleDataContainerName());
+  DataContainer::Pointer sm = getDataContainerArray()->createNonPrereqDataContainer(this, getTriangleDataContainerName());
   if(getErrorCode() < 0)
   {
     return;
@@ -139,7 +147,7 @@ void CombineStlFiles::dataCheck()
 
   std::vector<size_t> cDims(1, 3);
   DataArrayPath path(getTriangleDataContainerName(), getFaceAttributeMatrixName(), getFaceNormalsArrayName());
-  m_FaceNormalsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double>, AbstractFilter, double>(
+  m_FaceNormalsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double>>(
       this, path, 0, cDims);                   /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FaceNormalsPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -147,19 +155,6 @@ void CombineStlFiles::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void CombineStlFiles::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -278,7 +273,7 @@ AbstractFilter::Pointer CombineStlFiles::newFilterInstance(bool copyFilterParame
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString CombineStlFiles::getCompiledLibraryName() const
+QString CombineStlFiles::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -286,7 +281,7 @@ const QString CombineStlFiles::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString CombineStlFiles::getBrandingString() const
+QString CombineStlFiles::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -294,7 +289,7 @@ const QString CombineStlFiles::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString CombineStlFiles::getFilterVersion() const
+QString CombineStlFiles::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -305,7 +300,7 @@ const QString CombineStlFiles::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString CombineStlFiles::getGroupName() const
+QString CombineStlFiles::getGroupName() const
 {
   return SIMPL::FilterGroups::IOFilters;
 }
@@ -313,7 +308,7 @@ const QString CombineStlFiles::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString CombineStlFiles::getSubGroupName() const
+QString CombineStlFiles::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::InputFilters;
 }
@@ -321,7 +316,7 @@ const QString CombineStlFiles::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString CombineStlFiles::getHumanLabel() const
+QString CombineStlFiles::getHumanLabel() const
 {
   return "Combine STL Files";
 }
@@ -329,7 +324,84 @@ const QString CombineStlFiles::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid CombineStlFiles::getUuid()
+QUuid CombineStlFiles::getUuid() const
 {
   return QUuid("{71d46128-1d2d-58fd-9924-1714695768c3}");
+}
+
+// -----------------------------------------------------------------------------
+CombineStlFiles::Pointer CombineStlFiles::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<CombineStlFiles> CombineStlFiles::New()
+{
+  struct make_shared_enabler : public CombineStlFiles
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString CombineStlFiles::getNameOfClass() const
+{
+  return QString("CombineStlFiles");
+}
+
+// -----------------------------------------------------------------------------
+QString CombineStlFiles::ClassName()
+{
+  return QString("CombineStlFiles");
+}
+
+// -----------------------------------------------------------------------------
+void CombineStlFiles::setStlFilesPath(const QString& value)
+{
+  m_StlFilesPath = value;
+}
+
+// -----------------------------------------------------------------------------
+QString CombineStlFiles::getStlFilesPath() const
+{
+  return m_StlFilesPath;
+}
+
+// -----------------------------------------------------------------------------
+void CombineStlFiles::setTriangleDataContainerName(const QString& value)
+{
+  m_TriangleDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString CombineStlFiles::getTriangleDataContainerName() const
+{
+  return m_TriangleDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void CombineStlFiles::setFaceAttributeMatrixName(const QString& value)
+{
+  m_FaceAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString CombineStlFiles::getFaceAttributeMatrixName() const
+{
+  return m_FaceAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void CombineStlFiles::setFaceNormalsArrayName(const QString& value)
+{
+  m_FaceNormalsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString CombineStlFiles::getFaceNormalsArrayName() const
+{
+  return m_FaceNormalsArrayName;
 }

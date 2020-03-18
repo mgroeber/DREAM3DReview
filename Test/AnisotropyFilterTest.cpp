@@ -36,9 +36,10 @@
 #include <QtCore/QDir>
 #include <QtCore/QJsonDocument>
 
+#include <QtCore/QDebug>
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/DataArrays/DataArray.hpp"
+
 #include "SIMPLib/FilterParameters/FileListInfoFilterParameter.h"
 #include "SIMPLib/FilterParameters/FloatVec3FilterParameter.h"
 #include "SIMPLib/Filtering/ComparisonInputs.h"
@@ -49,6 +50,8 @@
 #include "SIMPLib/Plugin/ISIMPLibPlugin.h"
 #include "SIMPLib/Plugin/SIMPLibPluginLoader.h"
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+
 #include "UnitTestSupport.hpp"
 
 #include "DREAM3DReviewTestFileLocations.h"
@@ -193,7 +196,7 @@ public:
       bool propWasSet;
       QVariant var;
 
-      FileListInfo_t input;
+      StackFileListInfo input;
       input.InputPath = UnitTest::AnisotropyTest::InputDir + "/" + UnitTest::AnisotropyTest::TestTifExtension;
       input.StartIndex = UnitTest::AnisotropyTest::TestTifStartIndex;
       input.EndIndex = UnitTest::AnisotropyTest::TestTifEndIndex;

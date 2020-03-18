@@ -34,9 +34,14 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "LocalDislocationDensityCalculator.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataContainerCreationFilterParameter.h"
@@ -49,6 +54,8 @@
 #include "SIMPLib/Geometry/ImageGeom.h"
 #include "SIMPLib/Math/GeometryMath.h"
 #include "SIMPLib/Math/SIMPLibMath.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
 
@@ -199,7 +206,7 @@ void LocalDislocationDensityCalculator::dataCheck()
     return;
   }
 
-  EdgeGeom::Pointer edges = m->getPrereqGeometry<EdgeGeom, AbstractFilter>(this);
+  EdgeGeom::Pointer edges = m->getPrereqGeometry<EdgeGeom>(this);
   if(getErrorCode() < 0)
   {
     return;
@@ -219,14 +226,14 @@ void LocalDislocationDensityCalculator::dataCheck()
   std::vector<size_t> dims(1, 6);
   tempPath.update(getEdgeDataContainerName().getDataContainerName(), "_MetaData", "DomainBounds");
   m_DomainBoundsPtr =
-      getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, tempPath, dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
+      getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, tempPath, dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_DomainBoundsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_DomainBounds = m_DomainBoundsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   // Create a new DataContainer
-  DataContainer::Pointer m2 = getDataContainerArray()->createNonPrereqDataContainer<AbstractFilter>(this, getOutputDataContainerName(), DataContainerID);
+  DataContainer::Pointer m2 = getDataContainerArray()->createNonPrereqDataContainer(this, getOutputDataContainerName(), DataContainerID);
   if(getErrorCode() < 0)
   {
     return;
@@ -246,13 +253,13 @@ void LocalDislocationDensityCalculator::dataCheck()
 
   // Get the name and create the array in the new data attrMat
   dims[0] = 3;
-  m_BurgersVectorsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getBurgersVectorsArrayPath(),
+  m_BurgersVectorsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getBurgersVectorsArrayPath(),
                                                                                                           dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_BurgersVectorsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_BurgersVectors = m_BurgersVectorsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
-  m_SlipPlaneNormalsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getSlipPlaneNormalsArrayPath(),
+  m_SlipPlaneNormalsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getSlipPlaneNormalsArrayPath(),
                                                                                                             dims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_SlipPlaneNormalsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -260,32 +267,20 @@ void LocalDislocationDensityCalculator::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   dims[0] = 1;
   tempPath.update(getOutputDataContainerName().getDataContainerName(), getOutputAttributeMatrixName(), getOutputArrayName());
-  m_OutputArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0, dims, "", DataArrayID31);
+  m_OutputArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0, dims, "", DataArrayID31);
   if(nullptr != m_OutputArrayPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_OutputArray = m_OutputArrayPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   dims[0] = 1;
   tempPath.update(getOutputDataContainerName().getDataContainerName(), getOutputAttributeMatrixName(), getDominantSystemArrayName());
-  m_DominantSystemArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0, dims, "", DataArrayID32);
+  m_DominantSystemArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0, dims, "", DataArrayID32);
   if(nullptr != m_DominantSystemArrayPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_DominantSystemArray = m_DominantSystemArrayPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void LocalDislocationDensityCalculator::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -568,7 +563,7 @@ AbstractFilter::Pointer LocalDislocationDensityCalculator::newFilterInstance(boo
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LocalDislocationDensityCalculator::getCompiledLibraryName() const
+QString LocalDislocationDensityCalculator::getCompiledLibraryName() const
 {
   return DDDAnalysisToolboxConstants::DDDAnalysisToolboxBaseName;
 }
@@ -576,7 +571,7 @@ const QString LocalDislocationDensityCalculator::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LocalDislocationDensityCalculator::getBrandingString() const
+QString LocalDislocationDensityCalculator::getBrandingString() const
 {
   return "DDDAnalysisToolbox";
 }
@@ -584,7 +579,7 @@ const QString LocalDislocationDensityCalculator::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LocalDislocationDensityCalculator::getFilterVersion() const
+QString LocalDislocationDensityCalculator::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -595,7 +590,7 @@ const QString LocalDislocationDensityCalculator::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LocalDislocationDensityCalculator::getGroupName() const
+QString LocalDislocationDensityCalculator::getGroupName() const
 {
   return SIMPL::FilterGroups::Unsupported;
 }
@@ -603,7 +598,7 @@ const QString LocalDislocationDensityCalculator::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid LocalDislocationDensityCalculator::getUuid()
+QUuid LocalDislocationDensityCalculator::getUuid() const
 {
   return QUuid("{620a3022-0f92-5d07-b725-b22604874bbf}");
 }
@@ -611,7 +606,7 @@ const QUuid LocalDislocationDensityCalculator::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LocalDislocationDensityCalculator::getSubGroupName() const
+QString LocalDislocationDensityCalculator::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::StatisticsFilters;
 }
@@ -619,7 +614,132 @@ const QString LocalDislocationDensityCalculator::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString LocalDislocationDensityCalculator::getHumanLabel() const
+QString LocalDislocationDensityCalculator::getHumanLabel() const
 {
   return "Calculate Local Dislocation Densities";
+}
+
+// -----------------------------------------------------------------------------
+LocalDislocationDensityCalculator::Pointer LocalDislocationDensityCalculator::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<LocalDislocationDensityCalculator> LocalDislocationDensityCalculator::New()
+{
+  struct make_shared_enabler : public LocalDislocationDensityCalculator
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString LocalDislocationDensityCalculator::getNameOfClass() const
+{
+  return QString("LocalDislocationDensityCalculator");
+}
+
+// -----------------------------------------------------------------------------
+QString LocalDislocationDensityCalculator::ClassName()
+{
+  return QString("LocalDislocationDensityCalculator");
+}
+
+// -----------------------------------------------------------------------------
+void LocalDislocationDensityCalculator::setEdgeDataContainerName(const DataArrayPath& value)
+{
+  m_EdgeDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath LocalDislocationDensityCalculator::getEdgeDataContainerName() const
+{
+  return m_EdgeDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void LocalDislocationDensityCalculator::setBurgersVectorsArrayPath(const DataArrayPath& value)
+{
+  m_BurgersVectorsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath LocalDislocationDensityCalculator::getBurgersVectorsArrayPath() const
+{
+  return m_BurgersVectorsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void LocalDislocationDensityCalculator::setSlipPlaneNormalsArrayPath(const DataArrayPath& value)
+{
+  m_SlipPlaneNormalsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath LocalDislocationDensityCalculator::getSlipPlaneNormalsArrayPath() const
+{
+  return m_SlipPlaneNormalsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void LocalDislocationDensityCalculator::setCellSize(const FloatVec3Type& value)
+{
+  m_CellSize = value;
+}
+
+// -----------------------------------------------------------------------------
+FloatVec3Type LocalDislocationDensityCalculator::getCellSize() const
+{
+  return m_CellSize;
+}
+
+// -----------------------------------------------------------------------------
+void LocalDislocationDensityCalculator::setOutputDataContainerName(const DataArrayPath& value)
+{
+  m_OutputDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath LocalDislocationDensityCalculator::getOutputDataContainerName() const
+{
+  return m_OutputDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void LocalDislocationDensityCalculator::setOutputAttributeMatrixName(const QString& value)
+{
+  m_OutputAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString LocalDislocationDensityCalculator::getOutputAttributeMatrixName() const
+{
+  return m_OutputAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void LocalDislocationDensityCalculator::setOutputArrayName(const QString& value)
+{
+  m_OutputArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString LocalDislocationDensityCalculator::getOutputArrayName() const
+{
+  return m_OutputArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void LocalDislocationDensityCalculator::setDominantSystemArrayName(const QString& value)
+{
+  m_DominantSystemArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString LocalDislocationDensityCalculator::getDominantSystemArrayName() const
+{
+  return m_DominantSystemArrayName;
 }

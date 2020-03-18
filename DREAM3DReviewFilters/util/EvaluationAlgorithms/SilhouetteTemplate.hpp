@@ -35,7 +35,6 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
 
@@ -45,8 +44,34 @@ template<typename T>
 class SilhouetteTemplate
 {
 public:
-  SIMPL_SHARED_POINTERS(SilhouetteTemplate)
-  SIMPL_TYPE_MACRO(SilhouetteTemplate)
+  using Self = SilhouetteTemplate;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer()
+  {
+    return Pointer(static_cast<Self*>(nullptr));
+  }
+
+  /**
+   * @brief Returns the name of the class for SilhouetteTemplate
+   */
+  /**
+   * @brief Returns the name of the class for SilhouetteTemplate
+   */
+  QString getNameOfClass() const
+  {
+    return QString("SilhouetteTemplate");
+  }
+
+  /**
+   * @brief Returns the name of the class for SilhouetteTemplate
+   */
+  QString ClassName()
+  {
+    return QString("SilhouetteTemplate");
+  }
 
   SilhouetteTemplate(){}
   virtual ~SilhouetteTemplate(){}

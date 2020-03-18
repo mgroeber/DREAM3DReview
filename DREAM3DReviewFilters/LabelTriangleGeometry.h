@@ -14,10 +14,12 @@
 #ifndef _LabelTriangleGeometry_h_
 #define _LabelTriangleGeometry_h_
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
+#include <memory>
+
 #include "SIMPLib/FilterParameters/FloatVec3FilterParameter.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 /**
  * @brief The LabelTriangleGeometry class. See [Filter documentation](@ref LabelTriangleGeometry) for details.
@@ -27,39 +29,80 @@ class LabelTriangleGeometry : public AbstractFilter
   Q_OBJECT
 
 public:
-  SIMPL_SHARED_POINTERS(LabelTriangleGeometry)
-  SIMPL_FILTER_NEW_MACRO(LabelTriangleGeometry)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(LabelTriangleGeometry, AbstractFilter)
+  using Self = LabelTriangleGeometry;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<LabelTriangleGeometry> New();
+
+  /**
+   * @brief Returns the name of the class for LabelTriangleGeometry
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for LabelTriangleGeometry
+   */
+  static QString ClassName();
 
   ~LabelTriangleGeometry() override;
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, CADDataContainerName)
+  /**
+   * @brief Setter property for CADDataContainerName
+   */
+  void setCADDataContainerName(const DataArrayPath& value);
+  /**
+   * @brief Getter property for CADDataContainerName
+   * @return Value of CADDataContainerName
+   */
+  DataArrayPath getCADDataContainerName() const;
+
   Q_PROPERTY(DataArrayPath CADDataContainerName READ getCADDataContainerName WRITE setCADDataContainerName)
 
-  SIMPL_FILTER_PARAMETER(QString, TriangleAttributeMatrixName)
+  /**
+   * @brief Setter property for TriangleAttributeMatrixName
+   */
+  void setTriangleAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for TriangleAttributeMatrixName
+   * @return Value of TriangleAttributeMatrixName
+   */
+  QString getTriangleAttributeMatrixName() const;
+
   Q_PROPERTY(QString TriangleAttributeMatrixName READ getTriangleAttributeMatrixName WRITE setTriangleAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, RegionIdArrayName)
+  /**
+   * @brief Setter property for RegionIdArrayName
+   */
+  void setRegionIdArrayName(const QString& value);
+  /**
+   * @brief Getter property for RegionIdArrayName
+   * @return Value of RegionIdArrayName
+   */
+  QString getRegionIdArrayName() const;
+
   Q_PROPERTY(QString RegionIdArrayName READ getRegionIdArrayName WRITE setRegionIdArrayName)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -69,17 +112,17 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -97,38 +140,10 @@ public:
   void execute() override;
 
   /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-  /**
   * @brief getUuid Return the unique identifier for this filter.
   * @return A QUuid object.
   */
-  const QUuid getUuid() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
+  QUuid getUuid() const override;
 
 protected:
   LabelTriangleGeometry();
@@ -136,7 +151,7 @@ protected:
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
   * @brief updateEdgeInstancePointers
@@ -144,11 +159,18 @@ protected:
   void updateTriangleInstancePointers();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(int32_t, RegionId)
+  std::weak_ptr<DataArray<int32_t>> m_RegionIdPtr;
+  int32_t* m_RegionId = nullptr;
 
-  LabelTriangleGeometry(const LabelTriangleGeometry&) = delete;   // Copy Constructor Not Implemented
-  LabelTriangleGeometry(LabelTriangleGeometry&&) = delete;        // Move Constructor Not Implemented
-  void operator=(const LabelTriangleGeometry&) = delete; // Operator '=' Not Implemented
+  DataArrayPath m_CADDataContainerName = {};
+  QString m_TriangleAttributeMatrixName = {};
+  QString m_RegionIdArrayName = {};
+
+public:
+  LabelTriangleGeometry(const LabelTriangleGeometry&) = delete;            // Copy Constructor Not Implemented
+  LabelTriangleGeometry(LabelTriangleGeometry&&) = delete;                 // Move Constructor Not Implemented
+  LabelTriangleGeometry& operator=(const LabelTriangleGeometry&) = delete; // Copy Assignment Not Implemented
+  LabelTriangleGeometry& operator=(LabelTriangleGeometry&&) = delete;      // Move Assignment Not Implemented
 };
 
 #endif /* _LabelTriangleGeometry_H_ */

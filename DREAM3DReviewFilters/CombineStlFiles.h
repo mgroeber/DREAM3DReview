@@ -11,14 +11,17 @@
 * Subsequent changes to the codes by others may elect to add a copyright and license
 * for those changes.
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#ifndef _combinestlfiles_h_
-#define _combinestlfiles_h_
+#pragma once
 
-#include <QDir>
+#include <memory>
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <QtCore/QFileInfoList>
+#include <QtCore/QString>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 /**
  * @brief The CombineStlFiles class. See [Filter documentation](@ref combinestlfiles) for details.
@@ -28,42 +31,92 @@ class CombineStlFiles : public AbstractFilter
   Q_OBJECT
 
 public:
-  SIMPL_SHARED_POINTERS(CombineStlFiles)
-  SIMPL_FILTER_NEW_MACRO(CombineStlFiles)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(CombineStlFiles, AbstractFilter)
+  using Self = CombineStlFiles;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<CombineStlFiles> New();
+
+  /**
+   * @brief Returns the name of the class for CombineStlFiles
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for CombineStlFiles
+   */
+  static QString ClassName();
 
   ~CombineStlFiles() override;
 
-  SIMPL_FILTER_PARAMETER(QString, StlFilesPath)
+  /**
+   * @brief Setter property for StlFilesPath
+   */
+  void setStlFilesPath(const QString& value);
+  /**
+   * @brief Getter property for StlFilesPath
+   * @return Value of StlFilesPath
+   */
+  QString getStlFilesPath() const;
+
   Q_PROPERTY(QString StlFilesPath READ getStlFilesPath WRITE setStlFilesPath)
 
-  SIMPL_FILTER_PARAMETER(QString, TriangleDataContainerName)
+  /**
+   * @brief Setter property for TriangleDataContainerName
+   */
+  void setTriangleDataContainerName(const QString& value);
+  /**
+   * @brief Getter property for TriangleDataContainerName
+   * @return Value of TriangleDataContainerName
+   */
+  QString getTriangleDataContainerName() const;
+
   Q_PROPERTY(QString TriangleDataContainerName READ getTriangleDataContainerName WRITE setTriangleDataContainerName)
 
-  SIMPL_FILTER_PARAMETER(QString, FaceAttributeMatrixName)
+  /**
+   * @brief Setter property for FaceAttributeMatrixName
+   */
+  void setFaceAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for FaceAttributeMatrixName
+   * @return Value of FaceAttributeMatrixName
+   */
+  QString getFaceAttributeMatrixName() const;
+
   Q_PROPERTY(QString FaceAttributeMatrixName READ getFaceAttributeMatrixName WRITE setFaceAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, FaceNormalsArrayName)
+  /**
+   * @brief Setter property for FaceNormalsArrayName
+   */
+  void setFaceNormalsArrayName(const QString& value);
+  /**
+   * @brief Getter property for FaceNormalsArrayName
+   * @return Value of FaceNormalsArrayName
+   */
+  QString getFaceNormalsArrayName() const;
+
   Q_PROPERTY(QString FaceNormalsArrayName READ getFaceNormalsArrayName WRITE setFaceNormalsArrayName)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -73,17 +126,17 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -96,38 +149,10 @@ public:
   void execute() override;
 
   /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-  /**
   * @brief getUuid Return the unique identifier for this filter.
   * @return A QUuid object.
   */
-  const QUuid getUuid() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
+  QUuid getUuid() const override;
 
 protected:
   CombineStlFiles();
@@ -135,7 +160,7 @@ protected:
   /**
   * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
   */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
   * @brief Initializes all the private instance variables.
@@ -143,13 +168,19 @@ protected:
   void initialize();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(double, FaceNormals);
+  std::weak_ptr<DoubleArrayType> m_FaceNormalsPtr;
+  double* m_FaceNormals = nullptr;
+
+  QString m_StlFilesPath = {};
+  QString m_TriangleDataContainerName = {};
+  QString m_FaceAttributeMatrixName = {};
+  QString m_FaceNormalsArrayName = {};
 
   QFileInfoList m_FileList;
 
-  CombineStlFiles(const CombineStlFiles&) = delete; // Copy Constructor Not Implemented
-  CombineStlFiles(CombineStlFiles&&) = delete;      // Move Constructor Not Implemented
-  void operator=(const CombineStlFiles&) = delete;  // Operator '=' Not Implemented
+public:
+  CombineStlFiles(const CombineStlFiles&) = delete;            // Copy Constructor Not Implemented
+  CombineStlFiles(CombineStlFiles&&) = delete;                 // Move Constructor Not Implemented
+  CombineStlFiles& operator=(const CombineStlFiles&) = delete; // Copy Assignment Not Implemented
+  CombineStlFiles& operator=(CombineStlFiles&&) = delete;      // Move Assignment Not Implemented
 };
-
-#endif /* _CombineStlFiles_H_ */

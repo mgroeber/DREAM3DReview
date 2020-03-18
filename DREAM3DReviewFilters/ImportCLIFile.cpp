@@ -11,9 +11,13 @@
 * Subsequent changes to the codes by others may elect to add a copyright and license
 * for those changes.
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "ImportCLIFile.h"
 
 #include <QtCore/QFileInfo>
+
+#include <QtCore/QTextStream>
 
 #include "SIMPLib/Common/Constants.h"
 
@@ -22,6 +26,8 @@
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
 #include "SIMPLib/Geometry/EdgeGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -121,26 +127,13 @@ void ImportCLIFile::dataCheck()
   DataArrayPath path(getEdgeDataContainerName(), getEdgeAttributeMatrixName(), getLayerIdsArrayName());
   std::vector<size_t> cDims(1, 1);
 
-  getDataContainerArray()->createNonPrereqArrayFromPath<Int32ArrayType, AbstractFilter, int32_t>(this, path, 0, cDims);
+  getDataContainerArray()->createNonPrereqArrayFromPath<Int32ArrayType>(this, path, 0, cDims);
 
   path.setDataArrayName(getFeatureIdsArrayName());
 
-  getDataContainerArray()->createNonPrereqArrayFromPath<Int32ArrayType, AbstractFilter, int32_t>(this, path, 0, cDims);
+  getDataContainerArray()->createNonPrereqArrayFromPath<Int32ArrayType>(this, path, 0, cDims);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void ImportCLIFile::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -370,7 +363,7 @@ AbstractFilter::Pointer ImportCLIFile::newFilterInstance(bool copyFilterParamete
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ImportCLIFile::getCompiledLibraryName() const
+QString ImportCLIFile::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -378,7 +371,7 @@ const QString ImportCLIFile::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ImportCLIFile::getBrandingString() const
+QString ImportCLIFile::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -386,7 +379,7 @@ const QString ImportCLIFile::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ImportCLIFile::getFilterVersion() const
+QString ImportCLIFile::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -397,7 +390,7 @@ const QString ImportCLIFile::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ImportCLIFile::getGroupName() const
+QString ImportCLIFile::getGroupName() const
 {
   return SIMPL::FilterGroups::IOFilters;
 }
@@ -405,7 +398,7 @@ const QString ImportCLIFile::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ImportCLIFile::getSubGroupName() const
+QString ImportCLIFile::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::InputFilters;
 }
@@ -413,7 +406,7 @@ const QString ImportCLIFile::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ImportCLIFile::getHumanLabel() const
+QString ImportCLIFile::getHumanLabel() const
 {
   return "Import CLI File";
 }
@@ -421,7 +414,108 @@ const QString ImportCLIFile::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid ImportCLIFile::getUuid()
+QUuid ImportCLIFile::getUuid() const
 {
   return QUuid("{76ec2a58-a0cd-5548-b248-5a5eb08a1581}");
+}
+
+// -----------------------------------------------------------------------------
+ImportCLIFile::Pointer ImportCLIFile::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<ImportCLIFile> ImportCLIFile::New()
+{
+  struct make_shared_enabler : public ImportCLIFile
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString ImportCLIFile::getNameOfClass() const
+{
+  return QString("ImportCLIFile");
+}
+
+// -----------------------------------------------------------------------------
+QString ImportCLIFile::ClassName()
+{
+  return QString("ImportCLIFile");
+}
+
+// -----------------------------------------------------------------------------
+void ImportCLIFile::setCLIFile(const QString& value)
+{
+  m_CLIFile = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ImportCLIFile::getCLIFile() const
+{
+  return m_CLIFile;
+}
+
+// -----------------------------------------------------------------------------
+void ImportCLIFile::setEdgeDataContainerName(const QString& value)
+{
+  m_EdgeDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ImportCLIFile::getEdgeDataContainerName() const
+{
+  return m_EdgeDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void ImportCLIFile::setVertexAttributeMatrixName(const QString& value)
+{
+  m_VertexAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ImportCLIFile::getVertexAttributeMatrixName() const
+{
+  return m_VertexAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void ImportCLIFile::setEdgeAttributeMatrixName(const QString& value)
+{
+  m_EdgeAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ImportCLIFile::getEdgeAttributeMatrixName() const
+{
+  return m_EdgeAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void ImportCLIFile::setLayerIdsArrayName(const QString& value)
+{
+  m_LayerIdsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ImportCLIFile::getLayerIdsArrayName() const
+{
+  return m_LayerIdsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void ImportCLIFile::setFeatureIdsArrayName(const QString& value)
+{
+  m_FeatureIdsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ImportCLIFile::getFeatureIdsArrayName() const
+{
+  return m_FeatureIdsArrayName;
 }

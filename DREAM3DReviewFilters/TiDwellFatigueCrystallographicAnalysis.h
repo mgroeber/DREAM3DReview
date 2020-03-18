@@ -36,15 +36,17 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #pragma once
 
+#include <memory>
+
 #include <QtCore/QString>
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/DataArrays/IDataArray.h"
 #include "SIMPLib/DataArrays/NeighborList.hpp"
 #include "SIMPLib/DataContainers/DataContainer.h"
 #include "SIMPLib/FilterParameters/FloatVec3FilterParameter.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -59,116 +61,426 @@ class DREAM3DReview_EXPORT TiDwellFatigueCrystallographicAnalysis : public Abstr
 {
   Q_OBJECT
 public:
-  SIMPL_SHARED_POINTERS(TiDwellFatigueCrystallographicAnalysis)
-  SIMPL_FILTER_NEW_MACRO(TiDwellFatigueCrystallographicAnalysis)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(TiDwellFatigueCrystallographicAnalysis, AbstractFilter)
+  using Self = TiDwellFatigueCrystallographicAnalysis;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<TiDwellFatigueCrystallographicAnalysis> New();
+
+  /**
+   * @brief Returns the name of the class for TiDwellFatigueCrystallographicAnalysis
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for TiDwellFatigueCrystallographicAnalysis
+   */
+  static QString ClassName();
 
   ~TiDwellFatigueCrystallographicAnalysis() override;
-  SIMPL_FILTER_PARAMETER(DataArrayPath, DataContainerName)
+  /**
+   * @brief Setter property for DataContainerName
+   */
+  void setDataContainerName(const DataArrayPath& value);
+  /**
+   * @brief Getter property for DataContainerName
+   * @return Value of DataContainerName
+   */
+  DataArrayPath getDataContainerName() const;
+
   Q_PROPERTY(DataArrayPath DataContainerName READ getDataContainerName WRITE setDataContainerName)
 
   /* Place your input parameters here. You can use some of the DREAM3D Macros if you want to */
-  SIMPL_FILTER_PARAMETER(bool, AlphaGlobPhasePresent)
+  /**
+   * @brief Setter property for AlphaGlobPhasePresent
+   */
+  void setAlphaGlobPhasePresent(bool value);
+  /**
+   * @brief Getter property for AlphaGlobPhasePresent
+   * @return Value of AlphaGlobPhasePresent
+   */
+  bool getAlphaGlobPhasePresent() const;
+
   Q_PROPERTY(bool AlphaGlobPhasePresent READ getAlphaGlobPhasePresent WRITE setAlphaGlobPhasePresent)
-  SIMPL_FILTER_PARAMETER(int, AlphaGlobPhase)
+  /**
+   * @brief Setter property for AlphaGlobPhase
+   */
+  void setAlphaGlobPhase(int value);
+  /**
+   * @brief Getter property for AlphaGlobPhase
+   * @return Value of AlphaGlobPhase
+   */
+  int getAlphaGlobPhase() const;
+
   Q_PROPERTY(int AlphaGlobPhase READ getAlphaGlobPhase WRITE setAlphaGlobPhase)
-  SIMPL_FILTER_PARAMETER(int, MTRPhase)
+  /**
+   * @brief Setter property for MTRPhase
+   */
+  void setMTRPhase(int value);
+  /**
+   * @brief Getter property for MTRPhase
+   * @return Value of MTRPhase
+   */
+  int getMTRPhase() const;
+
   Q_PROPERTY(int MTRPhase READ getMTRPhase WRITE setMTRPhase)
-  SIMPL_FILTER_PARAMETER(float, LatticeParameterA)
+  /**
+   * @brief Setter property for LatticeParameterA
+   */
+  void setLatticeParameterA(float value);
+  /**
+   * @brief Getter property for LatticeParameterA
+   * @return Value of LatticeParameterA
+   */
+  float getLatticeParameterA() const;
+
   Q_PROPERTY(float LatticeParameterA READ getLatticeParameterA WRITE setLatticeParameterA)
-  SIMPL_FILTER_PARAMETER(float, LatticeParameterC)
+  /**
+   * @brief Setter property for LatticeParameterC
+   */
+  void setLatticeParameterC(float value);
+  /**
+   * @brief Getter property for LatticeParameterC
+   * @return Value of LatticeParameterC
+   */
+  float getLatticeParameterC() const;
+
   Q_PROPERTY(float LatticeParameterC READ getLatticeParameterC WRITE setLatticeParameterC)
-  SIMPL_FILTER_PARAMETER(FloatVec3Type, StressAxis)
+  /**
+   * @brief Setter property for StressAxis
+   */
+  void setStressAxis(const FloatVec3Type& value);
+  /**
+   * @brief Getter property for StressAxis
+   * @return Value of StressAxis
+   */
+  FloatVec3Type getStressAxis() const;
+
   Q_PROPERTY(FloatVec3Type StressAxis READ getStressAxis WRITE setStressAxis)
-  SIMPL_FILTER_PARAMETER(int, SubsurfaceDistance)
+  /**
+   * @brief Setter property for SubsurfaceDistance
+   */
+  void setSubsurfaceDistance(int value);
+  /**
+   * @brief Getter property for SubsurfaceDistance
+   * @return Value of SubsurfaceDistance
+   */
+  int getSubsurfaceDistance() const;
+
   Q_PROPERTY(int SubsurfaceDistance READ getSubsurfaceDistance WRITE setSubsurfaceDistance)
   Q_PROPERTY(float ConsiderationFraction READ getConsiderationFraction WRITE setConsiderationFraction)
-  SIMPL_FILTER_PARAMETER(float, ConsiderationFraction)
+  /**
+   * @brief Setter property for ConsiderationFraction
+   */
+  void setConsiderationFraction(float value);
+  /**
+   * @brief Getter property for ConsiderationFraction
+   * @return Value of ConsiderationFraction
+   */
+  float getConsiderationFraction() const;
 
-  SIMPL_FILTER_PARAMETER(bool, DoNotAssumeInitiatorPresence)
+  /**
+   * @brief Setter property for DoNotAssumeInitiatorPresence
+   */
+  void setDoNotAssumeInitiatorPresence(bool value);
+  /**
+   * @brief Getter property for DoNotAssumeInitiatorPresence
+   * @return Value of DoNotAssumeInitiatorPresence
+   */
+  bool getDoNotAssumeInitiatorPresence() const;
+
   Q_PROPERTY(bool DoNotAssumeInitiatorPresence READ getDoNotAssumeInitiatorPresence WRITE setDoNotAssumeInitiatorPresence)
-  SIMPL_FILTER_PARAMETER(float, InitiatorLowerThreshold)
+  /**
+   * @brief Setter property for InitiatorLowerThreshold
+   */
+  void setInitiatorLowerThreshold(float value);
+  /**
+   * @brief Getter property for InitiatorLowerThreshold
+   * @return Value of InitiatorLowerThreshold
+   */
+  float getInitiatorLowerThreshold() const;
+
   Q_PROPERTY(float InitiatorLowerThreshold READ getInitiatorLowerThreshold WRITE setInitiatorLowerThreshold)
-  SIMPL_FILTER_PARAMETER(float, InitiatorUpperThreshold)
+  /**
+   * @brief Setter property for InitiatorUpperThreshold
+   */
+  void setInitiatorUpperThreshold(float value);
+  /**
+   * @brief Getter property for InitiatorUpperThreshold
+   * @return Value of InitiatorUpperThreshold
+   */
+  float getInitiatorUpperThreshold() const;
+
   Q_PROPERTY(float InitiatorUpperThreshold READ getInitiatorUpperThreshold WRITE setInitiatorUpperThreshold)
-  SIMPL_FILTER_PARAMETER(float, HardFeatureLowerThreshold)
+  /**
+   * @brief Setter property for HardFeatureLowerThreshold
+   */
+  void setHardFeatureLowerThreshold(float value);
+  /**
+   * @brief Getter property for HardFeatureLowerThreshold
+   * @return Value of HardFeatureLowerThreshold
+   */
+  float getHardFeatureLowerThreshold() const;
+
   Q_PROPERTY(float HardFeatureLowerThreshold READ getHardFeatureLowerThreshold WRITE setHardFeatureLowerThreshold)
-  SIMPL_FILTER_PARAMETER(float, HardFeatureUpperThreshold)
+  /**
+   * @brief Setter property for HardFeatureUpperThreshold
+   */
+  void setHardFeatureUpperThreshold(float value);
+  /**
+   * @brief Getter property for HardFeatureUpperThreshold
+   * @return Value of HardFeatureUpperThreshold
+   */
+  float getHardFeatureUpperThreshold() const;
+
   Q_PROPERTY(float HardFeatureUpperThreshold READ getHardFeatureUpperThreshold WRITE setHardFeatureUpperThreshold)
-  SIMPL_FILTER_PARAMETER(float, SoftFeatureLowerThreshold)
+  /**
+   * @brief Setter property for SoftFeatureLowerThreshold
+   */
+  void setSoftFeatureLowerThreshold(float value);
+  /**
+   * @brief Getter property for SoftFeatureLowerThreshold
+   * @return Value of SoftFeatureLowerThreshold
+   */
+  float getSoftFeatureLowerThreshold() const;
+
   Q_PROPERTY(float SoftFeatureLowerThreshold READ getSoftFeatureLowerThreshold WRITE setSoftFeatureLowerThreshold)
-  SIMPL_FILTER_PARAMETER(float, SoftFeatureUpperThreshold)
+  /**
+   * @brief Setter property for SoftFeatureUpperThreshold
+   */
+  void setSoftFeatureUpperThreshold(float value);
+  /**
+   * @brief Getter property for SoftFeatureUpperThreshold
+   * @return Value of SoftFeatureUpperThreshold
+   */
+  float getSoftFeatureUpperThreshold() const;
+
   Q_PROPERTY(float SoftFeatureUpperThreshold READ getSoftFeatureUpperThreshold WRITE setSoftFeatureUpperThreshold)
 
-  SIMPL_FILTER_PARAMETER(QString, NewCellFeatureAttributeMatrixName)
+  /**
+   * @brief Setter property for NewCellFeatureAttributeMatrixName
+   */
+  void setNewCellFeatureAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for NewCellFeatureAttributeMatrixName
+   * @return Value of NewCellFeatureAttributeMatrixName
+   */
+  QString getNewCellFeatureAttributeMatrixName() const;
+
   Q_PROPERTY(QString NewCellFeatureAttributeMatrixName READ getNewCellFeatureAttributeMatrixName WRITE setNewCellFeatureAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(QString, SelectedFeaturesArrayName)
+  /**
+   * @brief Setter property for SelectedFeaturesArrayName
+   */
+  void setSelectedFeaturesArrayName(const QString& value);
+  /**
+   * @brief Getter property for SelectedFeaturesArrayName
+   * @return Value of SelectedFeaturesArrayName
+   */
+  QString getSelectedFeaturesArrayName() const;
+
   Q_PROPERTY(QString SelectedFeaturesArrayName READ getSelectedFeaturesArrayName WRITE setSelectedFeaturesArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, InitiatorsArrayName)
+  /**
+   * @brief Setter property for InitiatorsArrayName
+   */
+  void setInitiatorsArrayName(const QString& value);
+  /**
+   * @brief Getter property for InitiatorsArrayName
+   * @return Value of InitiatorsArrayName
+   */
+  QString getInitiatorsArrayName() const;
+
   Q_PROPERTY(QString InitiatorsArrayName READ getInitiatorsArrayName WRITE setInitiatorsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, HardFeaturesArrayName)
+  /**
+   * @brief Setter property for HardFeaturesArrayName
+   */
+  void setHardFeaturesArrayName(const QString& value);
+  /**
+   * @brief Getter property for HardFeaturesArrayName
+   * @return Value of HardFeaturesArrayName
+   */
+  QString getHardFeaturesArrayName() const;
+
   Q_PROPERTY(QString HardFeaturesArrayName READ getHardFeaturesArrayName WRITE setHardFeaturesArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, SoftFeaturesArrayName)
+  /**
+   * @brief Setter property for SoftFeaturesArrayName
+   */
+  void setSoftFeaturesArrayName(const QString& value);
+  /**
+   * @brief Getter property for SoftFeaturesArrayName
+   * @return Value of SoftFeaturesArrayName
+   */
+  QString getSoftFeaturesArrayName() const;
+
   Q_PROPERTY(QString SoftFeaturesArrayName READ getSoftFeaturesArrayName WRITE setSoftFeaturesArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, HardSoftGroupsArrayName)
+  /**
+   * @brief Setter property for HardSoftGroupsArrayName
+   */
+  void setHardSoftGroupsArrayName(const QString& value);
+  /**
+   * @brief Getter property for HardSoftGroupsArrayName
+   * @return Value of HardSoftGroupsArrayName
+   */
+  QString getHardSoftGroupsArrayName() const;
+
   Q_PROPERTY(QString HardSoftGroupsArrayName READ getHardSoftGroupsArrayName WRITE setHardSoftGroupsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, CellFeatureAttributeMatrixName)
+  /**
+   * @brief Setter property for CellFeatureAttributeMatrixName
+   */
+  void setCellFeatureAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for CellFeatureAttributeMatrixName
+   * @return Value of CellFeatureAttributeMatrixName
+   */
+  QString getCellFeatureAttributeMatrixName() const;
+
   Q_PROPERTY(QString CellFeatureAttributeMatrixName READ getCellFeatureAttributeMatrixName WRITE setCellFeatureAttributeMatrixName)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, CellFeatureAttributeMatrixPath)
+  /**
+   * @brief Setter property for CellFeatureAttributeMatrixPath
+   */
+  void setCellFeatureAttributeMatrixPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for CellFeatureAttributeMatrixPath
+   * @return Value of CellFeatureAttributeMatrixPath
+   */
+  DataArrayPath getCellFeatureAttributeMatrixPath() const;
+
   Q_PROPERTY(DataArrayPath CellFeatureAttributeMatrixPath READ getCellFeatureAttributeMatrixPath WRITE setCellFeatureAttributeMatrixPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, FeatureIdsArrayPath)
+  /**
+   * @brief Setter property for FeatureIdsArrayPath
+   */
+  void setFeatureIdsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for FeatureIdsArrayPath
+   * @return Value of FeatureIdsArrayPath
+   */
+  DataArrayPath getFeatureIdsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath FeatureIdsArrayPath READ getFeatureIdsArrayPath WRITE setFeatureIdsArrayPath)
 
-  SIMPL_FILTER_PARAMETER(QString, CellParentIdsArrayName)
+  /**
+   * @brief Setter property for CellParentIdsArrayName
+   */
+  void setCellParentIdsArrayName(const QString& value);
+  /**
+   * @brief Getter property for CellParentIdsArrayName
+   * @return Value of CellParentIdsArrayName
+   */
+  QString getCellParentIdsArrayName() const;
+
   Q_PROPERTY(QString CellParentIdsArrayName READ getCellParentIdsArrayName WRITE setCellParentIdsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, FeatureParentIdsArrayName)
+  /**
+   * @brief Setter property for FeatureParentIdsArrayName
+   */
+  void setFeatureParentIdsArrayName(const QString& value);
+  /**
+   * @brief Getter property for FeatureParentIdsArrayName
+   * @return Value of FeatureParentIdsArrayName
+   */
+  QString getFeatureParentIdsArrayName() const;
+
   Q_PROPERTY(QString FeatureParentIdsArrayName READ getFeatureParentIdsArrayName WRITE setFeatureParentIdsArrayName)
 
-  SIMPL_FILTER_PARAMETER(QString, ActiveArrayName)
+  /**
+   * @brief Setter property for ActiveArrayName
+   */
+  void setActiveArrayName(const QString& value);
+  /**
+   * @brief Getter property for ActiveArrayName
+   * @return Value of ActiveArrayName
+   */
+  QString getActiveArrayName() const;
+
   Q_PROPERTY(QString ActiveArrayName READ getActiveArrayName WRITE setActiveArrayName)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, FeatureEulerAnglesArrayPath)
+  /**
+   * @brief Setter property for FeatureEulerAnglesArrayPath
+   */
+  void setFeatureEulerAnglesArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for FeatureEulerAnglesArrayPath
+   * @return Value of FeatureEulerAnglesArrayPath
+   */
+  DataArrayPath getFeatureEulerAnglesArrayPath() const;
+
   Q_PROPERTY(DataArrayPath FeatureEulerAnglesArrayPath READ getFeatureEulerAnglesArrayPath WRITE setFeatureEulerAnglesArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, FeaturePhasesArrayPath)
+  /**
+   * @brief Setter property for FeaturePhasesArrayPath
+   */
+  void setFeaturePhasesArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for FeaturePhasesArrayPath
+   * @return Value of FeaturePhasesArrayPath
+   */
+  DataArrayPath getFeaturePhasesArrayPath() const;
+
   Q_PROPERTY(DataArrayPath FeaturePhasesArrayPath READ getFeaturePhasesArrayPath WRITE setFeaturePhasesArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, NeighborListArrayPath)
+  /**
+   * @brief Setter property for NeighborListArrayPath
+   */
+  void setNeighborListArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for NeighborListArrayPath
+   * @return Value of NeighborListArrayPath
+   */
+  DataArrayPath getNeighborListArrayPath() const;
+
   Q_PROPERTY(DataArrayPath NeighborListArrayPath READ getNeighborListArrayPath WRITE setNeighborListArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, CentroidsArrayPath)
+  /**
+   * @brief Setter property for CentroidsArrayPath
+   */
+  void setCentroidsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for CentroidsArrayPath
+   * @return Value of CentroidsArrayPath
+   */
+  DataArrayPath getCentroidsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath CentroidsArrayPath READ getCentroidsArrayPath WRITE setCentroidsArrayPath)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, CrystalStructuresArrayPath)
+  /**
+   * @brief Setter property for CrystalStructuresArrayPath
+   */
+  void setCrystalStructuresArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for CrystalStructuresArrayPath
+   * @return Value of CrystalStructuresArrayPath
+   */
+  DataArrayPath getCrystalStructuresArrayPath() const;
+
   Q_PROPERTY(DataArrayPath CrystalStructuresArrayPath READ getCrystalStructuresArrayPath WRITE setCrystalStructuresArrayPath)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
    */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -178,23 +490,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -223,17 +535,6 @@ public:
    */
   void execute() override;
 
-  /**
-   * @brief preflight Reimplemented from @see AbstractFilter class
-   */
-  void preflight() override;
-
-signals:
-  void updateFilterParameters(AbstractFilter* filter);
-  void parametersChanged();
-  void preflightAboutToExecute();
-  void preflightExecuted();
-
 protected:
   TiDwellFatigueCrystallographicAnalysis();
 
@@ -248,7 +549,7 @@ protected:
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -258,25 +559,73 @@ protected:
   void updateFeatureInstancePointers();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(bool, SelectedFeatures)
-  DEFINE_DATAARRAY_VARIABLE(bool, Initiators)
-  DEFINE_DATAARRAY_VARIABLE(bool, HardFeatures)
-  DEFINE_DATAARRAY_VARIABLE(bool, SoftFeatures)
-  DEFINE_DATAARRAY_VARIABLE(bool, HardSoftGroups)
+  std::weak_ptr<DataArray<bool>> m_SelectedFeaturesPtr;
+  bool* m_SelectedFeatures = nullptr;
+  std::weak_ptr<DataArray<bool>> m_InitiatorsPtr;
+  bool* m_Initiators = nullptr;
+  std::weak_ptr<DataArray<bool>> m_HardFeaturesPtr;
+  bool* m_HardFeatures = nullptr;
+  std::weak_ptr<DataArray<bool>> m_SoftFeaturesPtr;
+  bool* m_SoftFeatures = nullptr;
+  std::weak_ptr<DataArray<bool>> m_HardSoftGroupsPtr;
+  bool* m_HardSoftGroups = nullptr;
+  std::weak_ptr<DataArray<int32_t>> m_FeatureIdsPtr;
+  int32_t* m_FeatureIds = nullptr;
+  std::weak_ptr<DataArray<int32_t>> m_CellParentIdsPtr;
+  int32_t* m_CellParentIds = nullptr;
+  std::weak_ptr<DataArray<int32_t>> m_FeatureParentIdsPtr;
+  int32_t* m_FeatureParentIds = nullptr;
+  std::weak_ptr<DataArray<bool>> m_ActivePtr;
+  bool* m_Active = nullptr;
+  std::weak_ptr<DataArray<float>> m_FeatureEulerAnglesPtr;
+  float* m_FeatureEulerAngles = nullptr;
+  std::weak_ptr<DataArray<int32_t>> m_FeaturePhasesPtr;
+  int32_t* m_FeaturePhases = nullptr;
+  std::weak_ptr<DataArray<float>> m_CentroidsPtr;
+  float* m_Centroids = nullptr;
+  std::weak_ptr<DataArray<uint32_t>> m_CrystalStructuresPtr;
+  uint32_t* m_CrystalStructures = nullptr;
+
+  DataArrayPath m_DataContainerName = {};
+  bool m_AlphaGlobPhasePresent = {};
+  int m_AlphaGlobPhase = {};
+  int m_MTRPhase = {};
+  float m_LatticeParameterA = {};
+  float m_LatticeParameterC = {};
+  FloatVec3Type m_StressAxis = {};
+  int m_SubsurfaceDistance = {};
+  float m_ConsiderationFraction = {};
+  bool m_DoNotAssumeInitiatorPresence = {};
+  float m_InitiatorLowerThreshold = {};
+  float m_InitiatorUpperThreshold = {};
+  float m_HardFeatureLowerThreshold = {};
+  float m_HardFeatureUpperThreshold = {};
+  float m_SoftFeatureLowerThreshold = {};
+  float m_SoftFeatureUpperThreshold = {};
+  QString m_NewCellFeatureAttributeMatrixName = {};
+  QString m_SelectedFeaturesArrayName = {};
+  QString m_InitiatorsArrayName = {};
+  QString m_HardFeaturesArrayName = {};
+  QString m_SoftFeaturesArrayName = {};
+  QString m_HardSoftGroupsArrayName = {};
+  QString m_CellFeatureAttributeMatrixName = {};
+  DataArrayPath m_CellFeatureAttributeMatrixPath = {};
+  DataArrayPath m_FeatureIdsArrayPath = {};
+  QString m_CellParentIdsArrayName = {};
+  QString m_FeatureParentIdsArrayName = {};
+  QString m_ActiveArrayName = {};
+  DataArrayPath m_FeatureEulerAnglesArrayPath = {};
+  DataArrayPath m_FeaturePhasesArrayPath = {};
+  DataArrayPath m_NeighborListArrayPath = {};
+  DataArrayPath m_CentroidsArrayPath = {};
+  DataArrayPath m_CrystalStructuresArrayPath = {};
 
   // Feature Data - make sure these are all initialized to nullptr in the constructor
-  DEFINE_DATAARRAY_VARIABLE(int32_t, FeatureIds)
-  DEFINE_DATAARRAY_VARIABLE(int32_t, CellParentIds)
-  DEFINE_DATAARRAY_VARIABLE(int32_t, FeatureParentIds)
-  DEFINE_DATAARRAY_VARIABLE(bool, Active)
-  DEFINE_DATAARRAY_VARIABLE(float, FeatureEulerAngles)
-  DEFINE_DATAARRAY_VARIABLE(int32_t, FeaturePhases)
+
   NeighborList<int>::WeakPointer m_NeighborList;
   NeighborList<int>::WeakPointer m_ParentNeighborList;
-  DEFINE_DATAARRAY_VARIABLE(float, Centroids)
 
   // Ensemble Data - make sure these are all initialized to nullptr in the constructor
-  DEFINE_DATAARRAY_VARIABLE(uint32_t, CrystalStructures)
 
 public:
   TiDwellFatigueCrystallographicAnalysis(const TiDwellFatigueCrystallographicAnalysis&) = delete;            // Copy Constructor Not Implemented

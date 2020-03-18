@@ -33,11 +33,16 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "AdaptiveAlignmentMutualInformation.h"
 
 #include <fstream>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/FloatFilterParameter.h"
@@ -45,6 +50,8 @@
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
 #include "SIMPLib/Geometry/ImageGeom.h"
 #include "SIMPLib/Math/SIMPLibRandom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -156,7 +163,7 @@ void AdaptiveAlignmentMutualInformation::dataCheck()
 
   std::vector<size_t> cDims(1, 4);
   m_QuatsPtr =
-      getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getQuatsArrayPath(), cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
+      getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getQuatsArrayPath(), cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_QuatsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_Quats = m_QuatsPtr.lock()->getPointer(0);
@@ -167,7 +174,7 @@ void AdaptiveAlignmentMutualInformation::dataCheck()
   }
 
   cDims[0] = 1;
-  m_CellPhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getCellPhasesArrayPath(),
+  m_CellPhasesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getCellPhasesArrayPath(),
                                                                                                         cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CellPhasesPtr.lock())                                                                         /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -179,7 +186,7 @@ void AdaptiveAlignmentMutualInformation::dataCheck()
   }
   if(m_UseGoodVoxels)
   {
-    m_GoodVoxelsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getGoodVoxelsArrayPath(),
+    m_GoodVoxelsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getGoodVoxelsArrayPath(),
                                                                                                        cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_GoodVoxelsPtr.lock())                                                                      /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
@@ -191,28 +198,16 @@ void AdaptiveAlignmentMutualInformation::dataCheck()
     }
   }
 
-  m_CrystalStructuresPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<unsigned int>, AbstractFilter>(this, getCrystalStructuresArrayPath(),
+  m_CrystalStructuresPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<unsigned int>>(this, getCrystalStructuresArrayPath(),
                                                                                                                     cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CrystalStructuresPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_CrystalStructures = m_CrystalStructuresPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrayPaths);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrayPaths);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void AdaptiveAlignmentMutualInformation::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -680,9 +675,9 @@ void AdaptiveAlignmentMutualInformation::form_features_sections()
   bool noseeds = false;
   int32_t featurecount = 1;
   int64_t neighbor = 0;
-  QuatF q1 = QuaternionMathF::New();
-  QuatF q2 = QuaternionMathF::New();
-  QuatF* quats = reinterpret_cast<QuatF*>(m_Quats);
+  //  QuatF q1 = QuaternionMathF::New();
+  //  QuatF q2 = QuaternionMathF::New();
+  //  QuatF* quats = reinterpret_cast<QuatF*>(m_Quats);
   float w = 0.0f;
   float n1 = 0.0f;
   float n2 = 0.0f;
@@ -766,7 +761,9 @@ void AdaptiveAlignmentMutualInformation::form_features_sections()
           int64_t currentpoint = voxelslist[j];
           col = currentpoint % dims[0];
           row = (currentpoint / dims[0]) % dims[1];
-          QuaternionMathF::Copy(quats[currentpoint], q1);
+
+          QuatF q1(m_Quats + currentpoint * 4);
+
           phase1 = m_CrystalStructures[m_CellPhases[currentpoint]];
           for(int32_t i = 0; i < 4; i++)
           {
@@ -791,7 +788,8 @@ void AdaptiveAlignmentMutualInformation::form_features_sections()
             if(good && miFeatureIds[neighbor] <= 0 && m_CellPhases[neighbor] > 0)
             {
               w = std::numeric_limits<float>::max();
-              QuaternionMathF::Copy(quats[neighbor], q2);
+
+              QuatF q2(m_Quats + neighbor * 4);
               phase2 = m_CrystalStructures[m_CellPhases[neighbor]];
               if(phase1 == phase2)
               {
@@ -859,7 +857,7 @@ AbstractFilter::Pointer AdaptiveAlignmentMutualInformation::newFilterInstance(bo
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMutualInformation::getCompiledLibraryName() const
+QString AdaptiveAlignmentMutualInformation::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -867,7 +865,7 @@ const QString AdaptiveAlignmentMutualInformation::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMutualInformation::getBrandingString() const
+QString AdaptiveAlignmentMutualInformation::getBrandingString() const
 {
   return "Anisotropy";
 }
@@ -875,7 +873,7 @@ const QString AdaptiveAlignmentMutualInformation::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMutualInformation::getFilterVersion() const
+QString AdaptiveAlignmentMutualInformation::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -885,7 +883,7 @@ const QString AdaptiveAlignmentMutualInformation::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMutualInformation::getGroupName() const
+QString AdaptiveAlignmentMutualInformation::getGroupName() const
 {
   return SIMPL::FilterGroups::ReconstructionFilters;
 }
@@ -893,7 +891,7 @@ const QString AdaptiveAlignmentMutualInformation::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid AdaptiveAlignmentMutualInformation::getUuid()
+QUuid AdaptiveAlignmentMutualInformation::getUuid() const
 {
   return QUuid("{738c8da9-45d0-53dd-aa54-3f3a337b70d7}");
 }
@@ -901,7 +899,7 @@ const QUuid AdaptiveAlignmentMutualInformation::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMutualInformation::getSubGroupName() const
+QString AdaptiveAlignmentMutualInformation::getSubGroupName() const
 {
   return AnisotropyConstants::FilterSubGroups::AnisotropicAlignment;
 }
@@ -909,7 +907,120 @@ const QString AdaptiveAlignmentMutualInformation::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AdaptiveAlignmentMutualInformation::getHumanLabel() const
+QString AdaptiveAlignmentMutualInformation::getHumanLabel() const
 {
   return "Adaptive Alignment (Mutual Information)";
+}
+
+// -----------------------------------------------------------------------------
+AdaptiveAlignmentMutualInformation::Pointer AdaptiveAlignmentMutualInformation::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<AdaptiveAlignmentMutualInformation> AdaptiveAlignmentMutualInformation::New()
+{
+  struct make_shared_enabler : public AdaptiveAlignmentMutualInformation
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignmentMutualInformation::getNameOfClass() const
+{
+  return QString("AdaptiveAlignmentMutualInformation");
+}
+
+// -----------------------------------------------------------------------------
+QString AdaptiveAlignmentMutualInformation::ClassName()
+{
+  return QString("AdaptiveAlignmentMutualInformation");
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMutualInformation::setMisorientationTolerance(float value)
+{
+  m_MisorientationTolerance = value;
+}
+
+// -----------------------------------------------------------------------------
+float AdaptiveAlignmentMutualInformation::getMisorientationTolerance() const
+{
+  return m_MisorientationTolerance;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMutualInformation::setUseGoodVoxels(bool value)
+{
+  m_UseGoodVoxels = value;
+}
+
+// -----------------------------------------------------------------------------
+bool AdaptiveAlignmentMutualInformation::getUseGoodVoxels() const
+{
+  return m_UseGoodVoxels;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMutualInformation::setQuatsArrayPath(const DataArrayPath& value)
+{
+  m_QuatsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AdaptiveAlignmentMutualInformation::getQuatsArrayPath() const
+{
+  return m_QuatsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMutualInformation::setCellPhasesArrayPath(const DataArrayPath& value)
+{
+  m_CellPhasesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AdaptiveAlignmentMutualInformation::getCellPhasesArrayPath() const
+{
+  return m_CellPhasesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMutualInformation::setGoodVoxelsArrayPath(const DataArrayPath& value)
+{
+  m_GoodVoxelsArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AdaptiveAlignmentMutualInformation::getGoodVoxelsArrayPath() const
+{
+  return m_GoodVoxelsArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMutualInformation::setCrystalStructuresArrayPath(const DataArrayPath& value)
+{
+  m_CrystalStructuresArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AdaptiveAlignmentMutualInformation::getCrystalStructuresArrayPath() const
+{
+  return m_CrystalStructuresArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void AdaptiveAlignmentMutualInformation::setFeatureCounts(const std::shared_ptr<DataArray<int32_t>>& value)
+{
+  m_FeatureCounts = value;
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<DataArray<int32_t>> AdaptiveAlignmentMutualInformation::getFeatureCounts() const
+{
+  return m_FeatureCounts;
 }

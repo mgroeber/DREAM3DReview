@@ -33,11 +33,16 @@
 *
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "ApplyTransformationToGeometry.h"
 
 #include <Eigen/Dense>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataContainerSelectionFilterParameter.h"
@@ -48,8 +53,11 @@
 #include "SIMPLib/Geometry/IGeometry2D.h"
 #include "SIMPLib/Geometry/IGeometry3D.h"
 #include "SIMPLib/Geometry/VertexGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
 
-#include "OrientationLib/OrientationMath/OrientationTransforms.hpp"
+#include "OrientationLib/Core/Orientation.hpp"
+#include "OrientationLib/Core/OrientationTransformation.hpp"
+#include "OrientationLib/Core/Quaternion.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -161,7 +169,7 @@ void ApplyTransformationToGeometry::dataCheck()
   clearErrorCode();
   clearWarningCode();
 
-  IGeometry::Pointer igeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry, AbstractFilter>(this, getGeometryToTransform());
+  IGeometry::Pointer igeom = getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry>(this, getGeometryToTransform());
 
   if(getErrorCode() < 0)
   {
@@ -186,7 +194,7 @@ void ApplyTransformationToGeometry::dataCheck()
   }
   case 1: // Transformation matrix from array
   {
-    m_TransformationMatrixPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>, AbstractFilter>(this, getComputedTransformationMatrix(), cDims);
+    m_TransformationMatrixPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<float>>(this, getComputedTransformationMatrix(), cDims);
     if(m_TransformationMatrixPtr.lock())
     {
       m_TransformationMatrix = m_TransformationMatrixPtr.lock()->getPointer(0);
@@ -228,8 +236,7 @@ void ApplyTransformationToGeometry::dataCheck()
   case 3: // Rotation via axis-angle
   {
     float rotAngle = m_RotationAngle * SIMPLib::Constants::k_Pi / 180.0;
-    FOrientArrayType om(9);
-    FOrientTransformsType::ax2om(FOrientArrayType(m_RotationAxis[0], m_RotationAxis[1], m_RotationAxis[2], rotAngle), om);
+    OrientationF om = OrientationTransformation::ax2om<OrientationF, OrientationF>(OrientationF(m_RotationAxis[0], m_RotationAxis[1], m_RotationAxis[2], rotAngle));
 
     m_TransformationReference = FloatArrayType::CreateArray(1, cDims, "_INTERNAL_USE_ONLY_ManualTransformationMatrix", true);
     m_TransformationReference->initializeWithZeros();
@@ -290,19 +297,6 @@ void ApplyTransformationToGeometry::dataCheck()
   }
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void ApplyTransformationToGeometry::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -339,7 +333,7 @@ void ApplyTransformationToGeometry::applyTransformation()
     return;
   }
 
-  typedef Eigen::Matrix<float, 4, 4, Eigen::RowMajor> ProjectiveMatrix;
+  using ProjectiveMatrix = Eigen::Matrix<float, 4, 4, Eigen::RowMajor>;
   Eigen::Map<ProjectiveMatrix> transformation(m_TransformationMatrix);
 
   int64_t progIncrement = numVertices / 100;
@@ -412,7 +406,7 @@ AbstractFilter::Pointer ApplyTransformationToGeometry::newFilterInstance(bool co
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ApplyTransformationToGeometry::getCompiledLibraryName() const
+QString ApplyTransformationToGeometry::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -420,7 +414,7 @@ const QString ApplyTransformationToGeometry::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ApplyTransformationToGeometry::getBrandingString() const
+QString ApplyTransformationToGeometry::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -428,7 +422,7 @@ const QString ApplyTransformationToGeometry::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ApplyTransformationToGeometry::getFilterVersion() const
+QString ApplyTransformationToGeometry::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -439,7 +433,7 @@ const QString ApplyTransformationToGeometry::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ApplyTransformationToGeometry::getGroupName() const
+QString ApplyTransformationToGeometry::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterGroups::DREAM3DReviewFilters;
 }
@@ -447,7 +441,7 @@ const QString ApplyTransformationToGeometry::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid ApplyTransformationToGeometry::getUuid()
+QUuid ApplyTransformationToGeometry::getUuid() const
 {
   return QUuid("{c681caf4-22f2-5885-bbc9-a0476abc72eb}");
 }
@@ -455,7 +449,7 @@ const QUuid ApplyTransformationToGeometry::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ApplyTransformationToGeometry::getSubGroupName() const
+QString ApplyTransformationToGeometry::getSubGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::RotationTransformationFilters;
 }
@@ -463,7 +457,132 @@ const QString ApplyTransformationToGeometry::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ApplyTransformationToGeometry::getHumanLabel() const
+QString ApplyTransformationToGeometry::getHumanLabel() const
 {
   return "Apply Transformation to Geometry";
+}
+
+// -----------------------------------------------------------------------------
+ApplyTransformationToGeometry::Pointer ApplyTransformationToGeometry::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<ApplyTransformationToGeometry> ApplyTransformationToGeometry::New()
+{
+  struct make_shared_enabler : public ApplyTransformationToGeometry
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString ApplyTransformationToGeometry::getNameOfClass() const
+{
+  return QString("ApplyTransformationToGeometry");
+}
+
+// -----------------------------------------------------------------------------
+QString ApplyTransformationToGeometry::ClassName()
+{
+  return QString("ApplyTransformationToGeometry");
+}
+
+// -----------------------------------------------------------------------------
+void ApplyTransformationToGeometry::setManualTransformationMatrix(const DynamicTableData& value)
+{
+  m_ManualTransformationMatrix = value;
+}
+
+// -----------------------------------------------------------------------------
+DynamicTableData ApplyTransformationToGeometry::getManualTransformationMatrix() const
+{
+  return m_ManualTransformationMatrix;
+}
+
+// -----------------------------------------------------------------------------
+void ApplyTransformationToGeometry::setComputedTransformationMatrix(const DataArrayPath& value)
+{
+  m_ComputedTransformationMatrix = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath ApplyTransformationToGeometry::getComputedTransformationMatrix() const
+{
+  return m_ComputedTransformationMatrix;
+}
+
+// -----------------------------------------------------------------------------
+void ApplyTransformationToGeometry::setGeometryToTransform(const DataArrayPath& value)
+{
+  m_GeometryToTransform = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath ApplyTransformationToGeometry::getGeometryToTransform() const
+{
+  return m_GeometryToTransform;
+}
+
+// -----------------------------------------------------------------------------
+void ApplyTransformationToGeometry::setTransformationMatrixType(int value)
+{
+  m_TransformationMatrixType = value;
+}
+
+// -----------------------------------------------------------------------------
+int ApplyTransformationToGeometry::getTransformationMatrixType() const
+{
+  return m_TransformationMatrixType;
+}
+
+// -----------------------------------------------------------------------------
+void ApplyTransformationToGeometry::setRotationAxis(const FloatVec3Type& value)
+{
+  m_RotationAxis = value;
+}
+
+// -----------------------------------------------------------------------------
+FloatVec3Type ApplyTransformationToGeometry::getRotationAxis() const
+{
+  return m_RotationAxis;
+}
+
+// -----------------------------------------------------------------------------
+void ApplyTransformationToGeometry::setRotationAngle(float value)
+{
+  m_RotationAngle = value;
+}
+
+// -----------------------------------------------------------------------------
+float ApplyTransformationToGeometry::getRotationAngle() const
+{
+  return m_RotationAngle;
+}
+
+// -----------------------------------------------------------------------------
+void ApplyTransformationToGeometry::setTranslation(const FloatVec3Type& value)
+{
+  m_Translation = value;
+}
+
+// -----------------------------------------------------------------------------
+FloatVec3Type ApplyTransformationToGeometry::getTranslation() const
+{
+  return m_Translation;
+}
+
+// -----------------------------------------------------------------------------
+void ApplyTransformationToGeometry::setScale(const FloatVec3Type& value)
+{
+  m_Scale = value;
+}
+
+// -----------------------------------------------------------------------------
+FloatVec3Type ApplyTransformationToGeometry::getScale() const
+{
+  return m_Scale;
 }

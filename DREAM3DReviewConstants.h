@@ -6,6 +6,7 @@
 #include "itkRGBPixel.h"
 
 #include "SIMPLib/DataArrays/DataArray.hpp"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewConfig.h"
 
@@ -306,6 +307,23 @@ static const float CSLAxisAngle[21][5] = {{3.0f, 60.0f, 1.0f, 1.0f, 1.0f},   {5.
                                           {25.5f, 51.68f, 3.0f, 3.0f, 1.0f}, {27.0f, 31.58f, 1.0f, 1.0f, 0.0f}, {27.5f, 35.42f, 2.0f, 1.0f, 0.0f}, {29.0f, 43.61f, 1.0f, 0.0f, 0.0f},
                                           {29.5f, 46.39f, 2.0f, 2.0f, 1.0f}};
 } // namespace TransformationPhaseConstants
+
+namespace UUtahDMREFConstants
+{
+const QString UUtahDMREFPluginFile("UUtahDMREFPlugin");
+const QString UUtahDMREFPluginDisplayName("UUtahDMREF");
+const QString UUtahDMREFBaseName("UUtahDMREF");
+
+namespace FilterGroups
+{
+const QString UUtahDMREFFilters("UUtah DMREF");
+}
+
+namespace FilterSubGroups
+{
+const QString PackingFilters("Packing");
+}
+} // namespace UUtahDMREFConstants
 
 /**
 * @brief Use this namespace to define any custom GUI widgets that collect FilterParameters

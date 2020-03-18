@@ -4,10 +4,15 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLArray.hpp"
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Common/SIMPLArray.hpp"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
+
+class IDataArray;
+using IDataArrayShPtrType = std::shared_ptr<IDataArray>;
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -17,45 +22,94 @@
 class DREAM3DReview_EXPORT ImportMASSIFData : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(ImportMASSIFData SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(ImportMASSIFData)
+  PYB11_FILTER_NEW_MACRO(ImportMASSIFData)
+  PYB11_FILTER_PARAMETER(QString, MassifInputFilePath)
+  PYB11_FILTER_PARAMETER(QString, FilePrefix)
+  PYB11_FILTER_PARAMETER(int, StepNumber)
   PYB11_PROPERTY(QString MassifInputFilePath READ getMassifInputFilePath WRITE setMassifInputFilePath)
   PYB11_PROPERTY(QString FilePrefix READ getFilePrefix WRITE setFilePrefix)
   PYB11_PROPERTY(int StepNumber READ getStepNumber WRITE setStepNumber)
+#endif
 
 public:
-  SIMPL_SHARED_POINTERS(ImportMASSIFData)
-  SIMPL_FILTER_NEW_MACRO(ImportMASSIFData)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(ImportMASSIFData, AbstractFilter)
+  using Self = ImportMASSIFData;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<ImportMASSIFData> New();
+
+  /**
+   * @brief Returns the name of the class for ImportMASSIFData
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for ImportMASSIFData
+   */
+  static QString ClassName();
 
   ~ImportMASSIFData() override;
 
-  SIMPL_FILTER_PARAMETER(QString, MassifInputFilePath)
+  /**
+   * @brief Setter property for MassifInputFilePath
+   */
+  void setMassifInputFilePath(const QString& value);
+  /**
+   * @brief Getter property for MassifInputFilePath
+   * @return Value of MassifInputFilePath
+   */
+  QString getMassifInputFilePath() const;
+
   Q_PROPERTY(QString MassifInputFilePath READ getMassifInputFilePath WRITE setMassifInputFilePath)
 
-  SIMPL_FILTER_PARAMETER(QString, FilePrefix)
+  /**
+   * @brief Setter property for FilePrefix
+   */
+  void setFilePrefix(const QString& value);
+  /**
+   * @brief Getter property for FilePrefix
+   * @return Value of FilePrefix
+   */
+  QString getFilePrefix() const;
+
   Q_PROPERTY(QString FilePrefix READ getFilePrefix WRITE setFilePrefix)
 
-  SIMPL_FILTER_PARAMETER(int, StepNumber)
+  /**
+   * @brief Setter property for StepNumber
+   */
+  void setStepNumber(int value);
+  /**
+   * @brief Getter property for StepNumber
+   * @return Value of StepNumber
+   */
+  int getStepNumber() const;
+
   Q_PROPERTY(int StepNumber READ getStepNumber WRITE setStepNumber)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
    */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -65,23 +119,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -93,41 +147,13 @@ public:
    */
   void execute() override;
 
-  /**
-   * @brief preflight Reimplemented from @see AbstractFilter class
-   */
-  void preflight() override;
-
-signals:
-  /**
-   * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
-
 protected:
   ImportMASSIFData();
 
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -135,11 +161,15 @@ protected:
   void initialize();
 
 private:
-  QString m_PaddedStep = "";
+  std::weak_ptr<DataArray<float>> m_DFieldPtr;
+  std::weak_ptr<DataArray<float>> m_EFieldPtr;
+  std::weak_ptr<DataArray<float>> m_SFieldPtr;
 
-  DEFINE_DATAARRAY_WEAKPTR(float, DField)
-  DEFINE_DATAARRAY_WEAKPTR(float, EField)
-  DEFINE_DATAARRAY_WEAKPTR(float, SField)
+  QString m_MassifInputFilePath = {};
+  QString m_FilePrefix = {};
+  int m_StepNumber = {};
+
+  QString m_PaddedStep = "";
 
   /**
    * @brief createDataArrayPaths

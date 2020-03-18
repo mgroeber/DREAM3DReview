@@ -35,9 +35,11 @@
 
 #pragma once
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
-#include "SIMPLib/Filtering/AbstractFilter.h"
+#include <memory>
+
 #include "SIMPLib/SIMPLib.h"
+#include "SIMPLib/Filtering/AbstractFilter.h"
+#include "SIMPLib/DataArrays/DataArray.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
 
@@ -47,49 +49,108 @@
 class DREAM3DReview_EXPORT FindElementCentroids : public AbstractFilter
 {
   Q_OBJECT
+
+#ifdef SIMPL_ENABLE_PYTHON
   PYB11_CREATE_BINDINGS(FindElementCentroids SUPERCLASS AbstractFilter)
+  PYB11_SHARED_POINTERS(FindElementCentroids)
+  PYB11_FILTER_NEW_MACRO(FindElementCentroids)
+  PYB11_FILTER_PARAMETER(DataArrayPath, CellCentroidsArrayPath)
+  PYB11_FILTER_PARAMETER(bool, CreateVertexDataContainer)
+  PYB11_FILTER_PARAMETER(DataArrayPath, NewDataContainerName)
+  PYB11_FILTER_PARAMETER(QString, VertexAttributeMatrixName)
   PYB11_PROPERTY(DataArrayPath CellCentroidsArrayPath READ getCellCentroidsArrayPath WRITE setCellCentroidsArrayPath)
   PYB11_PROPERTY(bool CreateVertexDataContainer READ getCreateVertexDataContainer WRITE setCreateVertexDataContainer)
   PYB11_PROPERTY(DataArrayPath NewDataContainerName READ getNewDataContainerName WRITE setNewDataContainerName)
   PYB11_PROPERTY(QString VertexAttributeMatrixName READ getVertexAttributeMatrixName WRITE setVertexAttributeMatrixName)
+#endif
 
 public:
-  SIMPL_SHARED_POINTERS(FindElementCentroids)
-  SIMPL_FILTER_NEW_MACRO(FindElementCentroids)
-  SIMPL_TYPE_MACRO_SUPER_OVERRIDE(FindElementCentroids, AbstractFilter)
+  using Self = FindElementCentroids;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer();
+
+  static std::shared_ptr<FindElementCentroids> New();
+
+  /**
+   * @brief Returns the name of the class for FindElementCentroids
+   */
+  QString getNameOfClass() const override;
+  /**
+   * @brief Returns the name of the class for FindElementCentroids
+   */
+  static QString ClassName();
 
   ~FindElementCentroids() override;
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, CellCentroidsArrayPath)
+  /**
+   * @brief Setter property for CellCentroidsArrayPath
+   */
+  void setCellCentroidsArrayPath(const DataArrayPath& value);
+  /**
+   * @brief Getter property for CellCentroidsArrayPath
+   * @return Value of CellCentroidsArrayPath
+   */
+  DataArrayPath getCellCentroidsArrayPath() const;
+
   Q_PROPERTY(DataArrayPath CellCentroidsArrayPath READ getCellCentroidsArrayPath WRITE setCellCentroidsArrayPath)
 
-  SIMPL_FILTER_PARAMETER(bool, CreateVertexDataContainer)
+  /**
+   * @brief Setter property for CreateVertexDataContainer
+   */
+  void setCreateVertexDataContainer(bool value);
+  /**
+   * @brief Getter property for CreateVertexDataContainer
+   * @return Value of CreateVertexDataContainer
+   */
+  bool getCreateVertexDataContainer() const;
+
   Q_PROPERTY(bool CreateVertexDataContainer READ getCreateVertexDataContainer WRITE setCreateVertexDataContainer)
 
-  SIMPL_FILTER_PARAMETER(DataArrayPath, NewDataContainerName)
+  /**
+   * @brief Setter property for NewDataContainerName
+   */
+  void setNewDataContainerName(const DataArrayPath& value);
+  /**
+   * @brief Getter property for NewDataContainerName
+   * @return Value of NewDataContainerName
+   */
+  DataArrayPath getNewDataContainerName() const;
+
   Q_PROPERTY(DataArrayPath NewDataContainerName READ getNewDataContainerName WRITE setNewDataContainerName)
 
-  SIMPL_FILTER_PARAMETER(QString, VertexAttributeMatrixName)
+  /**
+   * @brief Setter property for VertexAttributeMatrixName
+   */
+  void setVertexAttributeMatrixName(const QString& value);
+  /**
+   * @brief Getter property for VertexAttributeMatrixName
+   * @return Value of VertexAttributeMatrixName
+   */
+  QString getVertexAttributeMatrixName() const;
+
   Q_PROPERTY(QString VertexAttributeMatrixName READ getVertexAttributeMatrixName WRITE setVertexAttributeMatrixName)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
    */
-  const QString getCompiledLibraryName() const override;
+  QString getCompiledLibraryName() const override;
 
   /**
    * @brief getBrandingString Returns the branding string for the filter, which is a tag
    * used to denote the filter's association with specific plugins
    * @return Branding string
   */
-  const QString getBrandingString() const override;
+  QString getBrandingString() const override;
 
   /**
    * @brief getFilterVersion Returns a version string for this filter. Default
    * value is an empty string.
    * @return
    */
-  const QString getFilterVersion() const override;
+  QString getFilterVersion() const override;
 
   /**
    * @brief newFilterInstance Reimplemented from @see AbstractFilter class
@@ -99,23 +160,23 @@ public:
   /**
    * @brief getGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getGroupName() const override;
+  QString getGroupName() const override;
 
   /**
    * @brief getSubGroupName Reimplemented from @see AbstractFilter class
    */
-  const QString getSubGroupName() const override;
+  QString getSubGroupName() const override;
 
   /**
    * @brief getUuid Return the unique identifier for this filter.
    * @return A QUuid object.
    */
-  const QUuid getUuid() override;
+  QUuid getUuid() const override;
 
   /**
    * @brief getHumanLabel Reimplemented from @see AbstractFilter class
    */
-  const QString getHumanLabel() const override;
+  QString getHumanLabel() const override;
 
   /**
    * @brief setupFilterParameters Reimplemented from @see AbstractFilter class
@@ -132,40 +193,12 @@ public:
    */
   void execute() override;
 
-  /**
-  * @brief preflight Reimplemented from @see AbstractFilter class
-  */
-  void preflight() override;
-
-signals:
-  /**
-    * @brief updateFilterParameters Emitted when the Filter requests all the latest Filter parameters
-   * be pushed from a user-facing control (such as a widget)
-   * @param filter Filter instance pointer
-   */
-  void updateFilterParameters(AbstractFilter* filter);
-
-  /**
-   * @brief parametersChanged Emitted when any Filter parameter is changed internally
-   */
-  void parametersChanged();
-
-  /**
-   * @brief preflightAboutToExecute Emitted just before calling dataCheck()
-   */
-  void preflightAboutToExecute();
-
-  /**
-   * @brief preflightExecuted Emitted just after calling dataCheck()
-   */
-  void preflightExecuted();
-
 protected:
   FindElementCentroids();
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -173,7 +206,13 @@ protected:
   void initialize();
 
 private:
-  DEFINE_DATAARRAY_VARIABLE(float, CellCentroidsArray)
+  std::weak_ptr<DataArray<float>> m_CellCentroidsArrayPtr;
+  float* m_CellCentroidsArray = nullptr;
+
+  DataArrayPath m_CellCentroidsArrayPath = {};
+  bool m_CreateVertexDataContainer = {};
+  DataArrayPath m_NewDataContainerName = {};
+  QString m_VertexAttributeMatrixName = {};
 
 public:
   FindElementCentroids(const FindElementCentroids&) = delete; // Copy Constructor Not Implemented

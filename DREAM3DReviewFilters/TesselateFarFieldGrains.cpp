@@ -34,17 +34,12 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "TesselateFarFieldGrains.h"
 
 #include <algorithm>
 #include <fstream>
-
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-#include <tbb/blocked_range3d.h>
-#include <tbb/parallel_for.h>
-#include <tbb/partitioner.h>
-#include <tbb/task_scheduler_init.h>
-#endif
 
 
 #include "SIMPLib/Common/Constants.h"
@@ -65,9 +60,20 @@
 #include "SIMPLib/StatsData/PrimaryStatsData.h"
 #include "SIMPLib/Utilities/FilePathGenerator.h"
 #include "SIMPLib/Utilities/TimeUtilities.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
-#include "OrientationLib/OrientationMath/OrientationMath.h"
-#include "OrientationLib/OrientationMath/OrientationTransforms.hpp"
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
+#include <tbb/blocked_range3d.h>
+#include <tbb/parallel_for.h>
+#include <tbb/partitioner.h>
+#include <tbb/task_scheduler_init.h>
+#endif
+
+#include "OrientationLib/Core/Orientation.hpp"
+#include "OrientationLib/Core/OrientationMath.h"
+#include "OrientationLib/Core/OrientationTransformation.hpp"
+#include "OrientationLib/Core/Quaternion.hpp"
 
 #include "EbsdLib/EbsdConstants.h"
 
@@ -462,7 +468,7 @@ void TesselateFarFieldGrains::dataCheck()
     return;
   }
 
-  ImageGeom::Pointer image = m->getPrereqGeometry<ImageGeom, AbstractFilter>(this);
+  ImageGeom::Pointer image = m->getPrereqGeometry<ImageGeom>(this);
   if(getErrorCode() < 0 || nullptr == image.get())
   {
     return;
@@ -471,7 +477,7 @@ void TesselateFarFieldGrains::dataCheck()
   // Input Ensemble Data That we require
 
   std::vector<size_t> dims(1, 1);
-  m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), dims);
+  m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getMaskArrayPath(), dims);
   if(nullptr != m_MaskPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_Mask = m_MaskPtr.lock()->getPointer(0);
@@ -479,7 +485,7 @@ void TesselateFarFieldGrains::dataCheck()
 
   // Cell Data
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellAttributeMatrixName().getAttributeMatrixName(), getFeatureIdsArrayName());
-  m_FeatureIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(
+  m_FeatureIdsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(
       this, tempPath, -1, dims);        /* Assigns the shared_ptr<>(this, tempPath, -1, dims); Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeatureIdsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -487,7 +493,7 @@ void TesselateFarFieldGrains::dataCheck()
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellAttributeMatrixName().getAttributeMatrixName(), getCellPhasesArrayName());
-  m_CellPhasesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(
+  m_CellPhasesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(
       this, tempPath, 0, dims);         /* Assigns the shared_ptr<>(this, tempPath, 0, dims); Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_CellPhasesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -508,59 +514,59 @@ void TesselateFarFieldGrains::dataCheck()
 
   // Feature Data
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getFeaturePhasesArrayName());
-  m_FeaturePhasesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(
+  m_FeaturePhasesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(
       this, tempPath, 0, dims);            /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeaturePhasesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_FeaturePhases = m_FeaturePhasesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getSlabIdArrayName());
-  m_SlabIdPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0, dims, "", DataArrayID31);
+  m_SlabIdPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, 0, dims, "", DataArrayID31);
   if(nullptr != m_SlabIdPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_SlabId = m_SlabIdPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getEquivalentDiametersArrayName());
-  m_EquivalentDiametersPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(
+  m_EquivalentDiametersPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(
       this, tempPath, 0, dims);                  /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_EquivalentDiametersPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_EquivalentDiameters = m_EquivalentDiametersPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getVolumesArrayName());
-  m_VolumesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0, dims, "", DataArrayID32);
+  m_VolumesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0, dims, "", DataArrayID32);
   if(nullptr != m_VolumesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_Volumes = m_VolumesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getOmega3sArrayName());
-  m_Omega3sPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0, dims, "", DataArrayID33);
+  m_Omega3sPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0, dims, "", DataArrayID33);
   if(nullptr != m_Omega3sPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_Omega3s = m_Omega3sPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   dims[0] = 3;
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getCentroidsArrayName());
-  m_CentroidsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0, dims, "", DataArrayID34);
+  m_CentroidsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0, dims, "", DataArrayID34);
   if(nullptr != m_CentroidsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_Centroids = m_CentroidsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getAxisEulerAnglesArrayName());
-  m_AxisEulerAnglesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(
+  m_AxisEulerAnglesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(
       this, tempPath, 0, dims);              /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_AxisEulerAnglesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_AxisEulerAngles = m_AxisEulerAnglesPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getAxisLengthsArrayName());
-  m_AxisLengthsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, tempPath, 0, dims, "", DataArrayID35);
+  m_AxisLengthsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0, dims, "", DataArrayID35);
   if(nullptr != m_AxisLengthsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_AxisLengths = m_AxisLengthsPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getFeatureEulerAnglesArrayName());
-  m_FeatureEulerAnglesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(
+  m_FeatureEulerAnglesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(
       this, tempPath, 0, dims);                 /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_FeatureEulerAnglesPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -570,7 +576,7 @@ void TesselateFarFieldGrains::dataCheck()
   dims[0] = 3;
   dims[1] = 3;
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellFeatureAttributeMatrixName(), getElasticStrainsArrayName());
-  m_ElasticStrainsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(
+  m_ElasticStrainsPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(
       this, tempPath, 0, dims);             /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_ElasticStrainsPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -581,24 +587,12 @@ void TesselateFarFieldGrains::dataCheck()
   dims.resize(1);
   dims[0] = 1;
   tempPath.update(getOutputCellAttributeMatrixName().getDataContainerName(), getOutputCellEnsembleAttributeMatrixName(), getCrystalStructuresArrayName());
-  m_CrystalStructuresPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<unsigned int>, AbstractFilter, unsigned int>(this, tempPath, Ebsd::CrystalStructure::UnknownCrystalStructure,
+  m_CrystalStructuresPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<unsigned int>>(this, tempPath, Ebsd::CrystalStructure::UnknownCrystalStructure,
                                                                                                                                         dims, "", DataArrayID36);
   if(nullptr != m_CrystalStructuresPtr.lock()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
     m_CrystalStructures = m_CrystalStructuresPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void TesselateFarFieldGrains::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
 
   bool hasMissingFiles = false;
   bool orderAscending = false;
@@ -641,7 +635,6 @@ void TesselateFarFieldGrains::preflight()
   attrMat->removeAttributeArray(m_AxisLengthsArrayName);
   attrMat->removeAttributeArray(m_VolumesArrayName);
   attrMat->removeAttributeArray(m_CentroidsArrayName);
-  setInPreflight(false);
 }
 
 // -----------------------------------------------------------------------------
@@ -851,8 +844,8 @@ void TesselateFarFieldGrains::load_features()
 
         m_FeaturePhases[currentFeature] = phase;
 
-        FOrientArrayType eu(m_FeatureEulerAngles + (3 * i), 3);
-        FOrientTransformsType::om2eu(FOrientArrayType(mat), eu);
+        OrientationF eu(m_FeatureEulerAngles + (3 * i), 3);
+        eu = OrientationTransformation::om2eu<OrientationF, OrientationF>(OrientationF(mat));
 
         alpha *= SIMPLib::Constants::k_PiOver180;
         beta *= SIMPLib::Constants::k_PiOver180;
@@ -865,7 +858,7 @@ void TesselateFarFieldGrains::load_features()
         MatrixMath::Multiply3x3with3x3(epsT, eps, epsMult);
         MatrixMath::Add3x3s(eps, epsT, epsAdd);
         MatrixMath::Add3x3s(epsAdd, epsMult, flst);
-        MatrixMath::Multiply3x3withConstant(flst, 0.5);
+        MatrixMath::Multiply3x3withConstant(flst, 0.5f);
 
         m_ElasticStrains[9 * currentFeature + 0] = flst[0][0];
         m_ElasticStrains[9 * currentFeature + 1] = flst[0][1];
@@ -933,7 +926,6 @@ void TesselateFarFieldGrains::assign_voxels()
   uint64_t millis = QDateTime::currentMSecsSinceEpoch();
   uint64_t currentMillis = millis;
 
-  FOrientArrayType om(9, 0.0);
   int64_t totalFeatures = m->getAttributeMatrix(m_OutputCellFeatureAttributeMatrixName)->getNumberOfTuples();
   for(int64_t i = 1; i < totalFeatures; i++)
   {
@@ -972,9 +964,7 @@ void TesselateFarFieldGrains::assign_voxels()
     float radcur2 = (radcur1 * bovera);
     float radcur3 = (radcur1 * covera);
     float ga[3][3];
-    FOrientArrayType om(9, 0.0);
-    FOrientTransformsType::eu2om(FOrientArrayType(&(m_AxisEulerAngles[3 * i]), 3), om);
-    om.toGMatrix(ga);
+    OrientationTransformation::eu2om<OrientationF, OrientationF>(OrientationF(&(m_AxisEulerAngles[3 * i]), 3)).toGMatrix(ga);
     column = static_cast<int64_t>(xc / spacing[0]);
     row = static_cast<int64_t>(yc / spacing[1]);
     plane = static_cast<int64_t>(zc / spacing[2]);
@@ -1254,7 +1244,7 @@ AbstractFilter::Pointer TesselateFarFieldGrains::newFilterInstance(bool copyFilt
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TesselateFarFieldGrains::getCompiledLibraryName() const
+QString TesselateFarFieldGrains::getCompiledLibraryName() const
 {
   return HEDMAnalysisConstants::HEDMAnalysisBaseName;
 }
@@ -1262,7 +1252,7 @@ const QString TesselateFarFieldGrains::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TesselateFarFieldGrains::getBrandingString() const
+QString TesselateFarFieldGrains::getBrandingString() const
 {
   return "HEDMAnalysis";
 }
@@ -1270,7 +1260,7 @@ const QString TesselateFarFieldGrains::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TesselateFarFieldGrains::getFilterVersion() const
+QString TesselateFarFieldGrains::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -1281,7 +1271,7 @@ const QString TesselateFarFieldGrains::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TesselateFarFieldGrains::getGroupName() const
+QString TesselateFarFieldGrains::getGroupName() const
 {
   return SIMPL::FilterGroups::Unsupported;
 }
@@ -1289,7 +1279,7 @@ const QString TesselateFarFieldGrains::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid TesselateFarFieldGrains::getUuid()
+QUuid TesselateFarFieldGrains::getUuid() const
 {
   return QUuid("{6f1abe57-ca7b-57ce-b03a-8c6f06fdc633}");
 }
@@ -1297,7 +1287,7 @@ const QUuid TesselateFarFieldGrains::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TesselateFarFieldGrains::getSubGroupName() const
+QString TesselateFarFieldGrains::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::PackingFilters;
 }
@@ -1305,7 +1295,252 @@ const QString TesselateFarFieldGrains::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString TesselateFarFieldGrains::getHumanLabel() const
+QString TesselateFarFieldGrains::getHumanLabel() const
 {
   return "Tesselate Far Field Grains";
+}
+
+// -----------------------------------------------------------------------------
+TesselateFarFieldGrains::Pointer TesselateFarFieldGrains::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<TesselateFarFieldGrains> TesselateFarFieldGrains::New()
+{
+  struct make_shared_enabler : public TesselateFarFieldGrains
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getNameOfClass() const
+{
+  return QString("TesselateFarFieldGrains");
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::ClassName()
+{
+  return QString("TesselateFarFieldGrains");
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setOutputCellAttributeMatrixName(const DataArrayPath& value)
+{
+  m_OutputCellAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TesselateFarFieldGrains::getOutputCellAttributeMatrixName() const
+{
+  return m_OutputCellAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setOutputCellFeatureAttributeMatrixName(const QString& value)
+{
+  m_OutputCellFeatureAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getOutputCellFeatureAttributeMatrixName() const
+{
+  return m_OutputCellFeatureAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setOutputCellEnsembleAttributeMatrixName(const QString& value)
+{
+  m_OutputCellEnsembleAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getOutputCellEnsembleAttributeMatrixName() const
+{
+  return m_OutputCellEnsembleAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setFeatureIdsArrayName(const QString& value)
+{
+  m_FeatureIdsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getFeatureIdsArrayName() const
+{
+  return m_FeatureIdsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setCellPhasesArrayName(const QString& value)
+{
+  m_CellPhasesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getCellPhasesArrayName() const
+{
+  return m_CellPhasesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setSlabIdArrayName(const QString& value)
+{
+  m_SlabIdArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getSlabIdArrayName() const
+{
+  return m_SlabIdArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setFeaturePhasesArrayName(const QString& value)
+{
+  m_FeaturePhasesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getFeaturePhasesArrayName() const
+{
+  return m_FeaturePhasesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setFeatureEulerAnglesArrayName(const QString& value)
+{
+  m_FeatureEulerAnglesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getFeatureEulerAnglesArrayName() const
+{
+  return m_FeatureEulerAnglesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setElasticStrainsArrayName(const QString& value)
+{
+  m_ElasticStrainsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getElasticStrainsArrayName() const
+{
+  return m_ElasticStrainsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setCentroidsArrayName(const QString& value)
+{
+  m_CentroidsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getCentroidsArrayName() const
+{
+  return m_CentroidsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setVolumesArrayName(const QString& value)
+{
+  m_VolumesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getVolumesArrayName() const
+{
+  return m_VolumesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setAxisLengthsArrayName(const QString& value)
+{
+  m_AxisLengthsArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getAxisLengthsArrayName() const
+{
+  return m_AxisLengthsArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setAxisEulerAnglesArrayName(const QString& value)
+{
+  m_AxisEulerAnglesArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getAxisEulerAnglesArrayName() const
+{
+  return m_AxisEulerAnglesArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setOmega3sArrayName(const QString& value)
+{
+  m_Omega3sArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getOmega3sArrayName() const
+{
+  return m_Omega3sArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setEquivalentDiametersArrayName(const QString& value)
+{
+  m_EquivalentDiametersArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getEquivalentDiametersArrayName() const
+{
+  return m_EquivalentDiametersArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setCrystalStructuresArrayName(const QString& value)
+{
+  m_CrystalStructuresArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString TesselateFarFieldGrains::getCrystalStructuresArrayName() const
+{
+  return m_CrystalStructuresArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setMaskArrayPath(const DataArrayPath& value)
+{
+  m_MaskArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath TesselateFarFieldGrains::getMaskArrayPath() const
+{
+  return m_MaskArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void TesselateFarFieldGrains::setFeatureInputFileListInfo(const StackFileListInfo& value)
+{
+  m_FeatureInputFileListInfo = value;
+}
+
+// -----------------------------------------------------------------------------
+StackFileListInfo TesselateFarFieldGrains::getFeatureInputFileListInfo() const
+{
+  return m_FeatureInputFileListInfo;
 }

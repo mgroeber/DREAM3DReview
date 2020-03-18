@@ -11,9 +11,14 @@
 * Subsequent changes to the codes by others may elect to add a copyright and license
 * for those changes.
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "SliceTriangleGeometry.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataContainerSelectionFilterParameter.h"
@@ -26,8 +31,13 @@
 #include "SIMPLib/Geometry/EdgeGeom.h"
 #include "SIMPLib/Geometry/TriangleGeom.h"
 #include "SIMPLib/Math/GeometryMath.h"
+#include "SIMPLib/Math/MatrixMath.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
-#include "OrientationLib/OrientationMath/OrientationTransforms.hpp"
+#include "OrientationLib/Core/Orientation.hpp"
+#include "OrientationLib/Core/OrientationTransformation.hpp"
+#include "OrientationLib/Core/Quaternion.hpp"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -180,7 +190,7 @@ void SliceTriangleGeometry::dataCheck()
   DataArrayPath tempPath;
   QVector<IDataArray::Pointer> dataArrays;
 
-  TriangleGeom::Pointer triangle = getDataContainerArray()->getPrereqGeometryFromDataContainer<TriangleGeom, AbstractFilter>(this, getCADDataContainerName());
+  TriangleGeom::Pointer triangle = getDataContainerArray()->getPrereqGeometryFromDataContainer<TriangleGeom>(this, getCADDataContainerName());
 
   if(m_SliceRange == 1)
   {
@@ -191,7 +201,7 @@ void SliceTriangleGeometry::dataCheck()
     }
   }
 
-  DataContainer::Pointer m = getDataContainerArray()->createNonPrereqDataContainer<AbstractFilter>(this, getSliceDataContainerName());
+  DataContainer::Pointer m = getDataContainerArray()->createNonPrereqDataContainer(this, getSliceDataContainerName());
   if(getErrorCode() < 0)
   {
     return;
@@ -211,7 +221,7 @@ void SliceTriangleGeometry::dataCheck()
   std::vector<size_t> cDims(1, 1);
   if(m_HaveRegionIds)
   {
-    m_TriRegionIdPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter>(this, getRegionIdArrayPath(),
+    m_TriRegionIdPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getRegionIdArrayPath(),
                                                                                                            cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_TriRegionIdPtr.lock().get())                                                                   /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
@@ -223,7 +233,7 @@ void SliceTriangleGeometry::dataCheck()
     }
 
     tempPath.update(getSliceDataContainerName(), getEdgeAttributeMatrixName(), getRegionIdArrayPath().getDataArrayName());
-    m_RegionIdPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(
+    m_RegionIdPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(
         this, tempPath, 0, cDims);            /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_RegionIdPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
@@ -236,7 +246,7 @@ void SliceTriangleGeometry::dataCheck()
   }
 
   tempPath.update(getSliceDataContainerName(), getEdgeAttributeMatrixName(), getSliceIdArrayName());
-  m_SliceIdPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, tempPath, 0,
+  m_SliceIdPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>>(this, tempPath, 0,
                                                                                                                     cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_SliceIdPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -248,7 +258,7 @@ void SliceTriangleGeometry::dataCheck()
   }
 
   tempPath.update(getSliceDataContainerName(), getSliceAttributeMatrixName(), getAreasArrayName());
-  m_AreaPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, int32_t>(this, tempPath, 0,
+  m_AreaPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0,
                                                                                                                cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_AreaPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -260,7 +270,7 @@ void SliceTriangleGeometry::dataCheck()
   }
 
   tempPath.update(getSliceDataContainerName(), getSliceAttributeMatrixName(), getPerimetersArrayName());
-  m_PerimeterPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, int32_t>(this, tempPath, 0,
+  m_PerimeterPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0,
                                                                                                                     cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_PerimeterPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -272,19 +282,6 @@ void SliceTriangleGeometry::dataCheck()
   }
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void SliceTriangleGeometry::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -304,9 +301,7 @@ void SliceTriangleGeometry::rotateVertices(unsigned int direction, float* n, int
     crossDirection[1] = -m_SliceDirection[0];
     crossDirection[2] = 0;
     MatrixMath::Normalize3x1(crossDirection);
-    FOrientArrayType om(9);
-    FOrientTransformsType::ax2om(FOrientArrayType(crossDirection[0], crossDirection[1], crossDirection[2], angle), om);
-    om.toGMatrix(rotMat);
+    OrientationTransformation::ax2om<OrientationF, OrientationF>(OrientationF(crossDirection[0], crossDirection[1], crossDirection[2], angle)).toGMatrix(rotMat);
 
     if (direction == rotBackward)
     {
@@ -414,7 +409,7 @@ void SliceTriangleGeometry::execute()
   std::vector<int32_t> sliceIds;
   int32_t regionId = 0;
   std::vector<int32_t> regionIds;
-  float min_shift = m_SliceResolution / 1000.0f;
+  // float min_shift = m_SliceResolution / 1000.0f;
 
   for(MeshIndexType i = 0; i < numTris; i++)
   {
@@ -670,7 +665,7 @@ AbstractFilter::Pointer SliceTriangleGeometry::newFilterInstance(bool copyFilter
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SliceTriangleGeometry::getCompiledLibraryName() const
+QString SliceTriangleGeometry::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -678,7 +673,7 @@ const QString SliceTriangleGeometry::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SliceTriangleGeometry::getBrandingString() const
+QString SliceTriangleGeometry::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -686,7 +681,7 @@ const QString SliceTriangleGeometry::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SliceTriangleGeometry::getFilterVersion() const
+QString SliceTriangleGeometry::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -697,7 +692,7 @@ const QString SliceTriangleGeometry::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SliceTriangleGeometry::getGroupName() const
+QString SliceTriangleGeometry::getGroupName() const
 {
   return SIMPL::FilterGroups::SamplingFilters;
 }
@@ -705,7 +700,7 @@ const QString SliceTriangleGeometry::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SliceTriangleGeometry::getSubGroupName() const
+QString SliceTriangleGeometry::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::GeometryFilters;
 }
@@ -713,7 +708,7 @@ const QString SliceTriangleGeometry::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString SliceTriangleGeometry::getHumanLabel() const
+QString SliceTriangleGeometry::getHumanLabel() const
 {
   return "Slice CAD Geometry";
 }
@@ -721,7 +716,204 @@ const QString SliceTriangleGeometry::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid SliceTriangleGeometry::getUuid()
+QUuid SliceTriangleGeometry::getUuid() const
 {
   return QUuid("{222307a4-67fd-5cb5-a12e-d80f9fb970ae}");
+}
+
+// -----------------------------------------------------------------------------
+SliceTriangleGeometry::Pointer SliceTriangleGeometry::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<SliceTriangleGeometry> SliceTriangleGeometry::New()
+{
+  struct make_shared_enabler : public SliceTriangleGeometry
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString SliceTriangleGeometry::getNameOfClass() const
+{
+  return QString("SliceTriangleGeometry");
+}
+
+// -----------------------------------------------------------------------------
+QString SliceTriangleGeometry::ClassName()
+{
+  return QString("SliceTriangleGeometry");
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setCADDataContainerName(const DataArrayPath& value)
+{
+  m_CADDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath SliceTriangleGeometry::getCADDataContainerName() const
+{
+  return m_CADDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setSliceDataContainerName(const QString& value)
+{
+  m_SliceDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SliceTriangleGeometry::getSliceDataContainerName() const
+{
+  return m_SliceDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setEdgeAttributeMatrixName(const QString& value)
+{
+  m_EdgeAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SliceTriangleGeometry::getEdgeAttributeMatrixName() const
+{
+  return m_EdgeAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setSliceAttributeMatrixName(const QString& value)
+{
+  m_SliceAttributeMatrixName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SliceTriangleGeometry::getSliceAttributeMatrixName() const
+{
+  return m_SliceAttributeMatrixName;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setSliceIdArrayName(const QString& value)
+{
+  m_SliceIdArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SliceTriangleGeometry::getSliceIdArrayName() const
+{
+  return m_SliceIdArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setAreasArrayName(const QString& value)
+{
+  m_AreasArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SliceTriangleGeometry::getAreasArrayName() const
+{
+  return m_AreasArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setPerimetersArrayName(const QString& value)
+{
+  m_PerimetersArrayName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString SliceTriangleGeometry::getPerimetersArrayName() const
+{
+  return m_PerimetersArrayName;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setHaveRegionIds(bool value)
+{
+  m_HaveRegionIds = value;
+}
+
+// -----------------------------------------------------------------------------
+bool SliceTriangleGeometry::getHaveRegionIds() const
+{
+  return m_HaveRegionIds;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setRegionIdArrayPath(const DataArrayPath& value)
+{
+  m_RegionIdArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath SliceTriangleGeometry::getRegionIdArrayPath() const
+{
+  return m_RegionIdArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setSliceDirection(const FloatVec3Type& value)
+{
+  m_SliceDirection = value;
+}
+
+// -----------------------------------------------------------------------------
+FloatVec3Type SliceTriangleGeometry::getSliceDirection() const
+{
+  return m_SliceDirection;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setSliceResolution(float value)
+{
+  m_SliceResolution = value;
+}
+
+// -----------------------------------------------------------------------------
+float SliceTriangleGeometry::getSliceResolution() const
+{
+  return m_SliceResolution;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setZstart(float value)
+{
+  m_Zstart = value;
+}
+
+// -----------------------------------------------------------------------------
+float SliceTriangleGeometry::getZstart() const
+{
+  return m_Zstart;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setZend(float value)
+{
+  m_Zend = value;
+}
+
+// -----------------------------------------------------------------------------
+float SliceTriangleGeometry::getZend() const
+{
+  return m_Zend;
+}
+
+// -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setSliceRange(int value)
+{
+  m_SliceRange = value;
+}
+
+// -----------------------------------------------------------------------------
+int SliceTriangleGeometry::getSliceRange() const
+{
+  return m_SliceRange;
 }

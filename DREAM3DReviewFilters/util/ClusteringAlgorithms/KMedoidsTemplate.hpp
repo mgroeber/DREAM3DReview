@@ -38,7 +38,6 @@
 #include <random>
 #include <chrono>
 
-#include "SIMPLib/Common/SIMPLibSetGetMacros.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 #include "SIMPLib/SIMPLib.h"
 
@@ -48,11 +47,37 @@ template<typename T>
 class KMedoidsTemplate
 {
 public:
-  SIMPL_SHARED_POINTERS(KMedoidsTemplate)
-  SIMPL_TYPE_MACRO(KMedoidsTemplate)
+  using Self = KMedoidsTemplate;
+  using Pointer = std::shared_ptr<Self>;
+  using ConstPointer = std::shared_ptr<const Self>;
+  using WeakPointer = std::weak_ptr<Self>;
+  using ConstWeakPointer = std::weak_ptr<const Self>;
+  static Pointer NullPointer()
+  {
+    return Pointer(static_cast<Self*>(nullptr));
+  }
 
-  KMedoidsTemplate(){}
-  virtual ~KMedoidsTemplate(){}
+  /**
+   * @brief Returns the name of the class for KMedoidsTemplate
+   */
+  /**
+   * @brief Returns the name of the class for KMedoidsTemplate
+   */
+  QString getNameOfClass() const
+  {
+    return QString("KMedoidsTemplate");
+  }
+
+  /**
+   * @brief Returns the name of the class for KMedoidsTemplate
+   */
+  QString ClassName()
+  {
+    return QString("KMedoidsTemplate");
+  }
+
+  KMedoidsTemplate() = default;
+  virtual ~KMedoidsTemplate() = default;
 
   // -----------------------------------------------------------------------------
   //

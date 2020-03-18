@@ -33,16 +33,22 @@
 *
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "FindNorm.h"
 
 #include <cmath>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArrayCreationFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/FloatFilterParameter.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -120,7 +126,7 @@ void FindNorm::dataCheck()
 
   QVector<DataArrayPath> dataArrayPaths;
 
-  m_InArrayPtr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getSelectedArrayPath());
+  m_InArrayPtr = getDataContainerArray()->getPrereqIDataArrayFromPath(this, getSelectedArrayPath());
   if(getErrorCode() >= 0)
   {
     dataArrayPaths.push_back(getSelectedArrayPath());
@@ -128,7 +134,7 @@ void FindNorm::dataCheck()
 
   std::vector<size_t> cDims(1, 1);
 
-  m_NormPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>, AbstractFilter, float>(this, getNormArrayPath(), 0, cDims, "", DataArrayID31);
+  m_NormPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, getNormArrayPath(), 0, cDims, "", DataArrayID31);
   if(m_NormPtr.lock())
   {
     m_Norm = m_NormPtr.lock()->getPointer(0);
@@ -139,18 +145,6 @@ void FindNorm::dataCheck()
   }
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void FindNorm::preflight()
-{
-  setInPreflight(true);
-  emit preflightAboutToExecute();
-  emit updateFilterParameters(this);
-  dataCheck();
-  emit preflightExecuted();
-  setInPreflight(false);
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -209,7 +203,7 @@ AbstractFilter::Pointer FindNorm::newFilterInstance(bool copyFilterParameters) c
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindNorm::getCompiledLibraryName() const
+QString FindNorm::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -217,7 +211,7 @@ const QString FindNorm::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindNorm::getBrandingString() const
+QString FindNorm::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -225,7 +219,7 @@ const QString FindNorm::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindNorm::getFilterVersion() const
+QString FindNorm::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -236,7 +230,7 @@ const QString FindNorm::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindNorm::getGroupName() const
+QString FindNorm::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterGroups::DREAM3DReviewFilters;
 }
@@ -244,7 +238,7 @@ const QString FindNorm::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid FindNorm::getUuid()
+QUuid FindNorm::getUuid() const
 {
   return QUuid("{5d0cd577-3e3e-57b8-a36d-b215b834251f}");
 }
@@ -252,7 +246,7 @@ const QUuid FindNorm::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindNorm::getSubGroupName() const
+QString FindNorm::getSubGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::StatisticsFilters;
 }
@@ -260,7 +254,72 @@ const QString FindNorm::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString FindNorm::getHumanLabel() const
+QString FindNorm::getHumanLabel() const
 {
   return "Find Norm";
+}
+
+// -----------------------------------------------------------------------------
+FindNorm::Pointer FindNorm::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<FindNorm> FindNorm::New()
+{
+  struct make_shared_enabler : public FindNorm
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString FindNorm::getNameOfClass() const
+{
+  return QString("FindNorm");
+}
+
+// -----------------------------------------------------------------------------
+QString FindNorm::ClassName()
+{
+  return QString("FindNorm");
+}
+
+// -----------------------------------------------------------------------------
+void FindNorm::setSelectedArrayPath(const DataArrayPath& value)
+{
+  m_SelectedArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindNorm::getSelectedArrayPath() const
+{
+  return m_SelectedArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindNorm::setNormArrayPath(const DataArrayPath& value)
+{
+  m_NormArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath FindNorm::getNormArrayPath() const
+{
+  return m_NormArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void FindNorm::setPSpace(float value)
+{
+  m_PSpace = value;
+}
+
+// -----------------------------------------------------------------------------
+float FindNorm::getPSpace() const
+{
+  return m_PSpace;
 }

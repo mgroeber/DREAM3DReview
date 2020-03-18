@@ -33,13 +33,18 @@
 *
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+#include <memory>
+
 #include "ExtractInternalSurfacesFromTriangleGeometry.h"
 
 #include <array>
 #include <cassert>
 #include <unordered_map>
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
@@ -47,6 +52,8 @@
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
 #include "SIMPLib/Geometry/TriangleGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -124,7 +131,7 @@ void ExtractInternalSurfacesFromTriangleGeometry::dataCheck()
 
   QVector<IDataArray::Pointer> arrays;
 
-  TriangleGeom::Pointer tris = getDataContainerArray()->getPrereqGeometryFromDataContainer<TriangleGeom, AbstractFilter>(this, getTriangleDataContainerName());
+  TriangleGeom::Pointer tris = getDataContainerArray()->getPrereqGeometryFromDataContainer<TriangleGeom>(this, getTriangleDataContainerName());
 
   if(getErrorCode() < 0)
   {
@@ -135,7 +142,7 @@ void ExtractInternalSurfacesFromTriangleGeometry::dataCheck()
 
   std::vector<size_t> cDims(1, 1);
 
-  m_NodeTypesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int8_t>, AbstractFilter>(this, getNodeTypesArrayPath(), cDims);
+  m_NodeTypesPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int8_t>>(this, getNodeTypesArrayPath(), cDims);
   if(m_NodeTypesPtr.lock())
   {
     m_NodeTypes = m_NodeTypesPtr.lock()->getPointer(0);
@@ -145,9 +152,9 @@ void ExtractInternalSurfacesFromTriangleGeometry::dataCheck()
     arrays.push_back(m_NodeTypesPtr.lock());
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, arrays);
+  getDataContainerArray()->validateNumberOfTuples(this, arrays);
 
-  DataContainer::Pointer dc = getDataContainerArray()->createNonPrereqDataContainer<AbstractFilter>(this, getInternalTrianglesName(), DataContainerID);
+  DataContainer::Pointer dc = getDataContainerArray()->createNonPrereqDataContainer(this, getInternalTrianglesName(), DataContainerID);
 
   if(getErrorCode() < 0)
   {
@@ -178,7 +185,7 @@ void ExtractInternalSurfacesFromTriangleGeometry::dataCheck()
         for(auto&& data_array : tempDataArrayList)
         {
           tempPath.update(getInternalTrianglesName(), tmpAttrMat->getName(), data_array);
-          IDataArray::Pointer tmpDataArray = tmpAttrMat->getPrereqIDataArray<IDataArray, AbstractFilter>(this, data_array, -90002);
+          IDataArray::Pointer tmpDataArray = tmpAttrMat->getPrereqIDataArray(this, data_array, -90002);
           if(getErrorCode() >= 0)
           {
             std::vector<size_t> cDims = tmpDataArray->getComponentDimensions();
@@ -195,19 +202,6 @@ void ExtractInternalSurfacesFromTriangleGeometry::dataCheck()
   }
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void ExtractInternalSurfacesFromTriangleGeometry::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -470,7 +464,7 @@ AbstractFilter::Pointer ExtractInternalSurfacesFromTriangleGeometry::newFilterIn
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ExtractInternalSurfacesFromTriangleGeometry::getCompiledLibraryName() const
+QString ExtractInternalSurfacesFromTriangleGeometry::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -478,7 +472,7 @@ const QString ExtractInternalSurfacesFromTriangleGeometry::getCompiledLibraryNam
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ExtractInternalSurfacesFromTriangleGeometry::getBrandingString() const
+QString ExtractInternalSurfacesFromTriangleGeometry::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -486,7 +480,7 @@ const QString ExtractInternalSurfacesFromTriangleGeometry::getBrandingString() c
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ExtractInternalSurfacesFromTriangleGeometry::getFilterVersion() const
+QString ExtractInternalSurfacesFromTriangleGeometry::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -497,7 +491,7 @@ const QString ExtractInternalSurfacesFromTriangleGeometry::getFilterVersion() co
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ExtractInternalSurfacesFromTriangleGeometry::getGroupName() const
+QString ExtractInternalSurfacesFromTriangleGeometry::getGroupName() const
 {
   return DREAM3DReviewConstants::FilterGroups::DREAM3DReviewFilters;
 }
@@ -505,7 +499,7 @@ const QString ExtractInternalSurfacesFromTriangleGeometry::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid ExtractInternalSurfacesFromTriangleGeometry::getUuid()
+QUuid ExtractInternalSurfacesFromTriangleGeometry::getUuid() const
 {
   return QUuid("{52a069b4-6a46-5810-b0ec-e0693c636034}");
 }
@@ -513,7 +507,7 @@ const QUuid ExtractInternalSurfacesFromTriangleGeometry::getUuid()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ExtractInternalSurfacesFromTriangleGeometry::getSubGroupName() const
+QString ExtractInternalSurfacesFromTriangleGeometry::getSubGroupName() const
 {
   return DREAM3DReviewConstants::FilterSubGroups::GeometryFilters;
 }
@@ -521,7 +515,72 @@ const QString ExtractInternalSurfacesFromTriangleGeometry::getSubGroupName() con
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString ExtractInternalSurfacesFromTriangleGeometry::getHumanLabel() const
+QString ExtractInternalSurfacesFromTriangleGeometry::getHumanLabel() const
 {
   return "Extract Internal Surfaces from Triangle Geometry";
+}
+
+// -----------------------------------------------------------------------------
+ExtractInternalSurfacesFromTriangleGeometry::Pointer ExtractInternalSurfacesFromTriangleGeometry::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<ExtractInternalSurfacesFromTriangleGeometry> ExtractInternalSurfacesFromTriangleGeometry::New()
+{
+  struct make_shared_enabler : public ExtractInternalSurfacesFromTriangleGeometry
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString ExtractInternalSurfacesFromTriangleGeometry::getNameOfClass() const
+{
+  return QString("ExtractInternalSurfacesFromTriangleGeometry");
+}
+
+// -----------------------------------------------------------------------------
+QString ExtractInternalSurfacesFromTriangleGeometry::ClassName()
+{
+  return QString("ExtractInternalSurfacesFromTriangleGeometry");
+}
+
+// -----------------------------------------------------------------------------
+void ExtractInternalSurfacesFromTriangleGeometry::setTriangleDataContainerName(const DataArrayPath& value)
+{
+  m_TriangleDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath ExtractInternalSurfacesFromTriangleGeometry::getTriangleDataContainerName() const
+{
+  return m_TriangleDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void ExtractInternalSurfacesFromTriangleGeometry::setNodeTypesArrayPath(const DataArrayPath& value)
+{
+  m_NodeTypesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath ExtractInternalSurfacesFromTriangleGeometry::getNodeTypesArrayPath() const
+{
+  return m_NodeTypesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void ExtractInternalSurfacesFromTriangleGeometry::setInternalTrianglesName(const QString& value)
+{
+  m_InternalTrianglesName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString ExtractInternalSurfacesFromTriangleGeometry::getInternalTrianglesName() const
+{
+  return m_InternalTrianglesName;
 }

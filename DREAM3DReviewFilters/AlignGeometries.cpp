@@ -11,9 +11,14 @@
  * Subsequent changes to the codes by others may elect to add a copyright and license
  * for those changes.
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "AlignGeometries.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/ChoiceFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataContainerSelectionFilterParameter.h"
 #include "SIMPLib/Geometry/EdgeGeom.h"
@@ -22,6 +27,7 @@
 #include "SIMPLib/Geometry/ImageGeom.h"
 #include "SIMPLib/Geometry/RectGridGeom.h"
 #include "SIMPLib/Geometry/VertexGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -87,8 +93,8 @@ void AlignGeometries::dataCheck()
   clearErrorCode();
   clearWarningCode();
 
-  getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry, AbstractFilter>(this, getMovingGeometry());
-  getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry, AbstractFilter>(this, getTargetGeometry());
+  getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry>(this, getMovingGeometry());
+  getDataContainerArray()->getPrereqGeometryFromDataContainer<IGeometry>(this, getTargetGeometry());
 
   if(getAlignmentType() != 0 && getAlignmentType() != 1)
   {
@@ -97,19 +103,6 @@ void AlignGeometries::dataCheck()
   }
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void AlignGeometries::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -490,7 +483,7 @@ AbstractFilter::Pointer AlignGeometries::newFilterInstance(bool copyFilterParame
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AlignGeometries::getCompiledLibraryName() const
+QString AlignGeometries::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -498,7 +491,7 @@ const QString AlignGeometries::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AlignGeometries::getBrandingString() const
+QString AlignGeometries::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -506,7 +499,7 @@ const QString AlignGeometries::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AlignGeometries::getFilterVersion() const
+QString AlignGeometries::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -517,7 +510,7 @@ const QString AlignGeometries::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AlignGeometries::getGroupName() const
+QString AlignGeometries::getGroupName() const
 {
   return SIMPL::FilterGroups::ReconstructionFilters;
 }
@@ -525,7 +518,7 @@ const QString AlignGeometries::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AlignGeometries::getSubGroupName() const
+QString AlignGeometries::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::AlignmentFilters;
 }
@@ -533,7 +526,7 @@ const QString AlignGeometries::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString AlignGeometries::getHumanLabel() const
+QString AlignGeometries::getHumanLabel() const
 {
   return "Align Geometries";
 }
@@ -541,7 +534,72 @@ const QString AlignGeometries::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid AlignGeometries::getUuid()
+QUuid AlignGeometries::getUuid() const
 {
   return QUuid("{ce1ee404-0336-536c-8aad-f9641c9458be}");
+}
+
+// -----------------------------------------------------------------------------
+AlignGeometries::Pointer AlignGeometries::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<AlignGeometries> AlignGeometries::New()
+{
+  struct make_shared_enabler : public AlignGeometries
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString AlignGeometries::getNameOfClass() const
+{
+  return QString("AlignGeometries");
+}
+
+// -----------------------------------------------------------------------------
+QString AlignGeometries::ClassName()
+{
+  return QString("AlignGeometries");
+}
+
+// -----------------------------------------------------------------------------
+void AlignGeometries::setMovingGeometry(const DataArrayPath& value)
+{
+  m_MovingGeometry = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AlignGeometries::getMovingGeometry() const
+{
+  return m_MovingGeometry;
+}
+
+// -----------------------------------------------------------------------------
+void AlignGeometries::setTargetGeometry(const DataArrayPath& value)
+{
+  m_TargetGeometry = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath AlignGeometries::getTargetGeometry() const
+{
+  return m_TargetGeometry;
+}
+
+// -----------------------------------------------------------------------------
+void AlignGeometries::setAlignmentType(int value)
+{
+  m_AlignmentType = value;
+}
+
+// -----------------------------------------------------------------------------
+int AlignGeometries::getAlignmentType() const
+{
+  return m_AlignmentType;
 }

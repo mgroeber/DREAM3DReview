@@ -11,9 +11,14 @@
 * Subsequent changes to the codes by others may elect to add a copyright and license
 * for those changes.
 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <memory>
+
 #include "MapPointCloudToRegularGrid.h"
 
+#include <QtCore/QTextStream>
+
 #include "SIMPLib/Common/Constants.h"
+
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/DataArrayCreationFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
@@ -24,6 +29,8 @@
 #include "SIMPLib/FilterParameters/StringFilterParameter.h"
 #include "SIMPLib/Geometry/ImageGeom.h"
 #include "SIMPLib/Geometry/VertexGeom.h"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
+#include "SIMPLib/DataContainers/DataContainer.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -142,7 +149,7 @@ void MapPointCloudToRegularGrid::dataCheck()
 
   QVector<IDataArray::Pointer> dataArrays;
 
-  VertexGeom::Pointer vertex = getDataContainerArray()->getPrereqGeometryFromDataContainer<VertexGeom, AbstractFilter>(this, getDataContainerName());
+  VertexGeom::Pointer vertex = getDataContainerArray()->getPrereqGeometryFromDataContainer<VertexGeom>(this, getDataContainerName());
 
   if(getErrorCode() < 0)
   {
@@ -172,7 +179,7 @@ void MapPointCloudToRegularGrid::dataCheck()
     size_t dims[3] = {static_cast<size_t>(getGridDimensions()[0]), static_cast<size_t>(getGridDimensions()[1]), static_cast<size_t>(getGridDimensions()[2])};
     image->setDimensions(dims);
 
-    DataContainer::Pointer m = getDataContainerArray()->createNonPrereqDataContainer<AbstractFilter>(this, getImageDataContainerName());
+    DataContainer::Pointer m = getDataContainerArray()->createNonPrereqDataContainer(this, getImageDataContainerName());
 
     if(getErrorCode() < 0)
     {
@@ -184,7 +191,7 @@ void MapPointCloudToRegularGrid::dataCheck()
 
   if(m_CreateDataContainer == 1)
   {
-    ImageGeom::Pointer vertex = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom, AbstractFilter>(this, getImageDataContainerPath());
+    ImageGeom::Pointer vertex = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom>(this, getImageDataContainerPath());
     if(getErrorCode() < 0)
     {
       return;
@@ -193,7 +200,7 @@ void MapPointCloudToRegularGrid::dataCheck()
 
   std::vector<size_t> cDims(1, 1);
 
-  m_VoxelIndicesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<size_t>, AbstractFilter, size_t>(
+  m_VoxelIndicesPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<size_t>>(
       this, getVoxelIndicesArrayPath(), 0, cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
   if(nullptr != m_VoxelIndicesPtr.lock().get())    /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
   {
@@ -207,7 +214,7 @@ void MapPointCloudToRegularGrid::dataCheck()
   if(getUseMask() == true)
   {
     m_MaskPtr =
-        getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>, AbstractFilter>(this, getMaskArrayPath(), cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
+        getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getMaskArrayPath(), cDims); /* Assigns the shared_ptr<> to an instance variable that is a weak_ptr<> */
     if(nullptr != m_MaskPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
     {
       m_Mask = m_MaskPtr.lock()->getPointer(0);
@@ -218,22 +225,9 @@ void MapPointCloudToRegularGrid::dataCheck()
     }
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrays);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrays);
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void MapPointCloudToRegularGrid::preflight()
-{
-  // These are the REQUIRED lines of CODE to make sure the filter behaves correctly
-  setInPreflight(true);              // Set the fact that we are preflighting.
-  emit preflightAboutToExecute();    // Emit this signal so that other widgets can do one file update
-  emit updateFilterParameters(this); // Emit this signal to have the widgets push their values down to the filter
-  dataCheck();                       // Run our DataCheck to make sure everthing is setup correctly
-  emit preflightExecuted();          // We are done preflighting this filter
-  setInPreflight(false);             // Inform the system this filter is NOT in preflight mode anymore.
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -477,7 +471,7 @@ AbstractFilter::Pointer MapPointCloudToRegularGrid::newFilterInstance(bool copyF
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString MapPointCloudToRegularGrid::getCompiledLibraryName() const
+QString MapPointCloudToRegularGrid::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -485,7 +479,7 @@ const QString MapPointCloudToRegularGrid::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString MapPointCloudToRegularGrid::getBrandingString() const
+QString MapPointCloudToRegularGrid::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -493,7 +487,7 @@ const QString MapPointCloudToRegularGrid::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString MapPointCloudToRegularGrid::getFilterVersion() const
+QString MapPointCloudToRegularGrid::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -504,7 +498,7 @@ const QString MapPointCloudToRegularGrid::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString MapPointCloudToRegularGrid::getGroupName() const
+QString MapPointCloudToRegularGrid::getGroupName() const
 {
   return SIMPL::FilterGroups::SamplingFilters;
 }
@@ -512,7 +506,7 @@ const QString MapPointCloudToRegularGrid::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString MapPointCloudToRegularGrid::getSubGroupName() const
+QString MapPointCloudToRegularGrid::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::MappingFilters;
 }
@@ -520,7 +514,7 @@ const QString MapPointCloudToRegularGrid::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QString MapPointCloudToRegularGrid::getHumanLabel() const
+QString MapPointCloudToRegularGrid::getHumanLabel() const
 {
   return "Map Point Cloud to Regular Grid";
 }
@@ -528,7 +522,132 @@ const QString MapPointCloudToRegularGrid::getHumanLabel() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-const QUuid MapPointCloudToRegularGrid::getUuid()
+QUuid MapPointCloudToRegularGrid::getUuid() const
 {
   return QUuid("{9fe34deb-99e1-5f3a-a9cc-e90c655b47ee}");
+}
+
+// -----------------------------------------------------------------------------
+MapPointCloudToRegularGrid::Pointer MapPointCloudToRegularGrid::NullPointer()
+{
+  return Pointer(static_cast<Self*>(nullptr));
+}
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<MapPointCloudToRegularGrid> MapPointCloudToRegularGrid::New()
+{
+  struct make_shared_enabler : public MapPointCloudToRegularGrid
+  {
+  };
+  std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
+  val->setupFilterParameters();
+  return val;
+}
+
+// -----------------------------------------------------------------------------
+QString MapPointCloudToRegularGrid::getNameOfClass() const
+{
+  return QString("MapPointCloudToRegularGrid");
+}
+
+// -----------------------------------------------------------------------------
+QString MapPointCloudToRegularGrid::ClassName()
+{
+  return QString("MapPointCloudToRegularGrid");
+}
+
+// -----------------------------------------------------------------------------
+void MapPointCloudToRegularGrid::setDataContainerName(const DataArrayPath& value)
+{
+  m_DataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath MapPointCloudToRegularGrid::getDataContainerName() const
+{
+  return m_DataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void MapPointCloudToRegularGrid::setImageDataContainerName(const QString& value)
+{
+  m_ImageDataContainerName = value;
+}
+
+// -----------------------------------------------------------------------------
+QString MapPointCloudToRegularGrid::getImageDataContainerName() const
+{
+  return m_ImageDataContainerName;
+}
+
+// -----------------------------------------------------------------------------
+void MapPointCloudToRegularGrid::setImageDataContainerPath(const DataArrayPath& value)
+{
+  m_ImageDataContainerPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath MapPointCloudToRegularGrid::getImageDataContainerPath() const
+{
+  return m_ImageDataContainerPath;
+}
+
+// -----------------------------------------------------------------------------
+void MapPointCloudToRegularGrid::setVoxelIndicesArrayPath(const DataArrayPath& value)
+{
+  m_VoxelIndicesArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath MapPointCloudToRegularGrid::getVoxelIndicesArrayPath() const
+{
+  return m_VoxelIndicesArrayPath;
+}
+
+// -----------------------------------------------------------------------------
+void MapPointCloudToRegularGrid::setGridDimensions(const IntVec3Type& value)
+{
+  m_GridDimensions = value;
+}
+
+// -----------------------------------------------------------------------------
+IntVec3Type MapPointCloudToRegularGrid::getGridDimensions() const
+{
+  return m_GridDimensions;
+}
+
+// -----------------------------------------------------------------------------
+void MapPointCloudToRegularGrid::setUseMask(bool value)
+{
+  m_UseMask = value;
+}
+
+// -----------------------------------------------------------------------------
+bool MapPointCloudToRegularGrid::getUseMask() const
+{
+  return m_UseMask;
+}
+
+// -----------------------------------------------------------------------------
+void MapPointCloudToRegularGrid::setCreateDataContainer(int value)
+{
+  m_CreateDataContainer = value;
+}
+
+// -----------------------------------------------------------------------------
+int MapPointCloudToRegularGrid::getCreateDataContainer() const
+{
+  return m_CreateDataContainer;
+}
+
+// -----------------------------------------------------------------------------
+void MapPointCloudToRegularGrid::setMaskArrayPath(const DataArrayPath& value)
+{
+  m_MaskArrayPath = value;
+}
+
+// -----------------------------------------------------------------------------
+DataArrayPath MapPointCloudToRegularGrid::getMaskArrayPath() const
+{
+  return m_MaskArrayPath;
 }
