@@ -60,7 +60,7 @@ set(_PublicFilters
   Silhouette
   WaveFrontObjectFileWriter
   RobustAutomaticThreshold
-
+  SliceSTLforAM
 
   # 2019-03-06 Filter AFRL Filter Release
   AlignGeometries
