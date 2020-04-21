@@ -22,6 +22,8 @@
 #include "SIMPLib/DataArrays/DataArray.hpp"
 #include "SIMPLib/Geometry/IGeometry.h"
 
+#include "DREAM3DReview\DREAM3DReviewFilters\SliceTriangleGeometry.h"
+
 /**
  * @brief The SliceSTLforAM class. See [Filter documentation](@ref SliceSTLforAM) for details.
  */
@@ -159,18 +161,6 @@ public:
   Q_PROPERTY(DataArrayPath RegionIdArrayPath READ getRegionIdArrayPath WRITE setRegionIdArrayPath)
 
   /**
-   * @brief Setter property for SliceDirection
-   */
-  void setSliceDirection(const FloatVec3Type& value);
-  /**
-   * @brief Getter property for SliceDirection
-   * @return Value of SliceDirection
-   */
-  FloatVec3Type getSliceDirection() const;
-
-  Q_PROPERTY(FloatVec3Type SliceDirection READ getSliceDirection WRITE setSliceDirection)
-
-  /**
    * @brief Setter property for SliceResolution
    */
   void setSliceResolution(float value);
@@ -287,32 +277,6 @@ protected:
   void dataCheck() override;
 
   /**
-   * @brief rotateVertices either rotates CAD triangles and/or edges into or out of the sectioning orientation so the sectioning is always along 001
-   */
-  void rotateVertices(unsigned int direction, float* n, int64_t numVerts, float* verts);
-
-    /**
-   * @brief Determines if a segment between two points intersects a plane defined by a normal and distance
-   * @param n
-   * @param d
-   * @param q
-   * @param r
-   * @param p
-   * @return
-   */
-  static char rayIntersectsPlane(const float d, const float* q, const float* r, float* p);
-
-  /**
-   * @brief updateEdgeInstancePointers
-   */
-  void determineBoundsAndNumSlices(float& minDim, float& maxDim, MeshIndexType numTris, MeshIndexType* tris, float* triVerts);
-
-  /**
-  * @brief updateEdgeInstancePointers
-  */
-  void updateEdgeInstancePointers();
-
-  /**
   * @brief updateSliceInstancePointers
   */
   void updateSliceInstancePointers();
@@ -338,7 +302,6 @@ private:
   QString m_PerimetersArrayName = {};
   bool m_HaveRegionIds = {};
   DataArrayPath m_RegionIdArrayPath = {};
-  FloatVec3Type m_SliceDirection = {};
   float m_SliceResolution = {};
   float m_Zstart = {};
   float m_Zend = {};

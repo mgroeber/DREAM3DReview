@@ -295,7 +295,6 @@ void SliceTriangleGeometry::execute()
   n[2] = 1.0f;
 
   TriangleGeom::Pointer triangle = getDataContainerArray()->getDataContainer(getCADDataContainerName())->getGeometryAs<TriangleGeom>();
-  triangle->findEdges();
 
   MeshIndexType* tris = triangle->getTriPointer(0);
   float* triVerts = triangle->getVertexPointer(0);

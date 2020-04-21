@@ -60,9 +60,6 @@ SliceSTLforAM::SliceSTLforAM()
 , m_Zend(0.0)
 , m_SliceRange(0)
 {
-  m_SliceDirection[0] = 0.0;
-  m_SliceDirection[1] = 0.0;
-  m_SliceDirection[2] = 1.0;
 }
 
 // -----------------------------------------------------------------------------
@@ -77,7 +74,6 @@ void SliceSTLforAM::setupFilterParameters()
 {
   FilterParameterVectorType parameters;
 
-  parameters.push_back(SIMPL_NEW_FLOAT_VEC3_FP("Slice Direction (ijk)", SliceDirection, FilterParameter::Parameter, SliceSTLforAM));
   {
     QVector<QString> choices;
     choices.push_back("Full Range");
@@ -135,30 +131,11 @@ void SliceSTLforAM::readFilterParameters(AbstractFilterParametersReader* reader,
   setSliceIdArrayName(reader->readString("SliceIdArrayName", getSliceIdArrayName()));
   setHaveRegionIds(reader->readValue("HaveRegionIds", getHaveRegionIds()));
   setRegionIdArrayPath(reader->readDataArrayPath("RegionIdArrayPath", getRegionIdArrayPath()));
-  setSliceDirection(reader->readFloatVec3("SliceDirection", getSliceDirection()));
   setSliceResolution(reader->readValue("SliceResolution", getSliceResolution()));
   setSliceRange(reader->readValue("SliceRange", getSliceRange()));
   setZstart(reader->readValue("Zstart", getZstart()));
   setZend(reader->readValue("Zend", getZend()));
   reader->closeFilterGroup();
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void SliceSTLforAM::updateEdgeInstancePointers()
-{
-  clearErrorCode();
-  clearWarningCode();
-
-  if(nullptr != m_SliceIdPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
-  {
-    m_SliceId = m_SliceIdPtr.lock()->getPointer(0);
-  }                                         /* Now assign the raw pointer to data from the DataArray<T> object */
-  if(nullptr != m_RegionIdPtr.lock().get()) /* Validate the Weak Pointer wraps a non-nullptr pointer to a DataArray<T> object */
-  {
-    m_RegionId = m_RegionIdPtr.lock()->getPointer(0);
-  } /* Now assign the raw pointer to data from the DataArray<T> object */
 }
 
 // -----------------------------------------------------------------------------
@@ -285,120 +262,6 @@ void SliceSTLforAM::dataCheck()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void SliceSTLforAM::rotateVertices(unsigned int direction, float* n, int64_t numVerts, float* verts)
-{
-  // determine the rotation need to allow sectioning direction to be 001
-  float sliceDirection[3] = {m_SliceDirection[0], m_SliceDirection[1], m_SliceDirection[2]};
-  MatrixMath::Normalize3x1(sliceDirection);
-  float angle = GeometryMath::AngleBetweenVectors(sliceDirection, n);
-  float rotMat[3][3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
-  float invRotMat[3][3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
-  if(angle > (0.01f * SIMPLib::Constants::k_PiOver180))
-  {
-    float crossDirection[3];
-    crossDirection[0] = m_SliceDirection[1];
-    crossDirection[1] = -m_SliceDirection[0];
-    crossDirection[2] = 0;
-    MatrixMath::Normalize3x1(crossDirection);
-    OrientationTransformation::ax2om<OrientationF, OrientationF>(OrientationF(crossDirection[0], crossDirection[1], crossDirection[2], angle)).toGMatrix(rotMat);
-
-    if (direction == rotBackward)
-    {
-      //invert the roation matrix and copy it back into itself
-      MatrixMath::Invert3x3(rotMat, invRotMat);
-      MatrixMath::Copy3x3(invRotMat, rotMat);
-    }
-
-    // rotate all vertices so sectioning direction will always be 001
-    float coords[3] = {0.0f, 0.0f, 0.0f};
-    float newcoords[3] = {0.0f, 0.0f, 0.0f};
-    for(int64_t i = 0; i < numVerts; i++)
-    {
-      coords[0] = verts[3 * i];
-      coords[1] = verts[3 * i + 1];
-      coords[2] = verts[3 * i + 2];
-      MatrixMath::Multiply3x3with3x1(rotMat, coords, newcoords);
-      verts[3 * i] = newcoords[0];
-      verts[3 * i + 1] = newcoords[1];
-      verts[3 * i + 2] = newcoords[2];
-    }
-  }
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-char SliceSTLforAM::rayIntersectsPlane(const float d, const float* q, const float* r, float* p)
-{
-  double rqDelZ;
-  double dqDelZ;
-  double t;
-
-  rqDelZ = r[2] - q[2];
-  dqDelZ = d - q[2];
-
-  t = dqDelZ / rqDelZ;
-  for(int i = 0; i < 3; i++)
-  {
-    p[i] = q[i] + (t * (r[i] - q[i]));
-  }
-  if(t > 0.0 && t < 1.0)
-  {
-    return '1';
-  }
-  if(t == 0.0)
-  {
-    return 'q';
-  }
-  if(t == 1.0)
-  {
-    return 'r';
-  }
-
-  return '0';
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void SliceSTLforAM::determineBoundsAndNumSlices(float& minDim, float& maxDim, MeshIndexType numTris, MeshIndexType* tris, float* triVerts)
-{
-  for(MeshIndexType i = 0; i < numTris; i++)
-  {
-    for(MeshIndexType j = 0; j < 3; j++)
-    {
-      MeshIndexType vert = tris[3 * i + j];
-      if(minDim > triVerts[3 * vert + 2])
-      {
-        minDim = triVerts[3 * vert + 2];
-      }
-      if(maxDim < triVerts[3 * vert + 2])
-      {
-        maxDim = triVerts[3 * vert + 2];
-      }
-    }
-  }
-
-  // adjust sectioning range if user selected a specific range - check that user range is within actual range
-  if(m_SliceRange == 1)
-  {
-    if(m_Zstart > minDim)
-    {
-      minDim = m_Zstart;
-    }
-    if(m_Zend < maxDim)
-    {
-      maxDim = m_Zend;
-    }
-  }
-
-  m_NumberOfSlices = static_cast<MeshIndexType>((maxDim - 0.0) / m_SliceResolution) + 1;
-//  m_NumberOfSlices = static_cast<MeshIndexType>((maxDim - minDim) / m_SliceResolution) + 1;
-}
-
-    // -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
 void SliceSTLforAM::execute()
 {
   clearErrorCode();
@@ -409,300 +272,50 @@ void SliceSTLforAM::execute()
     return;
   }
 
-  // geometry will be rotated so that the sectioning direction is always 001 before rotating back
-  float n[3] = {0.0f, 0.0f, 0.0f};
-  n[0] = 0.0f;
-  n[1] = 0.0f;
-  n[2] = 1.0f;
+
+  SliceTriangleGeometry::Pointer sliceTriGeom = SliceTriangleGeometry::New();
+  sliceTriGeom->setDataContainerArray(getDataContainerArray());
+  sliceTriGeom->setDoRotation(false);
+  sliceTriGeom->setCADDataContainerName(getCADDataContainerName());
+  sliceTriGeom->setEdgeAttributeMatrixName(getEdgeAttributeMatrixName());
+  sliceTriGeom->setHaveRegionIds(getHaveRegionIds());
+  sliceTriGeom->setRegionIdArrayPath(getRegionIdArrayPath());
+  sliceTriGeom->setSliceAttributeMatrixName(getSliceAttributeMatrixName());
+  sliceTriGeom->setSliceDataContainerName(getSliceDataContainerName());
+
+  sliceTriGeom->setSliceIdArrayName(getSliceIdArrayName());
+  sliceTriGeom->setSliceRange(getSliceRange());
+  sliceTriGeom->setSliceResolution(getSliceResolution());
+  sliceTriGeom->setZend(getZend());
+  sliceTriGeom->setZstart(getZstart());
 
   TriangleGeom::Pointer triangle = getDataContainerArray()->getDataContainer(getCADDataContainerName())->getGeometryAs<TriangleGeom>();
-  triangle->findEdges();
 
   MeshIndexType* tris = triangle->getTriPointer(0);
   float* triVerts = triangle->getVertexPointer(0);
   MeshIndexType numTris = triangle->getNumberOfTris();
   MeshIndexType numTriVerts = triangle->getNumberOfVertices();
 
-  //rotate CAD tiangles to get into sectioning orientation
-  rotateVertices(rotForward, n, numTriVerts, triVerts);
-
-  //determine bounds and number of slices needed for CAD geometry
-  float minDim = std::numeric_limits<float>::max();
-  float maxDim = -minDim;
-  determineBoundsAndNumSlices(minDim, maxDim, numTris, tris, triVerts);
-  int64_t minSlice = static_cast<int64_t>(minDim / m_SliceResolution);
-  int64_t maxSlice = static_cast<int64_t>(maxDim / m_SliceResolution);
-
-  float q[3] = {0.0f, 0.0f, 0.0f};
-  float r[3] = {0.0f, 0.0f, 0.0f};
-  float p[3] = {0.0f, 0.0f, 0.0f};
-  float corner[3] = {0.0f, 0.0f, 0.0f};
-  float d = 0;
-
-  std::vector<float> slicedVerts;
-  std::vector<int32_t> sliceIds;
-  int32_t regionId = 0;
-  std::vector<int32_t> regionIds;
-  // float min_shift = m_SliceResolution / 1000.0f;
-
-  int32_t edgeCounter = 0;
-  for(MeshIndexType i = 0; i < numTris; i++)
-  {
-    // get region Id of this triangle (if they are available)
-    if(m_HaveRegionIds)
-    {
-      regionId = m_TriRegionId[i];
-    }
-    // determine which slices would hit the triangle
-    float minTriDim = std::numeric_limits<float>::max();
-    float maxTriDim = -minTriDim;
-    for(size_t j = 0; j < 3; j++)
-    {
-      int64_t vert = tris[3 * i + j];
-      if(minTriDim > triVerts[3 * vert + 2])
-      {
-        minTriDim = triVerts[3 * vert + 2];
-      }
-      if(maxTriDim < triVerts[3 * vert + 2])
-      {
-        maxTriDim = triVerts[3 * vert + 2];
-      }
-    }
-    if(minTriDim > maxDim || maxTriDim < minDim)
-    {
-      continue;
-    }
-    if(minTriDim < minDim)
-    {
-      minTriDim = minDim;
-    }
-    if(maxTriDim > maxDim)
-    {
-      maxTriDim = maxDim;
-    }
-    size_t firstSlice = static_cast<size_t>(minTriDim / m_SliceResolution);
-    size_t lastSlice = static_cast<size_t>(maxTriDim / m_SliceResolution);
-    if(firstSlice < minSlice)
-    {
-      firstSlice = minSlice;
-    }
-    if(lastSlice > maxSlice)
-    {
-      lastSlice = maxSlice;
-    }
-    // get cross product of triangle vectors to get normals
-    float vecAB[3];
-    float vecAC[3];
-    float triCross[3];
-    char val;
-    vecAB[0] = triVerts[3 * tris[3 * i + 1]] - triVerts[3 * tris[3 * i]];
-    vecAB[1] = triVerts[3 * tris[3 * i + 1] + 1] - triVerts[3 * tris[3 * i] + 1];
-    vecAB[2] = triVerts[3 * tris[3 * i + 1] + 2] - triVerts[3 * tris[3 * i] + 2];
-    vecAC[0] = triVerts[3 * tris[3 * i + 2]] - triVerts[3 * tris[3 * i]];
-    vecAC[1] = triVerts[3 * tris[3 * i + 2] + 1] - triVerts[3 * tris[3 * i] + 1];
-    vecAC[2] = triVerts[3 * tris[3 * i + 2] + 2] - triVerts[3 * tris[3 * i] + 2];
-    triCross[0] = vecAB[1] * vecAC[2] - vecAB[2] * vecAC[1];
-    triCross[1] = vecAB[2] * vecAC[0] - vecAB[0] * vecAC[2];
-    triCross[2] = vecAB[0] * vecAC[1] - vecAB[1] * vecAC[0];
-    for(size_t j = firstSlice; j <= lastSlice; j++)
-    {
-      int cut = 0;
-      bool cornerHit = false;
-      d = (m_SliceResolution * float(j));
-      q[0] = triVerts[3 * tris[3 * i]];
-      q[1] = triVerts[3 * tris[3 * i] + 1];
-      q[2] = triVerts[3 * tris[3 * i] + 2];
-      r[0] = triVerts[3 * tris[3 * i + 1]];
-      r[1] = triVerts[3 * tris[3 * i + 1] + 1];
-      r[2] = triVerts[3 * tris[3 * i + 1] + 2];
-      if(q[2] > r[2])
-      {
-        val = rayIntersectsPlane(d, r, q, p);
-      }
-      else
-      {
-        val = rayIntersectsPlane(d, q, r, p);
-      }
-      if(val == '1')
-      {
-        slicedVerts.push_back(p[0]);
-        slicedVerts.push_back(p[1]);
-        slicedVerts.push_back(p[2]);
-        cut++;
-      }
-      else if (val == 'q' || val == 'r')
-      {
-        cornerHit = true;
-        corner[0] = p[0];
-        corner[1] = p[1];
-        corner[2] = p[2];
-      }
-      r[0] = triVerts[3 * tris[3 * i + 2]];
-      r[1] = triVerts[3 * tris[3 * i + 2] + 1];
-      r[2] = triVerts[3 * tris[3 * i + 2] + 2];
-      if(q[2] > r[2])
-      {
-        val = rayIntersectsPlane(d, r, q, p);
-      }
-      else
-      {
-        val = rayIntersectsPlane(d, q, r, p);
-      }
-      if(val == '1')
-      {
-        slicedVerts.push_back(p[0]);
-        slicedVerts.push_back(p[1]);
-        slicedVerts.push_back(p[2]);
-        cut++;
-      }
-      else if(val == 'q' || val == 'r')
-      {
-        cornerHit = true;
-        corner[0] = p[0];
-        corner[1] = p[1];
-        corner[2] = p[2];
-      }
-      q[0] = triVerts[3 * tris[3 * i + 1]];
-      q[1] = triVerts[3 * tris[3 * i + 1] + 1];
-      q[2] = triVerts[3 * tris[3 * i + 1] + 2];
-      if(q[2] > r[2])
-      {
-        val = rayIntersectsPlane(d, r, q, p);
-      }
-      else
-      {
-        val = rayIntersectsPlane(d, q, r, p);
-      }
-      if(val == '1')
-      {
-        slicedVerts.push_back(p[0]);
-        slicedVerts.push_back(p[1]);
-        slicedVerts.push_back(p[2]);
-        cut++;
-      }
-      else if(val == 'q' || val == 'r')
-      {
-        cornerHit = true;
-        corner[0] = p[0];
-        corner[1] = p[1];
-        corner[2] = p[2];
-      }
-      if(cut == 1 && !cornerHit)
-      {
-        for(int k = 0; k < 3; k++)
-        {
-          slicedVerts.pop_back();
-        }
-      }
-      if(cut == 1 && cornerHit)
-      {
-        slicedVerts.push_back(corner[0]);
-        slicedVerts.push_back(corner[1]);
-        slicedVerts.push_back(corner[2]);
-        cut++;
-      }
-      if(cut == 3)
-      {
-        for(int k = 0; k < 9; k++)
-        {
-          slicedVerts.pop_back();
-        }
-      }
-      if(cut == 2)
-      {
-        size_t size = slicedVerts.size();
-        // get delta x for the current ordering of the segment
-        float delX = slicedVerts[size - 6] - slicedVerts[size - 3];
-        // get cross product of vec with 001 slicing direction
-        if((triCross[1] > 0 && delX < 0) || (triCross[1] < 0 && delX > 0))
-        {
-          float temp[3] = {slicedVerts[size - 3], slicedVerts[size - 2], slicedVerts[size - 1]};
-          slicedVerts[size - 3] = slicedVerts[size - 6];
-          slicedVerts[size - 2] = slicedVerts[size - 5];
-          slicedVerts[size - 1] = slicedVerts[size - 4];
-          slicedVerts[size - 6] = temp[0];
-          slicedVerts[size - 5] = temp[1];
-          slicedVerts[size - 4] = temp[2];
-        }
-        sliceIds.push_back(j);
-        if(m_HaveRegionIds)
-        {
-          regionIds.push_back(regionId);
-        }
-        edgeCounter++;
-      }
-    }
-  }
-
-  size_t numVerts = slicedVerts.size() / 3;
-  size_t numEdges = slicedVerts.size() / 6;
-
-  if(numVerts != (2 * numEdges))
-  {
-    QString message = QObject::tr("Number of sectioned vertices and edges do not make sense.  Number of Vertices: %1 and Number of Edges: %2").arg(numVerts).arg(numEdges);
-    setErrorCondition(-00003, message);
-    return;
-  }
-
-  DataContainer::Pointer m = getDataContainerArray()->getDataContainer(getSliceDataContainerName());
-  SharedVertexList::Pointer vertices = EdgeGeom::CreateSharedVertexList(numVerts);
-  EdgeGeom::Pointer edge = EdgeGeom::CreateGeometry(numEdges, vertices, SIMPL::Geometry::EdgeGeometry, !getInPreflight());
-  float* verts = edge->getVertexPointer(0);
-  MeshIndexType* edges = edge->getEdgePointer(0);
-
-  std::vector<size_t> tDims(1, numEdges);
-  m->getAttributeMatrix(getEdgeAttributeMatrixName())->resizeAttributeArrays(tDims);
-  updateEdgeInstancePointers();
-  tDims[0] = m_NumberOfSlices;
-  m->getAttributeMatrix(getSliceAttributeMatrixName())->resizeAttributeArrays(tDims);
-  updateSliceInstancePointers();
-
-  for(size_t i = 0; i < numEdges; i++)
-  {
-    edges[2 * i] = 2 * i;
-    edges[2 * i + 1] = 2 * i + 1;
-    verts[3 * (2 * i)] = slicedVerts[3 * (2 * i)];
-    verts[3 * (2 * i) + 1] = slicedVerts[3 * (2 * i) + 1];
-    verts[3 * (2 * i) + 2] = slicedVerts[3 * (2 * i) + 2];
-    verts[3 * (2 * i + 1)] = slicedVerts[3 * (2 * i + 1)];
-    verts[3 * (2 * i + 1) + 1] = slicedVerts[3 * (2 * i + 1) + 1];
-    verts[3 * (2 * i + 1) + 2] = slicedVerts[3 * (2 * i + 1) + 2];
-    m_SliceId[i] = sliceIds[i];
-    if(m_HaveRegionIds)
-    {
-      m_RegionId[i] = regionIds[i];
-    }
-  }
-
-  // calculate slice areas before rotating back so we can use simple area calculation
-  for(size_t i = 0; i < numEdges; i++)
-  {
-    int32_t sliceId = m_SliceId[i];
-    float height = 0.5 * (verts[3 * (2 * i) + 1] + verts[3 * (2 * i + 1) + 1]);
-    float width = (verts[3 * (2 * i + 1)] - verts[3 * (2 * i)]);
-    float length = ((verts[3 * (2 * i + 1)] - verts[3 * (2 * i)]) * (verts[3 * (2 * i + 1)] - verts[3 * (2 * i)])) +
-                   ((verts[3 * (2 * i + 1) + 1] - verts[3 * (2 * i) + 1]) * (verts[3 * (2 * i + 1) + 1] - verts[3 * (2 * i) + 1])) +
-                   ((verts[3 * (2 * i + 1) + 2] - verts[3 * (2 * i) + 2]) * (verts[3 * (2 * i + 1) + 2] - verts[3 * (2 * i) + 2]));
-    length = sqrt(length);
-    float area = height * width;
-    m_Area[sliceId] += area;
-    m_Perimeter[sliceId] += length;
-  }
+  //// calculate slice areas before rotating back so we can use simple area calculation
+  //for(size_t i = 0; i < numEdges; i++)
+  //{
+  //  int32_t sliceId = m_SliceId[i];
+  //  float height = 0.5 * (verts[3 * (2 * i) + 1] + verts[3 * (2 * i + 1) + 1]);
+  //  float width = (verts[3 * (2 * i + 1)] - verts[3 * (2 * i)]);
+  //  float length = ((verts[3 * (2 * i + 1)] - verts[3 * (2 * i)]) * (verts[3 * (2 * i + 1)] - verts[3 * (2 * i)])) +
+  //                 ((verts[3 * (2 * i + 1) + 1] - verts[3 * (2 * i) + 1]) * (verts[3 * (2 * i + 1) + 1] - verts[3 * (2 * i) + 1])) +
+  //                 ((verts[3 * (2 * i + 1) + 2] - verts[3 * (2 * i) + 2]) * (verts[3 * (2 * i + 1) + 2] - verts[3 * (2 * i) + 2]));
+  //  length = sqrt(length);
+  //  float area = height * width;
+  //  m_Area[sliceId] += area;
+  //  m_Perimeter[sliceId] += length;
+  //}
 
   // take absolute value to ensure areas are positive (in case winding is such that areas come out negative)
   for(size_t i = 0; i < m_NumberOfSlices; i++)
   {
     m_Area[i] = fabsf(m_Area[i]);
   }
-
-
-  // rotate all CAD triangles back to original orientation
-  rotateVertices(rotBackward, n, numTriVerts, triVerts);
-  
-  // rotate all edges back to original orientation
-  rotateVertices(rotBackward, n, numVerts, verts);
-
-  m->setGeometry(edge);
 
   notifyStatusMessage("Complete");
 }
@@ -776,7 +389,7 @@ QString SliceSTLforAM::getHumanLabel() const
 // -----------------------------------------------------------------------------
 QUuid SliceSTLforAM::getUuid() const
 {
-  return QUuid("{222307a4-67fd-5cb5-a12e-d80f9fb970ae}");
+  return QUuid("{222307a4-67fd-5cb5-a12e-d80f9fb970af}");
 }
 
 // -----------------------------------------------------------------------------
@@ -914,18 +527,6 @@ void SliceSTLforAM::setRegionIdArrayPath(const DataArrayPath& value)
 DataArrayPath SliceSTLforAM::getRegionIdArrayPath() const
 {
   return m_RegionIdArrayPath;
-}
-
-// -----------------------------------------------------------------------------
-void SliceSTLforAM::setSliceDirection(const FloatVec3Type& value)
-{
-  m_SliceDirection = value;
-}
-
-// -----------------------------------------------------------------------------
-FloatVec3Type SliceSTLforAM::getSliceDirection() const
-{
-  return m_SliceDirection;
 }
 
 // -----------------------------------------------------------------------------
