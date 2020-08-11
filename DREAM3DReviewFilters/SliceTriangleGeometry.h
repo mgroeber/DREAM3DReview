@@ -43,6 +43,7 @@ class DREAM3DReview_EXPORT SliceTriangleGeometry : public AbstractFilter
   PYB11_PROPERTY(QString SliceAttributeMatrixName READ getSliceAttributeMatrixName WRITE setSliceAttributeMatrixName)
   PYB11_PROPERTY(QString SliceIdArrayName READ getSliceIdArrayName WRITE setSliceIdArrayName)
   PYB11_PROPERTY(bool HaveRegionIds READ getHaveRegionIds WRITE setHaveRegionIds)
+  PYB11_PROPERTY(bool DoRotation READ getDoRotation WRITE setDoRotation)
   PYB11_PROPERTY(DataArrayPath RegionIdArrayPath READ getRegionIdArrayPath WRITE setRegionIdArrayPath)
   PYB11_PROPERTY(FloatVec3Type SliceDirection READ getSliceDirection WRITE setSliceDirection)
   PYB11_PROPERTY(float SliceResolution READ getSliceResolution WRITE setSliceResolution)
@@ -138,6 +139,18 @@ public:
    */
   bool getHaveRegionIds() const;
   Q_PROPERTY(bool HaveRegionIds READ getHaveRegionIds WRITE setHaveRegionIds)
+
+  /**
+   * @brief Setter property for HaveRegionIds
+   */
+  void setDoRotation(bool value);
+  /**
+   * @brief Getter property for HaveRegionIds
+   * @return Value of HaveRegionIds
+   */
+  bool getDoRotation() const;
+  //don't actually want to display this to user, so no need for a Q_PROPERTY
+  //Q_PROPERTY(bool DoRotation READ getDoRotation WRITE setDoRotation)
 
   /**
    * @brief Setter property for RegionIdArrayPath
