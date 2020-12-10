@@ -32,34 +32,58 @@
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
 
+#define EXECUTE_FUNCTION_TEMPLATE_NEIGHBORLIST(observableObj, templateName, inputData, ...)                                                                                                            \
+  if(TemplateHelpers::CanDynamicCast<NeighborList<float>>()(inputData))                                                                                                                                \
+  {                                                                                                                                                                                                    \
+    templateName<float>(__VA_ARGS__);                                                                                                                                                                  \
+  }                                                                                                                                                                                                    \
+  else if(TemplateHelpers::CanDynamicCast<NeighborList<double>>()(inputData))                                                                                                                          \
+  {                                                                                                                                                                                                    \
+    templateName<double>(__VA_ARGS__);                                                                                                                                                                 \
+  }                                                                                                                                                                                                    \
+  else if(TemplateHelpers::CanDynamicCast<NeighborList<int8_t>>()(inputData))                                                                                                                          \
+  {                                                                                                                                                                                                    \
+    templateName<int8_t>(__VA_ARGS__);                                                                                                                                                                 \
+  }                                                                                                                                                                                                    \
+  else if(TemplateHelpers::CanDynamicCast<NeighborList<uint8_t>>()(inputData))                                                                                                                         \
+  {                                                                                                                                                                                                    \
+    templateName<uint8_t>(__VA_ARGS__);                                                                                                                                                                \
+  }                                                                                                                                                                                                    \
+  else if(TemplateHelpers::CanDynamicCast<NeighborList<int16_t>>()(inputData))                                                                                                                         \
+  {                                                                                                                                                                                                    \
+    templateName<int16_t>(__VA_ARGS__);                                                                                                                                                                \
+  }                                                                                                                                                                                                    \
+  else if(TemplateHelpers::CanDynamicCast<NeighborList<uint16_t>>()(inputData))                                                                                                                        \
+  {                                                                                                                                                                                                    \
+    templateName<uint16_t>(__VA_ARGS__);                                                                                                                                                               \
+  }                                                                                                                                                                                                    \
+  else if(TemplateHelpers::CanDynamicCast<NeighborList<int32_t>>()(inputData))                                                                                                                         \
+  {                                                                                                                                                                                                    \
+    templateName<int32_t>(__VA_ARGS__);                                                                                                                                                                \
+  }                                                                                                                                                                                                    \
+  else if(TemplateHelpers::CanDynamicCast<NeighborList<uint32_t>>()(inputData))                                                                                                                        \
+  {                                                                                                                                                                                                    \
+    templateName<uint32_t>(__VA_ARGS__);                                                                                                                                                               \
+  }                                                                                                                                                                                                    \
+  else if(TemplateHelpers::CanDynamicCast<NeighborList<int64_t>>()(inputData))                                                                                                                         \
+  {                                                                                                                                                                                                    \
+    templateName<int64_t>(__VA_ARGS__);                                                                                                                                                                \
+  }                                                                                                                                                                                                    \
+  else if(TemplateHelpers::CanDynamicCast<NeighborList<uint64_t>>()(inputData))                                                                                                                        \
+  {                                                                                                                                                                                                    \
+    templateName<uint64_t>(__VA_ARGS__);                                                                                                                                                               \
+  }                                                                                                                                                                                                    \
+  else                                                                                                                                                                                                 \
+  {                                                                                                                                                                                                    \
+    observableObj->setErrorCondition(-1, "The input array was of unsupported type");                                                                                                                   \
+  }
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 FindDynamicArrayStatistics::FindDynamicArrayStatistics()
-: m_FindLength(false)
-, m_FindMin(false)
-, m_FindMax(false)
-, m_FindMean(false)
-, m_FindMedian(false)
-, m_FindStdDeviation(false)
-, m_FindSummation(false)
-, m_LengthArrayPath("", "", "Length")
-, m_MinimumArrayPath("", "", "Minimum")
-, m_MaximumArrayPath("", "", "Maximum")
-, m_MeanArrayPath("", "", "Mean")
-, m_MedianArrayPath("", "", "Median")
-, m_StdDeviationArrayPath("", "", "StandardDeviation")
-, m_SummationArrayPath("", "", "Summation")
-, m_SelectedArrayPath("", "", "")
-, m_Length(nullptr)
-, m_Minimum(nullptr)
-, m_Maximum(nullptr)
-, m_Mean(nullptr)
-, m_Median(nullptr)
-, m_StandardDeviation(nullptr)
-, m_Summation(nullptr)
-, m_InputArray(nullptr)
 {
+  initialize();
 }
 
 // -----------------------------------------------------------------------------
@@ -148,7 +172,7 @@ void FindDynamicArrayStatistics::dataCheck()
 
   QVector<DataArrayPath> dataArrayPaths;
 
-  m_InputArrayPtr = getDataContainerArray()->getPrereqIDataArrayFromPath<IDataArray, AbstractFilter>(this, getSelectedArrayPath());
+  m_InputArrayPtr = getDataContainerArray()->getPrereqIDataArrayFromPath(this, getSelectedArrayPath());
 
   if(getErrorCode() < 0)
   {
@@ -165,11 +189,11 @@ void FindDynamicArrayStatistics::dataCheck()
 
   EXECUTE_FUNCTION_TEMPLATE_NEIGHBORLIST(this, createCompatibleArrays, m_InputArrayPtr.lock(), dataArrayPaths)
 
-  std::vector<size_t> cDims(1, 1);
+  std::vector<size_t> cDims = {1};
 
   if(m_FindLength)
   {
-    m_LengthPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<int32_t>, AbstractFilter, int32_t>(this, getLengthArrayPath(), 0, cDims);
+    m_LengthPtr = getDataContainerArray()->createNonPrereqArrayFromPath<Int32ArrayType>(this, getLengthArrayPath(), 0, cDims);
     if(nullptr != m_LengthPtr.lock().get())
     {
       m_Length = m_LengthPtr.lock()->getPointer(0);
@@ -180,7 +204,7 @@ void FindDynamicArrayStatistics::dataCheck()
     }
   }
 
-  getDataContainerArray()->validateNumberOfTuples<AbstractFilter>(this, dataArrayPaths);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrayPaths);
 }
 
 // -----------------------------------------------------------------------------
@@ -327,7 +351,8 @@ void findStdDeviation(IDataArray::Pointer source, IDataArray::Pointer stdDev)
     std::vector<T> difference(tmpList.size());
     T sum = std::accumulate(tmpList.begin(), tmpList.end(), T(0));
     T mean = sum / tmpList.size();
-    std::transform(tmpList.begin(), tmpList.end(), difference.begin(), std::bind2nd(std::minus<T>(), mean));
+    std::transform(tmpList.begin(), tmpList.end(), difference.begin(), [mean](T n) { return n - mean; });
+
     T squaredSum = std::inner_product(difference.begin(), difference.end(), difference.begin(), T(0));
     stdDevPtr[i] = sqrt(squaredSum / tmpList.size());
   }

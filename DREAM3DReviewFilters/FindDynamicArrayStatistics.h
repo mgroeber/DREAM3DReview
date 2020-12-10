@@ -11,13 +11,13 @@
  * Subsequent changes to the codes by others may elect to add a copyright and license
  * for those changes.
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#ifndef _finddynamicarraystatistics_h_
-#define _finddynamicarraystatistics_h_
+#pragma once
 
 #include <memory>
 
 #include "SIMPLib/SIMPLib.h"
 #include "SIMPLib/DataArrays/DataArray.hpp"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
 #include "SIMPLib/Filtering/AbstractFilter.h"
 
 #include "DREAM3DReview/DREAM3DReviewDLLExport.h"
@@ -31,6 +31,15 @@ using IDataArrayWkPtrType = std::weak_ptr<IDataArray>;
 class DREAM3DReview_EXPORT FindDynamicArrayStatistics : public AbstractFilter
 {
   Q_OBJECT
+
+  // Start Python bindings declarations
+  PYB11_BEGIN_BINDINGS(FindDynamicArrayStatistics SUPERCLASS AbstractFilter)
+  PYB11_FILTER()
+  PYB11_SHARED_POINTERS(FindDynamicArrayStatistics)
+  PYB11_FILTER_NEW_MACRO(FindDynamicArrayStatistics)
+
+  PYB11_END_BINDINGS()
+  // End Python bindings declarations
 
 public:
   using Self = FindDynamicArrayStatistics;
@@ -311,10 +320,10 @@ protected:
   void createCompatibleArrays(QVector<DataArrayPath>& dataArrayPaths)
   {
     std::vector<size_t> cDims(1, 1);
-
+    using DataArrayType = DataArray<T>;
     if(m_FindMin)
     {
-      m_MinimumPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<T>, AbstractFilter, T>(this, getMinimumArrayPath(), 0, cDims);
+      m_MinimumPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArrayType>(this, getMinimumArrayPath(), 0, cDims);
       if(getErrorCode() >= 0)
       {
         dataArrayPaths.push_back(getMinimumArrayPath());
@@ -323,7 +332,7 @@ protected:
 
     if(m_FindMax)
     {
-      m_MaximumPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<T>, AbstractFilter, T>(this, getMaximumArrayPath(), 0, cDims);
+      m_MaximumPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArrayType>(this, getMaximumArrayPath(), 0, cDims);
       if(getErrorCode() >= 0)
       {
         dataArrayPaths.push_back(getMaximumArrayPath());
@@ -332,7 +341,7 @@ protected:
 
     if(m_FindMean)
     {
-      m_MeanPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<T>, AbstractFilter, T>(this, getMeanArrayPath(), 0, cDims);
+      m_MeanPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArrayType>(this, getMeanArrayPath(), 0, cDims);
       if(getErrorCode() >= 0)
       {
         dataArrayPaths.push_back(getMeanArrayPath());
@@ -341,7 +350,7 @@ protected:
 
     if(m_FindMedian)
     {
-      m_MedianPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<T>, AbstractFilter, T>(this, getMedianArrayPath(), 0, cDims);
+      m_MedianPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArrayType>(this, getMedianArrayPath(), 0, cDims);
       if(getErrorCode() >= 0)
       {
         dataArrayPaths.push_back(getMedianArrayPath());
@@ -350,7 +359,7 @@ protected:
 
     if(m_FindStdDeviation)
     {
-      m_StandardDeviationPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<T>, AbstractFilter, T>(this, getStdDeviationArrayPath(), 0, cDims);
+      m_StandardDeviationPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArrayType>(this, getStdDeviationArrayPath(), 0, cDims);
       if(getErrorCode() >= 0)
       {
         dataArrayPaths.push_back(getStdDeviationArrayPath());
@@ -359,7 +368,7 @@ protected:
 
     if(m_FindSummation)
     {
-      m_SummationPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<T>, AbstractFilter, T>(this, getSummationArrayPath(), 0, cDims);
+      m_SummationPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArrayType>(this, getSummationArrayPath(), 0, cDims);
       if(getErrorCode() >= 0)
       {
         dataArrayPaths.push_back(getSummationArrayPath());
@@ -368,10 +377,11 @@ protected:
   }
 
   FindDynamicArrayStatistics();
+
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
-  void dataCheck();
+  void dataCheck() override;
 
   /**
    * @brief Initializes all the private instance variables.
@@ -397,25 +407,23 @@ private:
   std::weak_ptr<DataArray<int32_t>> m_LengthPtr;
   int32_t* m_Length = nullptr;
 
-  bool m_FindLength = {};
-  bool m_FindMin = {};
-  bool m_FindMax = {};
-  bool m_FindMean = {};
-  bool m_FindMedian = {};
-  bool m_FindStdDeviation = {};
-  bool m_FindSummation = {};
-  DataArrayPath m_LengthArrayPath = {};
-  DataArrayPath m_MinimumArrayPath = {};
-  DataArrayPath m_MaximumArrayPath = {};
-  DataArrayPath m_MeanArrayPath = {};
-  DataArrayPath m_MedianArrayPath = {};
-  DataArrayPath m_StdDeviationArrayPath = {};
-  DataArrayPath m_SummationArrayPath = {};
-  DataArrayPath m_SelectedArrayPath = {};
+  bool m_FindLength = false;
+  bool m_FindMin = false;
+  bool m_FindMax = false;
+  bool m_FindMean = false;
+  bool m_FindMedian = false;
+  bool m_FindStdDeviation = false;
+  bool m_FindSummation = false;
+  DataArrayPath m_LengthArrayPath = {"", "", "Length"};
+  DataArrayPath m_MinimumArrayPath = {"", "", "Minimum"};
+  DataArrayPath m_MaximumArrayPath = {"", "", "Maximum"};
+  DataArrayPath m_MeanArrayPath = {"", "", "Mean"};
+  DataArrayPath m_MedianArrayPath = {"", "", "Median"};
+  DataArrayPath m_StdDeviationArrayPath = {"", "", "StandardDeviation"};
+  DataArrayPath m_SummationArrayPath = {"", "", "Summation"};
+  DataArrayPath m_SelectedArrayPath = {"", "", ""};
 
   FindDynamicArrayStatistics(const FindDynamicArrayStatistics&) = delete; // Copy Constructor Not Implemented
   FindDynamicArrayStatistics(FindDynamicArrayStatistics&&) = delete;      // Move Constructor Not Implemented
   void operator=(const FindDynamicArrayStatistics&) = delete;             // Operator '=' Not Implemented
 };
-
-#endif /* _FindDynamicArrayStatistics_H_ */

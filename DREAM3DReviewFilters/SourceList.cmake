@@ -59,7 +59,7 @@ set(_PublicFilters
   CombineStlFiles
   ExportCLIFile
   ExtractTripleLinesFromTriangleGeometry
- # FindDynamicArrayStatistics
+  FindDynamicArrayStatistics
   FindLayerStatistics
   FindMinkowskiBouligandDimension
   FindSurfaceRoughness
