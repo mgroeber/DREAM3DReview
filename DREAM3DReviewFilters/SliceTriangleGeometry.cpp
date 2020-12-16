@@ -743,6 +743,17 @@ bool SliceTriangleGeometry::getHaveRegionIds() const
 }
 
 // -----------------------------------------------------------------------------
+void SliceTriangleGeometry::setDoRotation(bool value)
+{
+  m_DoRotation = value;
+}
+
+// -----------------------------------------------------------------------------
+bool SliceTriangleGeometry::getDoRotation() const
+{
+  return m_DoRotation;
+}
+// -----------------------------------------------------------------------------
 void SliceTriangleGeometry::setRegionIdArrayPath(const DataArrayPath& value)
 {
   m_RegionIdArrayPath = value;
