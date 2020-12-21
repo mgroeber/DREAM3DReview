@@ -341,7 +341,7 @@ protected:
 
     if(m_FindMean)
     {
-      m_MeanPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArrayType>(this, getMeanArrayPath(), 0, cDims);
+      m_MeanPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double> >(this, getMeanArrayPath(), 0, cDims);
       if(getErrorCode() >= 0)
       {
         dataArrayPaths.push_back(getMeanArrayPath());
@@ -359,7 +359,7 @@ protected:
 
     if(m_FindStdDeviation)
     {
-      m_StandardDeviationPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArrayType>(this, getStdDeviationArrayPath(), 0, cDims);
+      m_StandardDeviationPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double> >(this, getStdDeviationArrayPath(), 0, cDims);
       if(getErrorCode() >= 0)
       {
         dataArrayPaths.push_back(getStdDeviationArrayPath());
@@ -368,7 +368,7 @@ protected:
 
     if(m_FindSummation)
     {
-      m_SummationPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArrayType>(this, getSummationArrayPath(), 0, cDims);
+      m_SummationPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<double> >(this, getSummationArrayPath(), 0, cDims);
       if(getErrorCode() >= 0)
       {
         dataArrayPaths.push_back(getSummationArrayPath());

@@ -202,7 +202,7 @@ void InterpolatePointCloudToRegularGrid::dataCheck()
     setErrorCondition(-11000, ss);
   }
 
-  if(getKernelSize()[0] <= 0 || getKernelSize()[1] <= 0 || getKernelSize()[2] <= 0)
+  if(getKernelSize()[0] < 0 || getKernelSize()[1] < 0 || getKernelSize()[2] < 0)
   {
     QString ss = QObject::tr("All kernel dimensions must be positive.\n "
                              "Current kernel dimensions:\n x = %1\n y = %2\n z = %3\n")

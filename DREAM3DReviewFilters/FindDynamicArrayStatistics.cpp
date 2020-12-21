@@ -278,8 +278,8 @@ template <typename T>
 void findMean(IDataArray::Pointer source, IDataArray::Pointer mean)
 {
   typename NeighborList<T>::Pointer inputDataPtr = std::dynamic_pointer_cast<NeighborList<T>>(source);
-  typename DataArray<T>::Pointer meanDataPtr = std::dynamic_pointer_cast<DataArray<T>>(mean);
-  T* meanPtr = meanDataPtr->getPointer(0);
+  typename DataArray<double>::Pointer meanDataPtr = std::dynamic_pointer_cast<DataArray<double>>(mean);
+  double* meanPtr = meanDataPtr->getPointer(0);
 
   size_t numTuples = inputDataPtr->getNumberOfTuples();
 
@@ -290,8 +290,8 @@ void findMean(IDataArray::Pointer source, IDataArray::Pointer mean)
     {
       continue;
     }
-    T sum = std::accumulate(tmpList.begin(), tmpList.end(), T(0));
-    meanPtr[i] = sum / tmpList.size();
+    double sum = std::accumulate(tmpList.begin(), tmpList.end(), 0.0);
+    meanPtr[i] = sum / static_cast<double>(tmpList.size());
   }
 }
 
@@ -336,8 +336,8 @@ template <typename T>
 void findStdDeviation(IDataArray::Pointer source, IDataArray::Pointer stdDev)
 {
   typename NeighborList<T>::Pointer inputDataPtr = std::dynamic_pointer_cast<NeighborList<T>>(source);
-  typename DataArray<T>::Pointer stdDevDataPtr = std::dynamic_pointer_cast<DataArray<T>>(stdDev);
-  T* stdDevPtr = stdDevDataPtr->getPointer(0);
+  typename DataArray<double>::Pointer stdDevDataPtr = std::dynamic_pointer_cast<DataArray<double>>(stdDev);
+  double* stdDevPtr = stdDevDataPtr->getPointer(0);
 
   size_t numTuples = inputDataPtr->getNumberOfTuples();
 
@@ -348,13 +348,13 @@ void findStdDeviation(IDataArray::Pointer source, IDataArray::Pointer stdDev)
     {
       continue;
     }
-    std::vector<T> difference(tmpList.size());
-    T sum = std::accumulate(tmpList.begin(), tmpList.end(), T(0));
-    T mean = sum / tmpList.size();
-    std::transform(tmpList.begin(), tmpList.end(), difference.begin(), [mean](T n) { return n - mean; });
+    std::vector<double> difference(tmpList.size());
+    double sum = std::accumulate(tmpList.begin(), tmpList.end(), 0.0);
+    double mean = sum / static_cast<double>(tmpList.size());
+    std::transform(tmpList.begin(), tmpList.end(), difference.begin(), [mean](double(n)) { return double(n) - mean; });
 
-    T squaredSum = std::inner_product(difference.begin(), difference.end(), difference.begin(), T(0));
-    stdDevPtr[i] = sqrt(squaredSum / tmpList.size());
+    double squaredSum = std::inner_product(difference.begin(), difference.end(), difference.begin(), 0.0);
+    stdDevPtr[i] = sqrt(squaredSum / static_cast<double>(tmpList.size()));
   }
 }
 
@@ -365,8 +365,8 @@ template <typename T>
 void findSummation(IDataArray::Pointer source, IDataArray::Pointer summation)
 {
   typename NeighborList<T>::Pointer inputDataPtr = std::dynamic_pointer_cast<NeighborList<T>>(source);
-  typename DataArray<T>::Pointer summationDataPtr = std::dynamic_pointer_cast<DataArray<T>>(summation);
-  T* summationPtr = summationDataPtr->getPointer(0);
+  typename DataArray<double>::Pointer summationDataPtr = std::dynamic_pointer_cast<DataArray<double>>(summation);
+  double* summationPtr = summationDataPtr->getPointer(0);
 
   size_t numTuples = inputDataPtr->getNumberOfTuples();
 
@@ -377,7 +377,7 @@ void findSummation(IDataArray::Pointer source, IDataArray::Pointer summation)
     {
       continue;
     }
-    T sum = std::accumulate(tmpList.begin(), tmpList.end(), T(0));
+    double sum = std::accumulate(tmpList.begin(), tmpList.end(), 0.0);
     summationPtr[i] = sum;
   }
 }
