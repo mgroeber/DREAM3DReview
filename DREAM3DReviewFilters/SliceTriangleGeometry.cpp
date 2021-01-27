@@ -42,7 +42,7 @@
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-SliceTriangleGeometry::SliceTriangleGeometry() = default
+SliceTriangleGeometry::SliceTriangleGeometry() = default;
 
 // -----------------------------------------------------------------------------
 //
@@ -552,6 +552,10 @@ void SliceTriangleGeometry::execute()
     verts[3 * (2 * i + 1) + 1] = slicedVerts[3 * (2 * i + 1) + 1];
     verts[3 * (2 * i + 1) + 2] = slicedVerts[3 * (2 * i + 1) + 2];
     m_SliceId[i] = sliceIds[i];
+    if(m_SliceId[i] >= m_NumberOfSlices)
+    {
+      int stop = 0;
+    }
     if(m_HaveRegionIds)
     {
       m_RegionId[i] = regionIds[i];

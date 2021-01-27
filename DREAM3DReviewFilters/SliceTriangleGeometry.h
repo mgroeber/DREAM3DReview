@@ -148,6 +148,7 @@ public:
    * @brief Getter property for HaveRegionIds
    * @return Value of HaveRegionIds
    */
+
   bool getDoRotation() const;
   //don't actually want to display this to user, so no need for a Q_PROPERTY
   //Q_PROPERTY(bool DoRotation READ getDoRotation WRITE setDoRotation)
@@ -314,6 +315,7 @@ private:
   QString m_SliceIdArrayName = {"SliceIds"};
 
   bool m_HaveRegionIds = {false};
+  bool m_DoRotation = {false};
   DataArrayPath m_RegionIdArrayPath = {"", "", ""};
   FloatVec3Type m_SliceDirection = {0.0F, 0.0F, 1.0F};
   float m_SliceResolution = {1.0F};
