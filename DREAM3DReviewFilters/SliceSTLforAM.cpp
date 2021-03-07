@@ -75,13 +75,12 @@ void SliceSTLforAM::setupFilterParameters()
   FilterParameterVectorType parameters;
 
   {
-    QVector<QString> choices;
+    std::vector<QString> choices;
     choices.push_back("Full Range");
     choices.push_back("User Defined Range");
 
-    QStringList linkedChoiceProps;
-    linkedChoiceProps << "Zstart"
-                      << "Zend";
+    std::vector<QString> linkedChoiceProps = {"ZStart"};
+    linkedChoiceProps.push_back("Zend");
 
     LinkedChoicesFilterParameter::Pointer parameter = LinkedChoicesFilterParameter::New();
     parameter->setHumanLabel("Slice Range");
@@ -90,31 +89,31 @@ void SliceSTLforAM::setupFilterParameters()
     parameter->setGetterCallback(SIMPL_BIND_GETTER(SliceSTLforAM, this, SliceRange));
     parameter->setChoices(choices);
     parameter->setLinkedProperties(linkedChoiceProps);
-    parameter->setCategory(FilterParameter::Parameter);
+    parameter->setCategory(FilterParameter::Category::Parameter);
     parameters.push_back(parameter);
   }
-  parameters.push_back(SIMPL_NEW_FLOAT_FP("Slicing Start", Zstart, FilterParameter::Parameter, SliceSTLforAM, 1));
-  parameters.push_back(SIMPL_NEW_FLOAT_FP("Slicing End", Zend, FilterParameter::Parameter, SliceSTLforAM, 1));
+  parameters.push_back(SIMPL_NEW_FLOAT_FP("Slicing Start", Zstart, FilterParameter::Category::Parameter, SliceSTLforAM, 1));
+  parameters.push_back(SIMPL_NEW_FLOAT_FP("Slicing End", Zend, FilterParameter::Category::Parameter, SliceSTLforAM, 1));
 
-  parameters.push_back(SIMPL_NEW_FLOAT_FP("Slice Spacing", SliceResolution, FilterParameter::Parameter, SliceSTLforAM));
+  parameters.push_back(SIMPL_NEW_FLOAT_FP("Slice Spacing", SliceResolution, FilterParameter::Category::Parameter, SliceSTLforAM));
 
-  QStringList linkedProps("RegionIdArrayPath");
-  parameters.push_back(SIMPL_NEW_LINKED_BOOL_FP("Have Region Ids", HaveRegionIds, FilterParameter::Parameter, SliceSTLforAM, linkedProps));
+  std::vector<QString> linkedProps = {"RegionIdArrayPath"};
+  parameters.push_back(SIMPL_NEW_LINKED_BOOL_FP("Have Region Ids", HaveRegionIds, FilterParameter::Category::Parameter, SliceSTLforAM, linkedProps));
   linkedProps.clear();
   DataContainerSelectionFilterParameter::RequirementType dcsReq;
   IGeometry::Types geomTypes = {IGeometry::Type::Triangle};
   dcsReq.dcGeometryTypes = geomTypes;
-  parameters.push_back(SIMPL_NEW_DC_SELECTION_FP("CAD Geometry", CADDataContainerName, FilterParameter::RequiredArray, SliceSTLforAM, dcsReq));
+  parameters.push_back(SIMPL_NEW_DC_SELECTION_FP("CAD Geometry", CADDataContainerName, FilterParameter::Category::RequiredArray, SliceSTLforAM, dcsReq));
   {
     DataArraySelectionFilterParameter::RequirementType req = DataArraySelectionFilterParameter::CreateRequirement(SIMPL::TypeNames::Int32, 1, AttributeMatrix::Type::Face, IGeometry::Type::Triangle);
-    parameters.push_back(SIMPL_NEW_DA_SELECTION_FP("Region Ids", RegionIdArrayPath, FilterParameter::RequiredArray, SliceSTLforAM, req));
+    parameters.push_back(SIMPL_NEW_DA_SELECTION_FP("Region Ids", RegionIdArrayPath, FilterParameter::Category::RequiredArray, SliceSTLforAM, req));
   }
-  parameters.push_back(SIMPL_NEW_STRING_FP("Slice Geometry", SliceDataContainerName, FilterParameter::CreatedArray, SliceSTLforAM));
-  parameters.push_back(SIMPL_NEW_AM_WITH_LINKED_DC_FP("Edge Attribute Matrix", EdgeAttributeMatrixName, SliceDataContainerName, FilterParameter::CreatedArray, SliceSTLforAM));
-  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Slice Ids", SliceIdArrayName, SliceDataContainerName, EdgeAttributeMatrixName, FilterParameter::CreatedArray, SliceSTLforAM));
-  parameters.push_back(SIMPL_NEW_AM_WITH_LINKED_DC_FP("Slice Attribute Matrix", SliceAttributeMatrixName, SliceDataContainerName, FilterParameter::CreatedArray, SliceSTLforAM));
-  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Areas", AreasArrayName, SliceDataContainerName, SliceAttributeMatrixName, FilterParameter::CreatedArray, SliceSTLforAM));
-  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Perimeters", PerimetersArrayName, SliceDataContainerName, SliceAttributeMatrixName, FilterParameter::CreatedArray, SliceSTLforAM));
+  parameters.push_back(SIMPL_NEW_STRING_FP("Slice Geometry", SliceDataContainerName, FilterParameter::Category::CreatedArray, SliceSTLforAM));
+  parameters.push_back(SIMPL_NEW_AM_WITH_LINKED_DC_FP("Edge Attribute Matrix", EdgeAttributeMatrixName, SliceDataContainerName, FilterParameter::Category::CreatedArray, SliceSTLforAM));
+  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Slice Ids", SliceIdArrayName, SliceDataContainerName, EdgeAttributeMatrixName, FilterParameter::Category::CreatedArray, SliceSTLforAM));
+  parameters.push_back(SIMPL_NEW_AM_WITH_LINKED_DC_FP("Slice Attribute Matrix", SliceAttributeMatrixName, SliceDataContainerName, FilterParameter::Category::CreatedArray, SliceSTLforAM));
+  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Areas", AreasArrayName, SliceDataContainerName, SliceAttributeMatrixName, FilterParameter::Category::CreatedArray, SliceSTLforAM));
+  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Perimeters", PerimetersArrayName, SliceDataContainerName, SliceAttributeMatrixName, FilterParameter::Category::CreatedArray, SliceSTLforAM));
   setFilterParameters(parameters);
 }
 
