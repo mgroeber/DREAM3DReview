@@ -43,6 +43,7 @@ set(_PublicFilters
   DBSCAN
   DownsampleVertexGeometry
   ExtractInternalSurfacesFromTriangleGeometry
+  FindArrayDifferencesAlongDirection
   FindArrayStatistics
   FindElementCentroids
   FindNorm
