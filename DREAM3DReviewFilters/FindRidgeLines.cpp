@@ -32,7 +32,7 @@
  *    United States Prime Contract Navy N00173-07-C-2068
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#include "FindArrayDifferencesAlongDirection.h"
+#include "FindRidgeLines.h"
 
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
 #include <tbb/blocked_range.h>
@@ -63,36 +63,93 @@
  * determining the voxel to voxel differences in a given direction of a 3d image.
  */
 template <typename T>
-class DirectionalDifferencesImpl
+class FindRidgesImpl
 {
 
 public:
-  DirectionalDifferencesImpl(T* data, float* min, size_t length, size_t width, size_t dStride, size_t lStride, size_t wStride, std::vector<T> layerAverages)
+  FindRidgesImpl(T *data, DataContainer::Pointer geom, bool* ridgeFlag)
   : m_Data(data)
-  , m_Min(min)
-  , m_Length(length)
-  , m_Width(width)
-  , m_DStride(dStride)
-  , m_LStride(lStride)
-  , m_WStride(wStride)
-  , m_LayerAverages(layerAverages)
+  , m_Geom(geom)
+  , m_RidgeFlag(ridgeFlag)
   {
   }
-  virtual ~DirectionalDifferencesImpl() = default;
+  virtual ~FindRidgesImpl() = default;
 
   void convert(size_t start, size_t end) const
   {
+
+    SizeVec3Type geoDims = m_Geom->getGeometryAs<ImageGeom>()->getDimensions();
+
+    std::vector<size_t> neighbors(6);
+    neighbors[0] = -(geoDims[0] * geoDims[1]);
+    neighbors[1] = (geoDims[0] * geoDims[1]);
+    neighbors[2] = -(geoDims[0]);
+    neighbors[3] = (geoDims[0]);
+    neighbors[4] = -1;
+    neighbors[5] = 1;
+
     for(size_t iter = start; iter < end; iter++)
     {
-      for(size_t i = 0; i < m_Length; i++)
+      size_t col = iter % geoDims[0];
+      size_t row = (iter / geoDims[0]) % geoDims[1];
+      size_t plane = iter / (geoDims[0] * geoDims[1]);
+
+      bool xflag = true;
+      bool yflag = true;
+      bool zflag = true;
+
+      for(size_t i = 0; i < 2; i++)
       {
-        for(size_t j = 0; j < m_Width; j++)
+        if(i == 0 && plane == 0)
         {
-          size_t point = (iter * m_DStride) + (i * m_LStride) + (j * m_WStride);
-          m_Min[3 * point] = (m_Data[point + m_DStride] - m_Data[point]) - (m_LayerAverages[iter + 1] - m_LayerAverages[iter]);
-          m_Min[3 * point + 1] = (m_Data[point + 2 * m_DStride] - m_Data[point]) - (m_LayerAverages[iter + 2] - m_LayerAverages[iter]);
-          m_Min[3 * point + 2] = (m_Data[point + 3 * m_DStride] - m_Data[point]) - (m_LayerAverages[iter + 3] - m_LayerAverages[iter]);
+          continue;
         }
+        if(i == 1 && plane == (geoDims[2] - 1))
+        {
+          continue;
+        }
+        if(m_Data[iter] < m_Data[iter + neighbors[i]])
+        {
+          zflag = false;
+        }
+      }
+      for(size_t i = 2; i < 4; i++)
+      {
+        if(i == 2 && row == 0)
+        {
+          continue;
+        }
+        if(i == 3 && row == (geoDims[1] - 1))
+        {
+          continue;
+        }
+        if(m_Data[iter] < m_Data[iter + neighbors[i]])
+        {
+          yflag = false;
+        }
+      }
+      for(size_t i = 4; i < 6; i++)
+      {
+        if(i == 4 && col == 0)
+        {
+          continue;
+        }
+        if(i == 5 && col == (geoDims[0] - 1))
+        {
+          continue;
+        }
+        if(m_Data[iter] < m_Data[iter + neighbors[i]])
+        {
+          xflag = false;
+        }
+      }
+      if(xflag && yflag && zflag)
+      {
+        m_RidgeFlag[iter] = true;
+      }
+      else
+      {
+        m_RidgeFlag[iter] = false;
       }
     }
   }
@@ -105,95 +162,32 @@ public:
 #endif
 private:
   T* m_Data;
-  float* m_Min;
-  size_t m_Length;
-  size_t m_Width;
-  size_t m_DStride;
-  size_t m_LStride;
-  size_t m_WStride;
-  std::vector<T> m_LayerAverages;
-};
-
-/**
- * @brief The LayerAveragesImpl class implements a templated threaded algorithm for
- * determining the average values of layers in a 3D image.
- */
-template <typename T>
-class LayerAveragesImpl
-{
-
-public:
-  LayerAveragesImpl(T* data, size_t length, size_t width, size_t dStride, size_t lStride, size_t wStride, std::vector<T>& layerAverages)
-  : m_Data(data)
-  , m_Length(length)
-  , m_Width(width)
-  , m_DStride(dStride)
-  , m_LStride(lStride)
-  , m_WStride(wStride)
-  , m_LayerAverages(layerAverages)
-  {
-  }
-  virtual ~LayerAveragesImpl() = default;
-
-  void convert(size_t start, size_t end) const
-  {
-    for(size_t iter = start; iter < end; iter++)
-    {
-      size_t count = 0;
-      for(size_t i = 0; i < m_Length; i ++)
-      {
-        for(size_t j = 0; j < m_Width; j++)
-        {
-          size_t point = (iter * m_DStride) + (i * m_LStride) + (j * m_WStride);
-          if(m_Data[point] != 0)
-          {
-            m_LayerAverages[iter] += m_Data[point];
-            count++;
-          }
-        }
-      }
-      m_LayerAverages[iter] /= count;
-    }
-  }
-
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-  void operator()(const tbb::blocked_range<size_t>& r) const
-  {
-    convert(r.begin(), r.end());
-  }
-#endif
-private:
-  T* m_Data;
-  size_t m_Length;
-  size_t m_Width;
-  size_t m_DStride;
-  size_t m_LStride;
-  size_t m_WStride;
-  std::vector<T>& m_LayerAverages;
+  DataContainer::Pointer m_Geom;
+  bool* m_RidgeFlag;
 };
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-FindArrayDifferencesAlongDirection::FindArrayDifferencesAlongDirection() = default;
+FindRidgeLines::FindRidgeLines() = default;
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-FindArrayDifferencesAlongDirection::~FindArrayDifferencesAlongDirection() = default;
+FindRidgeLines::~FindRidgeLines() = default;
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::setupFilterParameters()
+void FindRidgeLines::setupFilterParameters()
 {
   FilterParameterVectorType parameters;
   {
     ChoiceFilterParameter::Pointer parameter = ChoiceFilterParameter::New();
     parameter->setHumanLabel("Direction of Interest");
     parameter->setPropertyName("Direction");
-    parameter->setSetterCallback(SIMPL_BIND_SETTER(FindArrayDifferencesAlongDirection, this, Direction));
-    parameter->setGetterCallback(SIMPL_BIND_GETTER(FindArrayDifferencesAlongDirection, this, Direction));
+    parameter->setSetterCallback(SIMPL_BIND_SETTER(FindRidgeLines, this, Direction));
+    parameter->setGetterCallback(SIMPL_BIND_GETTER(FindRidgeLines, this, Direction));
 
     std::vector<QString> choices;
     choices.push_back("X");
@@ -219,19 +213,19 @@ void FindArrayDifferencesAlongDirection::setupFilterParameters()
     daTypes.push_back(SIMPL::TypeNames::Float);
     daTypes.push_back(SIMPL::TypeNames::Double);
     req.daTypes = daTypes;
-    parameters.push_back(SIMPL_NEW_DA_SELECTION_FP("Attribute Array to Quantify", SelectedArrayPath, FilterParameter::Category::RequiredArray, FindArrayDifferencesAlongDirection, req));
+    parameters.push_back(SIMPL_NEW_DA_SELECTION_FP("Attribute Array to Quantify", SelectedArrayPath, FilterParameter::Category::RequiredArray, FindRidgeLines, req));
   }
   parameters.push_back(SeparatorFilterParameter::Create("Cell Data", FilterParameter::Category::CreatedArray));
   parameters.push_back(
-      SIMPL_NEW_DA_WITH_LINKED_AM_FP("Projected Image Min", ProjectedImageMinArrayName, SelectedArrayPath, SelectedArrayPath, FilterParameter::Category::CreatedArray, FindArrayDifferencesAlongDirection));
+      SIMPL_NEW_DA_WITH_LINKED_AM_FP("Ridge Flag Array", RidgeFlagArrayName, SelectedArrayPath, SelectedArrayPath, FilterParameter::Category::CreatedArray, FindRidgeLines));
   setFilterParameters(parameters);
 }
 
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::readFilterParameters(AbstractFilterParametersReader* reader, int index)
+void FindRidgeLines::readFilterParameters(AbstractFilterParametersReader* reader, int index)
 {
   reader->openFilterGroup(this, index);
-  setProjectedImageMinArrayName(reader->readString("ProjectedImageMinArrayName", getProjectedImageMinArrayName()));
+  setRidgeFlagArrayName(reader->readString("RidgeFlagArrayName", getRidgeFlagArrayName()));
   setSelectedArrayPath(reader->readDataArrayPath("SelectedArrayPath", getSelectedArrayPath()));
   setDirection(reader->readValue("Direction", getDirection()));
   reader->closeFilterGroup();
@@ -240,14 +234,14 @@ void FindArrayDifferencesAlongDirection::readFilterParameters(AbstractFilterPara
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::initialize()
+void FindRidgeLines::initialize()
 {
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::dataCheck()
+void FindRidgeLines::dataCheck()
 {
   clearErrorCode();
   clearWarningCode();
@@ -264,12 +258,12 @@ void FindArrayDifferencesAlongDirection::dataCheck()
     }
   }
 
-  std::vector<size_t> cDims(1, 3);
-  tempPath.update(getSelectedArrayPath().getDataContainerName(), getSelectedArrayPath().getAttributeMatrixName(), getProjectedImageMinArrayName());
-  m_ProjectedImageMinPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0, cDims);
-  if(nullptr != m_ProjectedImageMinPtr.lock())
+  std::vector<size_t> cDims(1, 1);
+  tempPath.update(getSelectedArrayPath().getDataContainerName(), getSelectedArrayPath().getAttributeMatrixName(), getRidgeFlagArrayName());
+  m_RidgeFlagPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<bool>>(this, tempPath, false, cDims);
+  if(nullptr != m_RidgeFlagPtr.lock())
   {
-    m_ProjectedImageMin = m_ProjectedImageMinPtr.lock()->getPointer(0);
+    m_RidgeFlag = m_RidgeFlagPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
   
@@ -278,17 +272,12 @@ void FindArrayDifferencesAlongDirection::dataCheck()
   {
     return;
   }
-
-  if(image->getXPoints() <= 1 || image->getYPoints() <= 1 || image->getZPoints() <= 1)
-  {
-    setErrorCondition(-999, "The Image Geometry is not 3D and cannot be run through this Filter");
-  }
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::execute()
+void FindRidgeLines::execute()
 {
   dataCheck();
   if(getErrorCode() < 0)
@@ -299,42 +288,7 @@ void FindArrayDifferencesAlongDirection::execute()
   DataContainer::Pointer m = getDataContainerArray()->getDataContainer(getSelectedArrayPath().getDataContainerName());
 
   SizeVec3Type geoDims = m->getGeometryAs<ImageGeom>()->getDimensions();
-
-  size_t dStride = 0, lStride = 0, wStride;
-  size_t count = geoDims[0]*geoDims[1]*geoDims[2];
-  size_t length = 0;
-  size_t width = 0;
-  size_t depth = 0;
-  if(m_Direction == 0)
-  {
-    dStride = 1;
-    lStride = geoDims[0];
-    wStride = geoDims[0] * geoDims[1];
-
-    depth = geoDims[0];
-    length = geoDims[1];
-    width = geoDims[2];
-  }
-  if(m_Direction == 1)
-  {
-    dStride = geoDims[0];
-    lStride = 1;
-    wStride = geoDims[0] * geoDims[1];
-    
-    depth = geoDims[1];
-    length = geoDims[0];
-    width = geoDims[2];
-  }
-  if(m_Direction == 2)
-  {
-    dStride = geoDims[0] * geoDims[1];
-    lStride = 1;
-    wStride = geoDims[0];
-
-    depth = geoDims[2];
-    length = geoDims[0];
-    width = geoDims[1];
-  }
+  size_t totalPoints = geoDims[0] * geoDims[1] * geoDims[2];
 
   IDataArray::Pointer iCellArray = m_InDataPtr.lock();
 
@@ -343,165 +297,125 @@ void FindArrayDifferencesAlongDirection::execute()
   {
     Int8ArrayType::Pointer cellArray = std::dynamic_pointer_cast<Int8ArrayType>(m_InDataPtr.lock());
     int8_t* cPtr = cellArray->getPointer(0);
-    std::vector<int8_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<int8_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth-1), DirectionalDifferencesImpl<int8_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int8_t>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<int8_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<int8_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
+    FindRidgesImpl<int8_t> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<UInt8ArrayType>()(m_InDataPtr.lock()))
   {
     UInt8ArrayType::Pointer cellArray = std::dynamic_pointer_cast<UInt8ArrayType>(m_InDataPtr.lock());
     uint8_t* cPtr = cellArray->getPointer(0);
-    std::vector<uint8_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<uint8_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<uint8_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint8_t>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<uint8_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<uint8_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
+    FindRidgesImpl<uint8_t> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<Int16ArrayType>()(m_InDataPtr.lock()))
   {
     Int16ArrayType::Pointer cellArray = std::dynamic_pointer_cast<Int16ArrayType>(m_InDataPtr.lock());
     int16_t* cPtr = cellArray->getPointer(0);
-    std::vector<int16_t> layerAverages(depth, 0);
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<int16_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<int16_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS 
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int16_t>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<int16_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<int16_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
+DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<UInt16ArrayType>()(m_InDataPtr.lock()))
   {
     UInt16ArrayType::Pointer cellArray = std::dynamic_pointer_cast<UInt16ArrayType>(m_InDataPtr.lock());
     uint16_t* cPtr = cellArray->getPointer(0);
-    std::vector<uint16_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<uint16_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<uint16_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint16_t>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<uint16_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<uint16_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
+    FindRidgesImpl<uint16_t> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<Int32ArrayType>()(m_InDataPtr.lock()))
   {
     Int32ArrayType::Pointer cellArray = std::dynamic_pointer_cast<Int32ArrayType>(m_InDataPtr.lock());
     int32_t* cPtr = cellArray->getPointer(0);
-    std::vector<int32_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<int32_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<int32_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int32_t>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<int32_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<int32_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
+    FindRidgesImpl<int32_t> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<UInt32ArrayType>()(m_InDataPtr.lock()))
   {
     UInt32ArrayType::Pointer cellArray = std::dynamic_pointer_cast<UInt32ArrayType>(m_InDataPtr.lock());
     uint32_t* cPtr = cellArray->getPointer(0);
-    std::vector<uint32_t> layerAverages(depth, 0);
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<uint32_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<uint32_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS 
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint32_t>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<uint32_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<uint32_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
+    FindRidgesImpl<uint32_t> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<Int64ArrayType>()(m_InDataPtr.lock()))
   {
     Int64ArrayType::Pointer cellArray = std::dynamic_pointer_cast<Int64ArrayType>(m_InDataPtr.lock());
     int64_t* cPtr = cellArray->getPointer(0);
-    std::vector<int64_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<int64_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<int64_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int64_t>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<int64_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<int64_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
+    FindRidgesImpl<int64_t> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<UInt64ArrayType>()(m_InDataPtr.lock()))
   {
     UInt64ArrayType::Pointer cellArray = std::dynamic_pointer_cast<UInt64ArrayType>(m_InDataPtr.lock());
     uint64_t* cPtr = cellArray->getPointer(0);
-    std::vector<uint64_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<uint64_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<uint64_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint64_t>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<uint64_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<uint64_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
+    FindRidgesImpl<uint64_t> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<FloatArrayType>()(m_InDataPtr.lock()))
   {
     FloatArrayType::Pointer cellArray = std::dynamic_pointer_cast<FloatArrayType>(m_InDataPtr.lock());
     float* cPtr = cellArray->getPointer(0);
-    std::vector<float> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<float>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<float>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<float>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<float> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<float> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
+    FindRidgesImpl<float> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<DoubleArrayType>()(m_InDataPtr.lock()))
   {
     DoubleArrayType::Pointer cellArray = std::dynamic_pointer_cast<DoubleArrayType>(m_InDataPtr.lock());
     double* cPtr = cellArray->getPointer(0);
-    std::vector<double> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<double>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<double>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<double>(cPtr, m, m_RidgeFlag),
                       tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<double> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth);
-    DirectionalDifferencesImpl<double> serial(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth - 3);
+    FindRidgesImpl<double> serial(cPtr, m, m_RidgeFlag);
+    serial.convert(0, totalPoints);
 #endif
   }
   else
@@ -515,9 +429,9 @@ void FindArrayDifferencesAlongDirection::execute()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-AbstractFilter::Pointer FindArrayDifferencesAlongDirection::newFilterInstance(bool copyFilterParameters) const
+AbstractFilter::Pointer FindRidgeLines::newFilterInstance(bool copyFilterParameters) const
 {
-  FindArrayDifferencesAlongDirection::Pointer filter = FindArrayDifferencesAlongDirection::New();
+  FindRidgeLines::Pointer filter = FindRidgeLines::New();
   if(copyFilterParameters)
   {
     copyFilterParameterInstanceVariables(filter.get());
@@ -528,7 +442,7 @@ AbstractFilter::Pointer FindArrayDifferencesAlongDirection::newFilterInstance(bo
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getCompiledLibraryName() const
+QString FindRidgeLines::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -536,7 +450,7 @@ QString FindArrayDifferencesAlongDirection::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getBrandingString() const
+QString FindRidgeLines::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -544,7 +458,7 @@ QString FindArrayDifferencesAlongDirection::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getFilterVersion() const
+QString FindRidgeLines::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -555,7 +469,7 @@ QString FindArrayDifferencesAlongDirection::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getGroupName() const
+QString FindRidgeLines::getGroupName() const
 {
   return SIMPL::FilterGroups::ProcessingFilters;
 }
@@ -563,15 +477,15 @@ QString FindArrayDifferencesAlongDirection::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QUuid FindArrayDifferencesAlongDirection::getUuid() const
+QUuid FindRidgeLines::getUuid() const
 {
-  return QUuid("{577dfdf6-02f8-5284-b45b-e31f5392a196}");
+  return QUuid("{577dfdf6-02f8-5284-b45b-e31f5392a178}");
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getSubGroupName() const
+QString FindRidgeLines::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::ImageFilters;
 }
@@ -579,21 +493,21 @@ QString FindArrayDifferencesAlongDirection::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getHumanLabel() const
+QString FindRidgeLines::getHumanLabel() const
 {
-  return "Find Array Differences Along Image Direction";
+  return "Find Ridge Lines";
 }
 
 // -----------------------------------------------------------------------------
-FindArrayDifferencesAlongDirection::Pointer FindArrayDifferencesAlongDirection::NullPointer()
+FindRidgeLines::Pointer FindRidgeLines::NullPointer()
 {
   return Pointer(static_cast<Self*>(nullptr));
 }
 
 // -----------------------------------------------------------------------------
-std::shared_ptr<FindArrayDifferencesAlongDirection> FindArrayDifferencesAlongDirection::New()
+std::shared_ptr<FindRidgeLines> FindRidgeLines::New()
 {
-  struct make_shared_enabler : public FindArrayDifferencesAlongDirection
+  struct make_shared_enabler : public FindRidgeLines
   {
   };
   std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
@@ -602,49 +516,49 @@ std::shared_ptr<FindArrayDifferencesAlongDirection> FindArrayDifferencesAlongDir
 }
 
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getNameOfClass() const
+QString FindRidgeLines::getNameOfClass() const
 {
-  return QString("FindArrayDifferencesAlongDirection");
+  return QString("FindRidgeLines");
 }
 
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::ClassName()
+QString FindRidgeLines::ClassName()
 {
-  return QString("FindArrayDifferencesAlongDirection");
+  return QString("FindRidgeLines");
 }
 
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::setSelectedArrayPath(const DataArrayPath& value)
+void FindRidgeLines::setSelectedArrayPath(const DataArrayPath& value)
 {
   m_SelectedArrayPath = value;
 }
 
 // -----------------------------------------------------------------------------
-DataArrayPath FindArrayDifferencesAlongDirection::getSelectedArrayPath() const
+DataArrayPath FindRidgeLines::getSelectedArrayPath() const
 {
   return m_SelectedArrayPath;
 }
 
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::setDirection(unsigned int value)
+void FindRidgeLines::setDirection(unsigned int value)
 {
   m_Direction = value;
 }
 
 // -----------------------------------------------------------------------------
-unsigned int FindArrayDifferencesAlongDirection::getDirection() const
+unsigned int FindRidgeLines::getDirection() const
 {
   return m_Direction;
 }
 
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::setProjectedImageMinArrayName(const QString& value)
+void FindRidgeLines::setRidgeFlagArrayName(const QString& value)
 {
-  m_ProjectedImageMinArrayName = value;
+  m_RidgeFlagArrayName = value;
 }
 
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getProjectedImageMinArrayName() const
+QString FindRidgeLines::getRidgeFlagArrayName() const
 {
-  return m_ProjectedImageMinArrayName;
+  return m_RidgeFlagArrayName;
 }

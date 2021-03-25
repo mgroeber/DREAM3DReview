@@ -47,6 +47,7 @@ set(_PublicFilters
   FindArrayStatistics
   FindElementCentroids
   FindNorm
+  FindRidgeLines
   FindVertexToTriangleDistances
   IterativeClosestPoint
   ImportQMMeltpoolH5File
