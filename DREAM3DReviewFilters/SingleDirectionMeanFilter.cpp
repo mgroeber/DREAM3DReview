@@ -32,7 +32,7 @@
  *    United States Prime Contract Navy N00173-07-C-2068
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#include "FindArrayDifferencesAlongDirection.h"
+#include "SingleDirectionMeanFilter.h"
 
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
 #include <tbb/blocked_range.h>
@@ -67,92 +67,47 @@ class DirectionalDifferencesImpl
 {
 
 public:
-  DirectionalDifferencesImpl(T* data, float* min, size_t length, size_t width, size_t dStride, size_t lStride, size_t wStride, std::vector<T> layerAverages)
+  DirectionalDifferencesImpl(T* data, float* filtArray, size_t length, size_t width, size_t depth, int64_t dStride, int64_t lStride, int64_t wStride)
   : m_Data(data)
-  , m_Min(min)
+  , m_FilteredArray(filtArray)
   , m_Length(length)
   , m_Width(width)
+  , m_Depth(depth)
   , m_DStride(dStride)
   , m_LStride(lStride)
   , m_WStride(wStride)
-  , m_LayerAverages(layerAverages)
   {
   }
   virtual ~DirectionalDifferencesImpl() = default;
 
   void convert(size_t start, size_t end) const
   {
+    int64_t m_DepthStep = fabs(m_DStride);
     for(size_t iter = start; iter < end; iter++)
     {
       for(size_t i = 0; i < m_Length; i++)
       {
         for(size_t j = 0; j < m_Width; j++)
         {
-          size_t point = (iter * m_DStride) + (i * m_LStride) + (j * m_WStride);
-          m_Min[3 * point] = (m_Data[point + m_DStride] - m_Data[point]) - (m_LayerAverages[iter + 1] - m_LayerAverages[iter]);
-          m_Min[3 * point + 1] = (m_Data[point + 2 * m_DStride] - m_Data[point]) - (m_LayerAverages[iter + 2] - m_LayerAverages[iter]);
-          m_Min[3 * point + 2] = (m_Data[point + 3 * m_DStride] - m_Data[point]) - (m_LayerAverages[iter + 3] - m_LayerAverages[iter]);
-        }
-      }
-    }
-  }
-
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-  void operator()(const tbb::blocked_range<size_t>& r) const
-  {
-    convert(r.begin(), r.end());
-  }
-#endif
-private:
-  T* m_Data;
-  float* m_Min;
-  size_t m_Length;
-  size_t m_Width;
-  size_t m_DStride;
-  size_t m_LStride;
-  size_t m_WStride;
-  std::vector<T> m_LayerAverages;
-};
-
-/**
- * @brief The LayerAveragesImpl class implements a templated threaded algorithm for
- * determining the average values of layers in a 3D image.
- */
-template <typename T>
-class LayerAveragesImpl
-{
-
-public:
-  LayerAveragesImpl(T* data, size_t length, size_t width, size_t dStride, size_t lStride, size_t wStride, std::vector<T>& layerAverages)
-  : m_Data(data)
-  , m_Length(length)
-  , m_Width(width)
-  , m_DStride(dStride)
-  , m_LStride(lStride)
-  , m_WStride(wStride)
-  , m_LayerAverages(layerAverages)
-  {
-  }
-  virtual ~LayerAveragesImpl() = default;
-
-  void convert(size_t start, size_t end) const
-  {
-    for(size_t iter = start; iter < end; iter++)
-    {
-      size_t count = 0;
-      for(size_t i = 0; i < m_Length; i ++)
-      {
-        for(size_t j = 0; j < m_Width; j++)
-        {
-          size_t point = (iter * m_DStride) + (i * m_LStride) + (j * m_WStride);
-          if(m_Data[point] != 0)
+          int64_t kernelIter = 0;
+          int64_t curDepth = iter;
+          size_t point = (iter * m_DepthStep) + (i * m_LStride) + (j * m_WStride);
+          while(kernelIter >= 20 && curDepth >= 0 && curDepth < m_Depth)
           {
-            m_LayerAverages[iter] += m_Data[point];
-            count++;
+            m_FilteredArray[point] += m_Data[point + (kernelIter * m_DStride)];
+            kernelIter++;
+            if(m_DStride > 0)
+            {
+              curDepth++;
+            }
+            else if(m_DStride < 0)
+            {
+              curDepth--;
+            }
           }
+          m_FilteredArray[point] /= float(kernelIter);
         }
       }
-      m_LayerAverages[iter] /= count;
     }
   }
 
@@ -164,41 +119,45 @@ public:
 #endif
 private:
   T* m_Data;
+  float* m_FilteredArray;
   size_t m_Length;
   size_t m_Width;
-  size_t m_DStride;
-  size_t m_LStride;
-  size_t m_WStride;
-  std::vector<T>& m_LayerAverages;
+  size_t m_Depth;
+  int64_t m_DStride;
+  int64_t m_LStride;
+  int64_t m_WStride;
 };
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-FindArrayDifferencesAlongDirection::FindArrayDifferencesAlongDirection() = default;
+SingleDirectionMeanFilter::SingleDirectionMeanFilter() = default;
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-FindArrayDifferencesAlongDirection::~FindArrayDifferencesAlongDirection() = default;
+SingleDirectionMeanFilter::~SingleDirectionMeanFilter() = default;
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::setupFilterParameters()
+void SingleDirectionMeanFilter::setupFilterParameters()
 {
   FilterParameterVectorType parameters;
   {
     ChoiceFilterParameter::Pointer parameter = ChoiceFilterParameter::New();
     parameter->setHumanLabel("Direction of Interest");
     parameter->setPropertyName("Direction");
-    parameter->setSetterCallback(SIMPL_BIND_SETTER(FindArrayDifferencesAlongDirection, this, Direction));
-    parameter->setGetterCallback(SIMPL_BIND_GETTER(FindArrayDifferencesAlongDirection, this, Direction));
+    parameter->setSetterCallback(SIMPL_BIND_SETTER(SingleDirectionMeanFilter, this, Direction));
+    parameter->setGetterCallback(SIMPL_BIND_GETTER(SingleDirectionMeanFilter, this, Direction));
 
     std::vector<QString> choices;
-    choices.push_back("X");
-    choices.push_back("Y");
-    choices.push_back("Z");
+    choices.push_back("+X");
+    choices.push_back("-X");
+    choices.push_back("+Y");
+    choices.push_back("-Y");
+    choices.push_back("+Z");
+    choices.push_back("-Z");
     parameter->setChoices(choices);
     parameter->setCategory(FilterParameter::Category::Parameter);
     parameters.push_back(parameter);
@@ -219,19 +178,18 @@ void FindArrayDifferencesAlongDirection::setupFilterParameters()
     daTypes.push_back(SIMPL::TypeNames::Float);
     daTypes.push_back(SIMPL::TypeNames::Double);
     req.daTypes = daTypes;
-    parameters.push_back(SIMPL_NEW_DA_SELECTION_FP("Attribute Array to Quantify", SelectedArrayPath, FilterParameter::Category::RequiredArray, FindArrayDifferencesAlongDirection, req));
+    parameters.push_back(SIMPL_NEW_DA_SELECTION_FP("Attribute Array to Filter", SelectedArrayPath, FilterParameter::Category::RequiredArray, SingleDirectionMeanFilter, req));
   }
   parameters.push_back(SeparatorFilterParameter::Create("Cell Data", FilterParameter::Category::CreatedArray));
-  parameters.push_back(
-      SIMPL_NEW_DA_WITH_LINKED_AM_FP("Projected Image Min", ProjectedImageMinArrayName, SelectedArrayPath, SelectedArrayPath, FilterParameter::Category::CreatedArray, FindArrayDifferencesAlongDirection));
+  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Filtered Array", FilteredArrayName, SelectedArrayPath, SelectedArrayPath, FilterParameter::Category::CreatedArray, SingleDirectionMeanFilter));
   setFilterParameters(parameters);
 }
 
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::readFilterParameters(AbstractFilterParametersReader* reader, int index)
+void SingleDirectionMeanFilter::readFilterParameters(AbstractFilterParametersReader* reader, int index)
 {
   reader->openFilterGroup(this, index);
-  setProjectedImageMinArrayName(reader->readString("ProjectedImageMinArrayName", getProjectedImageMinArrayName()));
+  setFilteredArrayName(reader->readString("FilteredArrayName", getFilteredArrayName()));
   setSelectedArrayPath(reader->readDataArrayPath("SelectedArrayPath", getSelectedArrayPath()));
   setDirection(reader->readValue("Direction", getDirection()));
   reader->closeFilterGroup();
@@ -240,14 +198,14 @@ void FindArrayDifferencesAlongDirection::readFilterParameters(AbstractFilterPara
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::initialize()
+void SingleDirectionMeanFilter::initialize()
 {
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::dataCheck()
+void SingleDirectionMeanFilter::dataCheck()
 {
   clearErrorCode();
   clearWarningCode();
@@ -264,15 +222,14 @@ void FindArrayDifferencesAlongDirection::dataCheck()
     }
   }
 
-  std::vector<size_t> cDims(1, 3);
-  tempPath.update(getSelectedArrayPath().getDataContainerName(), getSelectedArrayPath().getAttributeMatrixName(), getProjectedImageMinArrayName());
-  m_ProjectedImageMinPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0, cDims);
-  if(nullptr != m_ProjectedImageMinPtr.lock())
+  std::vector<size_t> cDims(1, 1);
+  tempPath.update(getSelectedArrayPath().getDataContainerName(), getSelectedArrayPath().getAttributeMatrixName(), getFilteredArrayName());
+  m_FilteredArrayPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, tempPath, 0, cDims);
+  if(nullptr != m_FilteredArrayPtr.lock())
   {
-    m_ProjectedImageMin = m_ProjectedImageMinPtr.lock()->getPointer(0);
+    m_FilteredArray = m_FilteredArrayPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  
   ImageGeom::Pointer image = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom>(this, getSelectedArrayPath().getDataContainerName());
   if(getErrorCode() < 0)
   {
@@ -288,7 +245,7 @@ void FindArrayDifferencesAlongDirection::dataCheck()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::execute()
+void SingleDirectionMeanFilter::execute()
 {
   dataCheck();
   if(getErrorCode() < 0)
@@ -300,8 +257,8 @@ void FindArrayDifferencesAlongDirection::execute()
 
   SizeVec3Type geoDims = m->getGeometryAs<ImageGeom>()->getDimensions();
 
-  size_t dStride = 0, lStride = 0, wStride;
-  size_t count = geoDims[0]*geoDims[1]*geoDims[2];
+  int64_t dStride = 0, lStride = 0, wStride;
+  size_t count = geoDims[0] * geoDims[1] * geoDims[2];
   size_t length = 0;
   size_t width = 0;
   size_t depth = 0;
@@ -317,17 +274,47 @@ void FindArrayDifferencesAlongDirection::execute()
   }
   if(m_Direction == 1)
   {
-    dStride = geoDims[0];
-    lStride = 1;
+    dStride = -1;
+    lStride = geoDims[0];
     wStride = geoDims[0] * geoDims[1];
-    
-    depth = geoDims[1];
-    length = geoDims[0];
+
+    depth = geoDims[0];
+    length = geoDims[1];
     width = geoDims[2];
   }
   if(m_Direction == 2)
   {
+    dStride = geoDims[0];
+    lStride = 1;
+    wStride = geoDims[0] * geoDims[1];
+
+    depth = geoDims[1];
+    length = geoDims[0];
+    width = geoDims[2];
+  }
+  if(m_Direction == 3)
+  {
+    dStride = -geoDims[0];
+    lStride = 1;
+    wStride = geoDims[0] * geoDims[1];
+
+    depth = geoDims[1];
+    length = geoDims[0];
+    width = geoDims[2];
+  }
+  if(m_Direction == 4)
+  {
     dStride = geoDims[0] * geoDims[1];
+    lStride = 1;
+    wStride = geoDims[0];
+
+    depth = geoDims[2];
+    length = geoDims[0];
+    width = geoDims[1];
+  }
+  if(m_Direction == 5)
+  {
+    dStride = -geoDims[0] * geoDims[1];
     lStride = 1;
     wStride = geoDims[0];
 
@@ -338,22 +325,17 @@ void FindArrayDifferencesAlongDirection::execute()
 
   IDataArray::Pointer iCellArray = m_InDataPtr.lock();
 
-
   if(TemplateHelpers::CanDynamicCast<Int8ArrayType>()(m_InDataPtr.lock()))
   {
     Int8ArrayType::Pointer cellArray = std::dynamic_pointer_cast<Int8ArrayType>(m_InDataPtr.lock());
     int8_t* cPtr = cellArray->getPointer(0);
     std::vector<int8_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<int8_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth-1), DirectionalDifferencesImpl<int8_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<int8_t>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<int8_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<int8_t> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<int8_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<UInt8ArrayType>()(m_InDataPtr.lock()))
@@ -362,15 +344,11 @@ void FindArrayDifferencesAlongDirection::execute()
     uint8_t* cPtr = cellArray->getPointer(0);
     std::vector<uint8_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<uint8_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<uint8_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<uint8_t>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<uint8_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<uint8_t> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<uint8_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<Int16ArrayType>()(m_InDataPtr.lock()))
@@ -379,14 +357,10 @@ void FindArrayDifferencesAlongDirection::execute()
     int16_t* cPtr = cellArray->getPointer(0);
     std::vector<int16_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<int16_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<int16_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<int16_t>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<int16_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<int16_t> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<int16_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<UInt16ArrayType>()(m_InDataPtr.lock()))
@@ -395,14 +369,10 @@ void FindArrayDifferencesAlongDirection::execute()
     uint16_t* cPtr = cellArray->getPointer(0);
     std::vector<uint16_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<uint16_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<uint16_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<uint16_t>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<uint16_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<uint16_t> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<uint16_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<Int32ArrayType>()(m_InDataPtr.lock()))
@@ -411,15 +381,11 @@ void FindArrayDifferencesAlongDirection::execute()
     int32_t* cPtr = cellArray->getPointer(0);
     std::vector<int32_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<int32_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<int32_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<int32_t>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<int32_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<int32_t> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<int32_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<UInt32ArrayType>()(m_InDataPtr.lock()))
@@ -428,15 +394,11 @@ void FindArrayDifferencesAlongDirection::execute()
     uint32_t* cPtr = cellArray->getPointer(0);
     std::vector<uint32_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<uint32_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<uint32_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<uint32_t>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<uint32_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<uint32_t> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<uint32_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<Int64ArrayType>()(m_InDataPtr.lock()))
@@ -445,15 +407,11 @@ void FindArrayDifferencesAlongDirection::execute()
     int64_t* cPtr = cellArray->getPointer(0);
     std::vector<int64_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<int64_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<int64_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<int64_t>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 
 #else
-    LayerAveragesImpl<int64_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<int64_t> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<int64_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<UInt64ArrayType>()(m_InDataPtr.lock()))
@@ -462,14 +420,10 @@ void FindArrayDifferencesAlongDirection::execute()
     uint64_t* cPtr = cellArray->getPointer(0);
     std::vector<uint64_t> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<uint64_t>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<uint64_t>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<uint64_t>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<uint64_t> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<uint64_t> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<uint64_t> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<FloatArrayType>()(m_InDataPtr.lock()))
@@ -478,14 +432,10 @@ void FindArrayDifferencesAlongDirection::execute()
     float* cPtr = cellArray->getPointer(0);
     std::vector<float> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<float>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<float>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<float>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<float> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<float> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<float> serial(cPtr, m_ProjectedImageMin, dStride, count);
-    serial.convert(0, depth - 3);
 #endif
   }
   else if(TemplateHelpers::CanDynamicCast<DoubleArrayType>()(m_InDataPtr.lock()))
@@ -494,14 +444,10 @@ void FindArrayDifferencesAlongDirection::execute()
     double* cPtr = cellArray->getPointer(0);
     std::vector<double> layerAverages(depth, 0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), LayerAveragesImpl<double>(cPtr, length, width, dStride, lStride, wStride, layerAverages), tbb::auto_partitioner());
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth - 3), DirectionalDifferencesImpl<double>(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, depth), DirectionalDifferencesImpl<double>(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride), tbb::auto_partitioner());
 #else
-    LayerAveragesImpl<double> serial(cPtr, length, width, dStride, lStride, wStride, layerAverages);
+    DirectionalDifferencesImpl<double> serial(cPtr, m_FilteredArray, length, width, depth, dStride, lStride, wStride);
     serial.convert(0, depth);
-    DirectionalDifferencesImpl<double> serial(cPtr, m_ProjectedImageMin, length, width, dStride, lStride, wStride, layerAverages);
-    serial.convert(0, depth - 3);
 #endif
   }
   else
@@ -515,9 +461,9 @@ void FindArrayDifferencesAlongDirection::execute()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-AbstractFilter::Pointer FindArrayDifferencesAlongDirection::newFilterInstance(bool copyFilterParameters) const
+AbstractFilter::Pointer SingleDirectionMeanFilter::newFilterInstance(bool copyFilterParameters) const
 {
-  FindArrayDifferencesAlongDirection::Pointer filter = FindArrayDifferencesAlongDirection::New();
+  SingleDirectionMeanFilter::Pointer filter = SingleDirectionMeanFilter::New();
   if(copyFilterParameters)
   {
     copyFilterParameterInstanceVariables(filter.get());
@@ -528,7 +474,7 @@ AbstractFilter::Pointer FindArrayDifferencesAlongDirection::newFilterInstance(bo
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getCompiledLibraryName() const
+QString SingleDirectionMeanFilter::getCompiledLibraryName() const
 {
   return DREAM3DReviewConstants::DREAM3DReviewBaseName;
 }
@@ -536,7 +482,7 @@ QString FindArrayDifferencesAlongDirection::getCompiledLibraryName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getBrandingString() const
+QString SingleDirectionMeanFilter::getBrandingString() const
 {
   return "DREAM3DReview";
 }
@@ -544,7 +490,7 @@ QString FindArrayDifferencesAlongDirection::getBrandingString() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getFilterVersion() const
+QString SingleDirectionMeanFilter::getFilterVersion() const
 {
   QString version;
   QTextStream vStream(&version);
@@ -555,7 +501,7 @@ QString FindArrayDifferencesAlongDirection::getFilterVersion() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getGroupName() const
+QString SingleDirectionMeanFilter::getGroupName() const
 {
   return SIMPL::FilterGroups::ProcessingFilters;
 }
@@ -563,15 +509,15 @@ QString FindArrayDifferencesAlongDirection::getGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QUuid FindArrayDifferencesAlongDirection::getUuid() const
+QUuid SingleDirectionMeanFilter::getUuid() const
 {
-  return QUuid("{577dfdf6-02f8-5284-b45b-e31f5392a196}");
+  return QUuid("{577dfdf6-02f8-5284-b45b-e31f5412b166}");
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getSubGroupName() const
+QString SingleDirectionMeanFilter::getSubGroupName() const
 {
   return SIMPL::FilterSubGroups::ImageFilters;
 }
@@ -579,21 +525,21 @@ QString FindArrayDifferencesAlongDirection::getSubGroupName() const
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getHumanLabel() const
+QString SingleDirectionMeanFilter::getHumanLabel() const
 {
-  return "Find Array Differences Along Image Direction";
+  return "Single Direction Mean Filter";
 }
 
 // -----------------------------------------------------------------------------
-FindArrayDifferencesAlongDirection::Pointer FindArrayDifferencesAlongDirection::NullPointer()
+SingleDirectionMeanFilter::Pointer SingleDirectionMeanFilter::NullPointer()
 {
   return Pointer(static_cast<Self*>(nullptr));
 }
 
 // -----------------------------------------------------------------------------
-std::shared_ptr<FindArrayDifferencesAlongDirection> FindArrayDifferencesAlongDirection::New()
+std::shared_ptr<SingleDirectionMeanFilter> SingleDirectionMeanFilter::New()
 {
-  struct make_shared_enabler : public FindArrayDifferencesAlongDirection
+  struct make_shared_enabler : public SingleDirectionMeanFilter
   {
   };
   std::shared_ptr<make_shared_enabler> val = std::make_shared<make_shared_enabler>();
@@ -602,49 +548,49 @@ std::shared_ptr<FindArrayDifferencesAlongDirection> FindArrayDifferencesAlongDir
 }
 
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getNameOfClass() const
+QString SingleDirectionMeanFilter::getNameOfClass() const
 {
-  return QString("FindArrayDifferencesAlongDirection");
+  return QString("SingleDirectionMeanFilter");
 }
 
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::ClassName()
+QString SingleDirectionMeanFilter::ClassName()
 {
-  return QString("FindArrayDifferencesAlongDirection");
+  return QString("SingleDirectionMeanFilter");
 }
 
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::setSelectedArrayPath(const DataArrayPath& value)
+void SingleDirectionMeanFilter::setSelectedArrayPath(const DataArrayPath& value)
 {
   m_SelectedArrayPath = value;
 }
 
 // -----------------------------------------------------------------------------
-DataArrayPath FindArrayDifferencesAlongDirection::getSelectedArrayPath() const
+DataArrayPath SingleDirectionMeanFilter::getSelectedArrayPath() const
 {
   return m_SelectedArrayPath;
 }
 
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::setDirection(unsigned int value)
+void SingleDirectionMeanFilter::setDirection(unsigned int value)
 {
   m_Direction = value;
 }
 
 // -----------------------------------------------------------------------------
-unsigned int FindArrayDifferencesAlongDirection::getDirection() const
+unsigned int SingleDirectionMeanFilter::getDirection() const
 {
   return m_Direction;
 }
 
 // -----------------------------------------------------------------------------
-void FindArrayDifferencesAlongDirection::setProjectedImageMinArrayName(const QString& value)
+void SingleDirectionMeanFilter::setFilteredArrayName(const QString& value)
 {
-  m_ProjectedImageMinArrayName = value;
+  m_FilteredArrayName = value;
 }
 
 // -----------------------------------------------------------------------------
-QString FindArrayDifferencesAlongDirection::getProjectedImageMinArrayName() const
+QString SingleDirectionMeanFilter::getFilteredArrayName() const
 {
-  return m_ProjectedImageMinArrayName;
+  return m_FilteredArrayName;
 }

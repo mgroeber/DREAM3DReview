@@ -49,24 +49,24 @@ using IDataArrayWkPtrType = std::weak_ptr<IDataArray>;
 /**
  * @brief The FindProjectedImageStatistics class. See [Filter documentation](@ref findprojectedimagestatistics) for details.
  */
-class DREAM3DReview_EXPORT FindArrayDifferencesAlongDirection : public AbstractFilter
+class DREAM3DReview_EXPORT SingleDirectionMeanFilter : public AbstractFilter
 {
   Q_OBJECT
 
   // Start Python bindings declarations
-  PYB11_BEGIN_BINDINGS(FindArrayDifferencesAlongDirection SUPERCLASS AbstractFilter)
+  PYB11_BEGIN_BINDINGS(SingleDirectionMeanFilter SUPERCLASS AbstractFilter)
   PYB11_FILTER()
-  PYB11_SHARED_POINTERS(FindArrayDifferencesAlongDirection)
-  PYB11_FILTER_NEW_MACRO(FindArrayDifferencesAlongDirection)
+  PYB11_SHARED_POINTERS(SingleDirectionMeanFilter)
+  PYB11_FILTER_NEW_MACRO(SingleDirectionMeanFilter)
   PYB11_PROPERTY(DataArrayPath SelectedArrayPath READ getSelectedArrayPath WRITE setSelectedArrayPath)
   PYB11_PROPERTY(unsigned int Direction READ getDirection WRITE setDirection)
-  PYB11_PROPERTY(QString ProjectedImageMinArrayName READ getProjectedImageMinArrayName WRITE setProjectedImageMinArrayName)
+  PYB11_PROPERTY(QString FilteredArrayName READ getFilteredArrayName WRITE setFilteredArrayName)
 
   PYB11_END_BINDINGS()
   // End Python bindings declarations
 
 public:
-  using Self = FindArrayDifferencesAlongDirection;
+  using Self = SingleDirectionMeanFilter;
   using Pointer = std::shared_ptr<Self>;
   using ConstPointer = std::shared_ptr<const Self>;
   using WeakPointer = std::weak_ptr<Self>;
@@ -93,7 +93,7 @@ public:
    */
   static QString ClassName();
 
-  ~FindArrayDifferencesAlongDirection() override;
+  ~SingleDirectionMeanFilter() override;
 
   /**
    * @brief Setter property for SelectedArrayPath
@@ -120,13 +120,13 @@ public:
   /**
    * @brief Setter property for ProjectedImageMinArrayName
    */
-  void setProjectedImageMinArrayName(const QString& value);
+  void setFilteredArrayName(const QString& value);
   /**
    * @brief Getter property for ProjectedImageMinArrayName
    * @return Value of ProjectedImageMinArrayName
    */
-  QString getProjectedImageMinArrayName() const;
-  Q_PROPERTY(QString ProjectedImageMinArrayName READ getProjectedImageMinArrayName WRITE setProjectedImageMinArrayName)
+  QString getFilteredArrayName() const;
+  Q_PROPERTY(QString FilteredArrayName READ getFilteredArrayName WRITE setFilteredArrayName)
 
   /**
    * @brief getCompiledLibraryName Reimplemented from @see AbstractFilter class
@@ -189,7 +189,7 @@ public:
   void execute() override;
 
 protected:
-  FindArrayDifferencesAlongDirection();
+  SingleDirectionMeanFilter();
   /**
    * @brief dataCheck Checks for the appropriate parameter values and availability of arrays
    */
@@ -204,16 +204,16 @@ private:
   IDataArrayWkPtrType m_InDataPtr;
   void* m_InData = nullptr;
 
-  std::weak_ptr<DataArray<float>> m_ProjectedImageMinPtr;
-  float* m_ProjectedImageMin = nullptr;
+  std::weak_ptr<DataArray<float>> m_FilteredArrayPtr;
+  float* m_FilteredArray = nullptr;
 
   DataArrayPath m_SelectedArrayPath = {"", "", ""};
   unsigned int m_Direction = {0};
-  QString m_ProjectedImageMinArrayName = {SIMPL::CellData::ProjectedImageMin};
+  QString m_FilteredArrayName = {SIMPL::CellData::ProjectedImageMin};
 
 public:
-  FindArrayDifferencesAlongDirection(const FindArrayDifferencesAlongDirection&) = delete;            // Copy Constructor Not Implemented
-  FindArrayDifferencesAlongDirection(FindArrayDifferencesAlongDirection&&) = delete;                 // Move Constructor Not Implemented
-  FindArrayDifferencesAlongDirection& operator=(const FindArrayDifferencesAlongDirection&) = delete; // Copy Assignment Not Implemented
-  FindArrayDifferencesAlongDirection& operator=(FindArrayDifferencesAlongDirection&&) = delete; // Move Assignment Not Implemented
+  SingleDirectionMeanFilter(const SingleDirectionMeanFilter&) = delete;            // Copy Constructor Not Implemented
+  SingleDirectionMeanFilter(SingleDirectionMeanFilter&&) = delete;                 // Move Constructor Not Implemented
+  SingleDirectionMeanFilter& operator=(const SingleDirectionMeanFilter&) = delete; // Copy Assignment Not Implemented
+  SingleDirectionMeanFilter& operator=(SingleDirectionMeanFilter&&) = delete; // Move Assignment Not Implemented
 };
