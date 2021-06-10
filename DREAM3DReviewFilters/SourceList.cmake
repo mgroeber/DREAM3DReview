@@ -39,6 +39,7 @@ set(_PublicFilters
   AverageEdgeFaceCellArrayToVertexArray
   AverageVertexArrayToEdgeFaceCellArray
   ComputeUmeyamaTransform
+  ConvertImageGeometryToVertex
   EstablishFoamMorphology
   DBSCAN
   DownsampleVertexGeometry
@@ -60,6 +61,7 @@ set(_PublicFilters
   PrincipalComponentAnalysis
   RemoveFlaggedVertices
   Silhouette
+  SingleDirectionMeanFilter
   WaveFrontObjectFileWriter
   RobustAutomaticThreshold
 

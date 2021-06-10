@@ -37,6 +37,7 @@
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <numeric>
 #include <unordered_map>
 
 #include <QtCore/QTextStream>
@@ -44,15 +45,19 @@
 #include "SIMPLib/Common/Constants.h"
 #include "SIMPLib/Common/TemplateHelpers.h"
 #include "SIMPLib/DataArrays/NeighborList.hpp"
+#include "SIMPLib/DataContainers/DataContainerArray.h"
 #include "SIMPLib/FilterParameters/AbstractFilterParametersReader.h"
 #include "SIMPLib/FilterParameters/AttributeMatrixSelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/BooleanFilterParameter.h"
+#include "SIMPLib/FilterParameters/DataArrayCreationFilterParameter.h"
 #include "SIMPLib/FilterParameters/DataArraySelectionFilterParameter.h"
 #include "SIMPLib/FilterParameters/DoubleFilterParameter.h"
 #include "SIMPLib/FilterParameters/IntFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedBooleanFilterParameter.h"
 #include "SIMPLib/FilterParameters/LinkedPathCreationFilterParameter.h"
 #include "SIMPLib/FilterParameters/SeparatorFilterParameter.h"
+#include "SIMPLib/FilterParameters/StringFilterParameter.h"
+#include "SIMPLib/Math/SIMPLibMath.h"
 
 #include "DREAM3DReview/DREAM3DReviewConstants.h"
 #include "DREAM3DReview/DREAM3DReviewVersion.h"
@@ -177,8 +182,7 @@ void FindArrayStatistics::dataCheck()
     return;
   }
 
-  QVector<DataArrayPath> outputDataArrayPaths;
-  QVector<DataArrayPath> inputDataArrayPaths;
+  QVector<DataArrayPath> dataArrayPaths;
 
   m_InputArrayPtr = getDataContainerArray()->getPrereqIDataArrayFromPath(this, getSelectedArrayPath());
 
@@ -187,7 +191,7 @@ void FindArrayStatistics::dataCheck()
     return;
   }
 
-  inputDataArrayPaths.push_back(getSelectedArrayPath());
+  // dataArrayPaths.push_back(getSelectedArrayPath());
 
   if(m_InputArrayPtr.lock()->getNumberOfComponents() != 1)
   {
@@ -231,24 +235,24 @@ void FindArrayStatistics::dataCheck()
 
   if(getComputeByIndex())
   {
-    m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<Int32ArrayType>(this, getFeatureIdsArrayPath(), cDims);
+    m_FeatureIdsPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<int32_t>>(this, getFeatureIdsArrayPath(), cDims);
     if(m_FeatureIdsPtr.lock())
     {
       m_FeatureIds = m_FeatureIdsPtr.lock()->getPointer(0);
     }
     if(getErrorCode() >= 0)
     {
-      inputDataArrayPaths.push_back(getFeatureIdsArrayPath());
+      dataArrayPaths.push_back(getFeatureIdsArrayPath());
     }
   }
 
-  EXECUTE_FUNCTION_TEMPLATE(this, createCompatibleArrays, m_InputArrayPtr.lock(), outputDataArrayPaths)
+  EXECUTE_FUNCTION_TEMPLATE(this, createCompatibleArrays, m_InputArrayPtr.lock(), dataArrayPaths)
 
   if(m_FindHistogram)
   {
     std::vector<size_t> cDims_List = {static_cast<size_t>(m_NumBins)};
     DataArrayPath path(getDestinationAttributeMatrix().getDataContainerName(), getDestinationAttributeMatrix().getAttributeMatrixName(), getHistogramArrayName());
-    m_HistogramListPtr = getDataContainerArray()->createNonPrereqArrayFromPath<FloatArrayType>(this, path, 0, cDims_List, "", DataArrayID37);
+    m_HistogramListPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, path, 0, cDims_List, "", DataArrayID37);
     if(getErrorCode() < 0)
     {
       return;
@@ -257,14 +261,14 @@ void FindArrayStatistics::dataCheck()
 
   if(getUseMask())
   {
-    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<BoolArrayType>(this, getMaskArrayPath(), cDims);
+    m_MaskPtr = getDataContainerArray()->getPrereqArrayFromPath<DataArray<bool>>(this, getMaskArrayPath(), cDims);
     if(m_MaskPtr.lock())
     {
       m_Mask = m_MaskPtr.lock()->getPointer(0);
     }
     if(getErrorCode() >= 0)
     {
-      inputDataArrayPaths.push_back(getMaskArrayPath());
+    //  dataArrayPaths.push_back(getMaskArrayPath());
     }
   }
 
@@ -276,15 +280,18 @@ void FindArrayStatistics::dataCheck()
       setErrorCondition(-11003, ss);
     }
     DataArrayPath path(getSelectedArrayPath().getDataContainerName(), getSelectedArrayPath().getAttributeMatrixName(), getStandardizedArrayName());
-    m_StandardizedPtr = getDataContainerArray()->createNonPrereqArrayFromPath<FloatArrayType>(this, path, 0, cDims, "", DataArrayID39);
+    m_StandardizedPtr = getDataContainerArray()->createNonPrereqArrayFromPath<DataArray<float>>(this, path, 0, cDims, "", DataArrayID39);
+    if(m_StandardizedPtr.lock())
+    {
+      m_Standardized = m_StandardizedPtr.lock()->getPointer(0);
+    }
     if(getErrorCode() >= 0)
     {
-      inputDataArrayPaths.push_back(path);
+      dataArrayPaths.push_back(path);
     }
   }
 
-  getDataContainerArray()->validateNumberOfTuples(this, inputDataArrayPaths);
-  getDataContainerArray()->validateNumberOfTuples(this, outputDataArrayPaths);
+  getDataContainerArray()->validateNumberOfTuples(this, dataArrayPaths);
 }
 
 // -----------------------------------------------------------------------------
@@ -523,7 +530,7 @@ public:
         if(m_Arrays[7])
         {
           std::vector<float> vals = findHistogram(m_FeatureDataMap[i], m_HistMin, m_HistMax, m_HistFullRange, m_NumBins);
-          std::shared_ptr<FloatArrayType> histArray = std::dynamic_pointer_cast<FloatArrayType>(m_Arrays[7]);
+          std::shared_ptr<DataArray<float>> histArray = std::dynamic_pointer_cast<DataArray<float>>(m_Arrays[7]);
           histArray->setTuple(i, vals);
         }
       }
@@ -623,7 +630,7 @@ void findStatisticsImpl(bool length, bool min, bool max, bool mean, bool median,
     if(arrays[7])
     {
       std::vector<float> vals = findHistogram(data, histmin, histmax, histfullrange, numBins);
-      std::shared_ptr<FloatArrayType> histArray = std::dynamic_pointer_cast<FloatArrayType>(arrays[7]);
+      std::shared_ptr<DataArray<float>> histArray = std::dynamic_pointer_cast<DataArray<float>>(arrays[7]);
       histArray->setTuple(0, vals);
     }
   }
@@ -659,7 +666,7 @@ void findStatistics(IDataArray::Pointer source, Int32ArrayType::Pointer featureI
         featureValueMap[featureIdsPtr[i]].push_back(dataPtr[i]);
       }
     }
-    
+
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
     bool doParallel = true;
 #endif
@@ -797,7 +804,7 @@ void FindArrayStatistics::execute()
   }
 
   EXECUTE_FUNCTION_TEMPLATE(this, findStatistics, m_InputArrayPtr.lock(), m_InputArrayPtr.lock(), m_FeatureIdsPtr.lock(), m_UseMask, m_Mask, m_FindLength, m_FindMin, m_FindMax, m_FindMean,
-                            m_FindMedian, m_FindStdDeviation, m_FindSummation, arrays, numFeatures, m_ComputeByIndex, m_FindHistogram, m_MinRange, m_MaxRange, m_UseFullRange, m_NumBins)
+                            m_FindMedian, m_FindStdDeviation, m_FindSummation, arrays, numFeatures, m_ComputeByIndex, m_FindHistogram, m_MinRange, m_MaxRange, m_UseFullRange, m_NumBins);
 
   if(m_StandardizeData)
   {

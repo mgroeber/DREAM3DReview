@@ -67,7 +67,7 @@ class FindRidgesImpl
 {
 
 public:
-  FindRidgesImpl(T *data, DataContainer::Pointer geom, bool* ridgeFlag)
+  FindRidgesImpl(T* data, DataContainer::Pointer geom, bool* ridgeFlag)
   : m_Data(data)
   , m_Geom(geom)
   , m_RidgeFlag(ridgeFlag)
@@ -80,7 +80,7 @@ public:
 
     SizeVec3Type geoDims = m_Geom->getGeometryAs<ImageGeom>()->getDimensions();
 
-    std::vector<size_t> neighbors(6);
+    std::vector<int64_t> neighbors(6);
     neighbors[0] = -(geoDims[0] * geoDims[1]);
     neighbors[1] = (geoDims[0] * geoDims[1]);
     neighbors[2] = -(geoDims[0]);
@@ -94,9 +94,9 @@ public:
       size_t row = (iter / geoDims[0]) % geoDims[1];
       size_t plane = iter / (geoDims[0] * geoDims[1]);
 
-      bool xflag = true;
-      bool yflag = true;
-      bool zflag = true;
+      uint8_t xflag = 0;
+      uint8_t yflag = 0;
+      uint8_t zflag = 0;
 
       for(size_t i = 0; i < 2; i++)
       {
@@ -108,10 +108,11 @@ public:
         {
           continue;
         }
-        if(m_Data[iter] < m_Data[iter + neighbors[i]])
+        if(m_Data[iter] > m_Data[iter + neighbors[i]])
         {
-          zflag = false;
+          zflag++;
         }
+
       }
       for(size_t i = 2; i < 4; i++)
       {
@@ -123,9 +124,9 @@ public:
         {
           continue;
         }
-        if(m_Data[iter] < m_Data[iter + neighbors[i]])
+        if(m_Data[iter] > m_Data[iter + neighbors[i]])
         {
-          yflag = false;
+          yflag++;
         }
       }
       for(size_t i = 4; i < 6; i++)
@@ -138,12 +139,12 @@ public:
         {
           continue;
         }
-        if(m_Data[iter] < m_Data[iter + neighbors[i]])
+        if(m_Data[iter] > m_Data[iter + neighbors[i]])
         {
-          xflag = false;
+          xflag++;
         }
       }
-      if(xflag && yflag && zflag)
+      if(xflag > 1 || yflag > 1 || zflag > 1)
       {
         m_RidgeFlag[iter] = true;
       }
@@ -216,8 +217,7 @@ void FindRidgeLines::setupFilterParameters()
     parameters.push_back(SIMPL_NEW_DA_SELECTION_FP("Attribute Array to Quantify", SelectedArrayPath, FilterParameter::Category::RequiredArray, FindRidgeLines, req));
   }
   parameters.push_back(SeparatorFilterParameter::Create("Cell Data", FilterParameter::Category::CreatedArray));
-  parameters.push_back(
-      SIMPL_NEW_DA_WITH_LINKED_AM_FP("Ridge Flag Array", RidgeFlagArrayName, SelectedArrayPath, SelectedArrayPath, FilterParameter::Category::CreatedArray, FindRidgeLines));
+  parameters.push_back(SIMPL_NEW_DA_WITH_LINKED_AM_FP("Ridge Flag Array", RidgeFlagArrayName, SelectedArrayPath, SelectedArrayPath, FilterParameter::Category::CreatedArray, FindRidgeLines));
   setFilterParameters(parameters);
 }
 
@@ -266,11 +266,84 @@ void FindRidgeLines::dataCheck()
     m_RidgeFlag = m_RidgeFlagPtr.lock()->getPointer(0);
   } /* Now assign the raw pointer to data from the DataArray<T> object */
 
-  
   ImageGeom::Pointer image = getDataContainerArray()->getPrereqGeometryFromDataContainer<ImageGeom>(this, getSelectedArrayPath().getDataContainerName());
   if(getErrorCode() < 0)
   {
     return;
+  }
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+template <typename T>
+void extendRidges(IDataArray::Pointer source, DataContainer::Pointer geom, bool* ridgeFlag)
+{
+  SizeVec3Type geoDims = geom->getGeometryAs<ImageGeom>()->getDimensions();
+  typename DataArray<T>::Pointer sourcePtr = std::dynamic_pointer_cast<DataArray<T>>(source);
+  T* data = sourcePtr->getPointer(0);
+
+  std::vector<int64_t> neighbors(6);
+  neighbors[0] = -(geoDims[0] * geoDims[1]);
+  neighbors[1] = (geoDims[0] * geoDims[1]);
+  neighbors[2] = -(geoDims[0]);
+  neighbors[3] = (geoDims[0]);
+  neighbors[4] = -1;
+  neighbors[5] = 1;
+
+  bool keepGoing = true;
+  std::vector<size_t> pointsToChange;
+  while(keepGoing)
+  {
+    keepGoing = false;
+    size_t point = 0;
+    for(size_t plane = 0; plane < geoDims[2]; plane++)
+    {
+      for(size_t row = 0; row < geoDims[1]; row++)
+      {
+        for(size_t col = 0; col < geoDims[0]; col++)
+        {
+          for(size_t iter = 0; iter < 6; iter++)
+          {
+            if(iter == 0 && plane == 0)
+            {
+              continue;
+            }
+            if(iter == 1 && plane == geoDims[2]-1)
+            {
+              continue;
+            }
+            if(iter == 2 && row == 0)
+            {
+              continue;
+            }
+            if(iter == 3 && row == geoDims[1]-1)
+            {
+              continue;
+            }
+            if(iter == 4 && col == 0)
+            {
+              continue;
+            }
+            if(iter == 5 && col == geoDims[0]-1)
+            {
+              continue;
+            }
+            if(data[point] >= data[point + neighbors[iter]] && ridgeFlag[point + neighbors[iter]] && !ridgeFlag[point])
+            {
+              pointsToChange.push_back(point);
+              keepGoing = true;
+            }
+          }
+          point++;
+        }
+      }
+    }
+    for (size_t a = 0; a < pointsToChange.size(); a++)
+    {
+      ridgeFlag[pointsToChange[a]] = true;
+    }
+    pointsToChange.clear();
   }
 }
 
@@ -292,14 +365,12 @@ void FindRidgeLines::execute()
 
   IDataArray::Pointer iCellArray = m_InDataPtr.lock();
 
-
   if(TemplateHelpers::CanDynamicCast<Int8ArrayType>()(m_InDataPtr.lock()))
   {
     Int8ArrayType::Pointer cellArray = std::dynamic_pointer_cast<Int8ArrayType>(m_InDataPtr.lock());
     int8_t* cPtr = cellArray->getPointer(0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int8_t>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int8_t>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 
 #else
     FindRidgesImpl<int8_t> serial(cPtr, m, m_RidgeFlag);
@@ -311,8 +382,7 @@ void FindRidgeLines::execute()
     UInt8ArrayType::Pointer cellArray = std::dynamic_pointer_cast<UInt8ArrayType>(m_InDataPtr.lock());
     uint8_t* cPtr = cellArray->getPointer(0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint8_t>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint8_t>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 
 #else
     FindRidgesImpl<uint8_t> serial(cPtr, m, m_RidgeFlag);
@@ -323,11 +393,10 @@ void FindRidgeLines::execute()
   {
     Int16ArrayType::Pointer cellArray = std::dynamic_pointer_cast<Int16ArrayType>(m_InDataPtr.lock());
     int16_t* cPtr = cellArray->getPointer(0);
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS 
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int16_t>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int16_t>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 #else
-DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
+    DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
     serial.convert(0, totalPoints);
 #endif
   }
@@ -336,8 +405,7 @@ DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
     UInt16ArrayType::Pointer cellArray = std::dynamic_pointer_cast<UInt16ArrayType>(m_InDataPtr.lock());
     uint16_t* cPtr = cellArray->getPointer(0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint16_t>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint16_t>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 #else
     FindRidgesImpl<uint16_t> serial(cPtr, m, m_RidgeFlag);
     serial.convert(0, totalPoints);
@@ -348,8 +416,7 @@ DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
     Int32ArrayType::Pointer cellArray = std::dynamic_pointer_cast<Int32ArrayType>(m_InDataPtr.lock());
     int32_t* cPtr = cellArray->getPointer(0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int32_t>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int32_t>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 
 #else
     FindRidgesImpl<int32_t> serial(cPtr, m, m_RidgeFlag);
@@ -360,9 +427,8 @@ DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
   {
     UInt32ArrayType::Pointer cellArray = std::dynamic_pointer_cast<UInt32ArrayType>(m_InDataPtr.lock());
     uint32_t* cPtr = cellArray->getPointer(0);
-#ifdef SIMPL_USE_PARALLEL_ALGORITHMS 
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint32_t>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+#ifdef SIMPL_USE_PARALLEL_ALGORITHMS
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint32_t>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 
 #else
     FindRidgesImpl<uint32_t> serial(cPtr, m, m_RidgeFlag);
@@ -374,8 +440,7 @@ DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
     Int64ArrayType::Pointer cellArray = std::dynamic_pointer_cast<Int64ArrayType>(m_InDataPtr.lock());
     int64_t* cPtr = cellArray->getPointer(0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int64_t>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<int64_t>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 
 #else
     FindRidgesImpl<int64_t> serial(cPtr, m, m_RidgeFlag);
@@ -387,8 +452,7 @@ DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
     UInt64ArrayType::Pointer cellArray = std::dynamic_pointer_cast<UInt64ArrayType>(m_InDataPtr.lock());
     uint64_t* cPtr = cellArray->getPointer(0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint64_t>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<uint64_t>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 #else
     FindRidgesImpl<uint64_t> serial(cPtr, m, m_RidgeFlag);
     serial.convert(0, totalPoints);
@@ -399,8 +463,7 @@ DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
     FloatArrayType::Pointer cellArray = std::dynamic_pointer_cast<FloatArrayType>(m_InDataPtr.lock());
     float* cPtr = cellArray->getPointer(0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<float>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<float>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 #else
     FindRidgesImpl<float> serial(cPtr, m, m_RidgeFlag);
     serial.convert(0, totalPoints);
@@ -411,8 +474,7 @@ DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
     DoubleArrayType::Pointer cellArray = std::dynamic_pointer_cast<DoubleArrayType>(m_InDataPtr.lock());
     double* cPtr = cellArray->getPointer(0);
 #ifdef SIMPL_USE_PARALLEL_ALGORITHMS
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<double>(cPtr, m, m_RidgeFlag),
-                      tbb::auto_partitioner());
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, totalPoints), FindRidgesImpl<double>(cPtr, m, m_RidgeFlag), tbb::auto_partitioner());
 #else
     FindRidgesImpl<double> serial(cPtr, m, m_RidgeFlag);
     serial.convert(0, totalPoints);
@@ -424,6 +486,8 @@ DirectionalDifferencesImpl<int16_t> serial(cPtr, m, m_RidgeFlag);
     setErrorCondition(-11001, ss);
     return;
   }
+
+  //EXECUTE_FUNCTION_TEMPLATE(this, extendRidges, m_InDataPtr.lock(), m_InDataPtr.lock(), m, m_RidgeFlag);
 }
 
 // -----------------------------------------------------------------------------
